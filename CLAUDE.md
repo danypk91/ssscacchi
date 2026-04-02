@@ -6,6 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Website for **Circolo Scacchi Santa Sabina**, a chess club in Genova (Italy). Built with **Astro 6** (static site, SSG), deployed on Vercel at `santasabinascacchi.vercel.app`. All content is in Italian.
 
+## Deployment
+
+Hosted on **Vercel**, connected to the GitHub repo `danypk91/ssscacchi`. Pushes to `main` trigger automatic deploys. Remote uses SSH alias `github-danypk91` (see `~/.ssh/config`).
+
 ## Commands
 
 ```bash
