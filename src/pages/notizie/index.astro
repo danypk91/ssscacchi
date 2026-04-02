@@ -1,0 +1,70 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const notizie = (await getCollection('notizie'))
+  .sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime());
+---
+
+<BaseLayout title="Notizie" description="Tutte le notizie dal Circolo Scacchi Santa Sabina di Genova.">
+  <section class="section">
+    <div class="container">
+      <h1 class="section-title">Notizie</h1>
+      <p class="section-subtitle">Tutte le novità dal circolo</p>
+
+      <div class="news-list">
+        {notizie.map(n => (
+          <a href={`/notizie/${n.id}`} class="card news-item">
+            <time>{new Date(n.data.date).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })}</time>
+            <h2>{n.data.title}</h2>
+            <p>{n.data.excerpt}</p>
+            <span class="read-more">Leggi tutto &rarr;</span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .news-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .news-item {
+    display: block;
+    color: inherit;
+  }
+
+  .news-item time {
+    font-size: 0.8rem;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .news-item h2 {
+    font-size: 1.35rem;
+    margin: 0.4rem 0;
+    transition: color 0.2s;
+  }
+
+  .news-item:hover h2 {
+    color: var(--accent);
+  }
+
+  .news-item p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+  }
+
+  .read-more {
+    display: inline-block;
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--accent);
+    font-weight: 600;
+  }
+</style>

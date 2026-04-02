@@ -1,0 +1,207 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const categorie = [
+  { name: 'Aperture', icon: '&#9816;', desc: 'Trattati e repertori sulle aperture' },
+  { name: 'Mediogioco', icon: '&#9815;', desc: 'Strategia, tattica e combinazioni' },
+  { name: 'Finali', icon: '&#9814;', desc: 'Tecnica dei finali' },
+  { name: 'Generali', icon: '&#9813;', desc: 'Manuali completi e didattica' },
+  { name: 'Narrativa', icon: '&#9819;', desc: 'Romanzi e racconti a tema scacchistico' },
+  { name: 'Raccolte', icon: '&#9812;', desc: 'Raccolte di partite commentate' },
+];
+---
+
+<BaseLayout title="Biblioteca" description="Biblioteca scacchistica del Circolo Santa Sabina. Consultazione e prestito libri per i soci.">
+  <section class="section">
+    <div class="container">
+      <h1 class="section-title">Biblioteca</h1>
+      <p class="section-subtitle">La nostra collezione scacchistica a disposizione dei soci</p>
+
+      <div class="intro-card card">
+        <div class="intro-grid">
+          <div>
+            <h2>Servizio di prestito</h2>
+            <p>
+              La biblioteca del circolo offre un servizio di <strong>consultazione e prestito</strong> libri
+              per tutti i soci. La collezione comprende testi su aperture, mediogioco, finali, manuali generali,
+              narrativa scacchistica e raccolte di partite commentate.
+            </p>
+          </div>
+          <div class="rules-box">
+            <h3>Regole</h3>
+            <ul>
+              <li>Un solo libro per volta</li>
+              <li>Restituzione entro un mese</li>
+              <li>Ritiro e restituzione negli orari indicati</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="schedule-banner">
+        <span class="schedule-icon">&#128197;</span>
+        <div>
+          <strong>Orari del servizio biblioteca</strong>
+          <p>Primo martedì e terzo venerdì di ogni mese, durante gli orari di apertura del circolo.</p>
+        </div>
+      </div>
+
+      <h2 class="cat-title">Categorie disponibili</h2>
+      <div class="cat-grid">
+        {categorie.map(cat => (
+          <div class="card cat-card">
+            <div class="cat-icon" set:html={cat.icon} />
+            <h3>{cat.name}</h3>
+            <p>{cat.desc}</p>
+          </div>
+        ))}
+      </div>
+
+      <div class="contact-cta card">
+        <h2>Vuoi prenotare un libro?</h2>
+        <p>Contattaci via email indicando il titolo che ti interessa e ti confermeremo la disponibilità.</p>
+        <a href="mailto:santasabinascacchi@gmail.com" class="btn btn-primary">
+          Scrivi a santasabinascacchi@gmail.com
+        </a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .intro-card {
+    margin-bottom: 2rem;
+  }
+
+  .intro-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 2rem;
+    align-items: start;
+  }
+
+  .intro-grid h2 {
+    color: var(--accent);
+    font-size: 1.3rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .intro-grid p {
+    color: var(--text-secondary);
+    line-height: 1.7;
+  }
+
+  .rules-box {
+    background: var(--bg-secondary);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+  }
+
+  .rules-box h3 {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    margin-bottom: 0.75rem;
+  }
+
+  .rules-box ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+  }
+
+  .rules-box li::before {
+    content: '— ';
+    color: var(--accent);
+  }
+
+  .schedule-banner {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: var(--accent-glow);
+    border: 1px solid var(--wood-dark);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 3rem;
+  }
+
+  .schedule-icon {
+    font-size: 1.8rem;
+  }
+
+  .schedule-banner strong {
+    display: block;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+  }
+
+  .schedule-banner p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin: 0;
+  }
+
+  .cat-title {
+    font-size: 1.3rem;
+    color: var(--accent);
+    margin-bottom: 1.5rem;
+  }
+
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 3rem;
+  }
+
+  .cat-card {
+    text-align: center;
+    padding: 1.75rem 1.25rem;
+  }
+
+  .cat-icon {
+    font-size: 2rem;
+    color: var(--accent);
+    margin-bottom: 0.75rem;
+  }
+
+  .cat-card h3 {
+    font-size: 1.05rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .cat-card p {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+  }
+
+  .contact-cta {
+    text-align: center;
+    padding: 2.5rem;
+  }
+
+  .contact-cta h2 {
+    color: var(--accent);
+    font-size: 1.3rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .contact-cta p {
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  @media (max-width: 768px) {
+    .intro-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

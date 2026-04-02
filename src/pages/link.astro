@@ -1,0 +1,107 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const linkCategories = [
+  {
+    title: 'Federazioni',
+    links: [
+      { name: 'FSI – Federazione Scacchistica Italiana', url: 'https://www.federscacchi.it/' },
+      { name: 'Comitato Regionale Liguria Scacchi', url: 'https://www.liguriascacchi.it/' },
+      { name: 'FIDE – World Chess Federation', url: 'https://www.fide.com/' },
+    ],
+  },
+  {
+    title: 'Circoli Genovesi e Liguri',
+    links: [
+      { name: 'Circolo Scacchistico "Luigi Centurini"', url: 'https://www.centurini.it/' },
+      { name: 'Circolo Scacchistico "Filippo Merlino" – Sestri Ponente', url: 'https://www.scacchigenovamerlino.altervista.org' },
+      { name: 'Scacchi Ruta – Ruta di Camogli', url: 'https://scacchiruta.altervista.org/' },
+      { name: 'Circolo Scacchistico Sammargaritese', url: 'https://www.scacchidisanta.it/' },
+    ],
+  },
+  {
+    title: 'Strumenti e Piattaforme',
+    links: [
+      { name: 'VeSuS – Gestione tornei e iscrizioni', url: 'https://vesus.org/' },
+      { name: 'Il kit dell\'arbitro – Calcolo ELO', url: 'https://arbitri.lombardiascacchi.com/arb_calcolo_elo.html' },
+    ],
+  },
+  {
+    title: 'Risorse Scacchistiche',
+    links: [
+      { name: 'Le due Torri', url: 'https://www.scacco.it' },
+      { name: 'Scacchi che passione!', url: 'https://scacchichepassione.altervista.org/' },
+      { name: 'Classifica mondiale Top 50', url: 'https://www.2700chess.com/' },
+      { name: 'Uno Scacchista – Blog di analisi', url: 'https://unoscacchista.com/' },
+    ],
+  },
+  {
+    title: 'Organizzazione',
+    links: [
+      { name: 'U.S. ACLI Santa Sabina', url: 'https://www.santasabina.org/start.htm' },
+    ],
+  },
+];
+---
+
+<BaseLayout title="Link" description="Link utili a federazioni, circoli, strumenti e risorse scacchistiche.">
+  <section class="section">
+    <div class="container">
+      <h1 class="section-title">Link Utili</h1>
+      <p class="section-subtitle">Federazioni, circoli, strumenti e risorse</p>
+
+      <div class="links-grid">
+        {linkCategories.map(cat => (
+          <div class="card link-category">
+            <h2>{cat.title}</h2>
+            <ul>
+              {cat.links.map(link => (
+                <li>
+                  <a href={link.url} target="_blank" rel="noopener">{link.name}</a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .links-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .link-category h2 {
+    font-size: 1.1rem;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .link-category ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .link-category a {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    display: block;
+    padding: 0.3rem 0;
+    transition: color 0.2s, padding-left 0.2s;
+  }
+
+  .link-category a:hover {
+    color: var(--accent);
+    padding-left: 0.5rem;
+  }
+</style>

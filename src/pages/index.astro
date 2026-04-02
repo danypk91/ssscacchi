@@ -1,0 +1,864 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const allNotizie = await getCollection('notizie');
+const notizie = allNotizie
+  .sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime())
+  .slice(0, 4);
+
+const prossimieventi = [
+  {
+    title: 'Torneo Sociale di Primavera 2026',
+    date: '14 Apr – 26 Mag 2026',
+    time: '21:15',
+    desc: '7 turni, 50 min + 20"/mossa',
+    link: 'https://vesus.org/tournament/HxESjko4',
+  },
+  {
+    title: 'GP Lampo 2026 – 3a Tappa',
+    date: '10 Aprile 2026',
+    time: '21:15',
+    desc: '7 turni, 5 min + 3"/mossa',
+    link: 'https://vesus.org/tournament/tL_czXHO',
+  },
+];
+
+/* 8x8 board with a starting position (simplified).
+   We place unicode pieces on certain squares. */
+const boardPieces: Record<number, string> = {
+  0: '\u265C', 1: '\u265E', 2: '\u265D', 3: '\u265B', 4: '\u265A', 5: '\u265D', 6: '\u265E', 7: '\u265C',
+  8: '\u265F', 9: '\u265F', 10: '\u265F', 11: '\u265F', 12: '\u265F', 13: '\u265F', 14: '\u265F', 15: '\u265F',
+  48: '\u2659', 49: '\u2659', 50: '\u2659', 51: '\u2659', 52: '\u2659', 53: '\u2659', 54: '\u2659', 55: '\u2659',
+  56: '\u2656', 57: '\u2658', 58: '\u2657', 59: '\u2655', 60: '\u2654', 61: '\u2657', 62: '\u2658', 63: '\u2656',
+};
+---
+
+<BaseLayout title="Home">
+  <!-- Hero -->
+  <section class="hero">
+    <!-- Atmospheric background -->
+    <div class="hero-atmosphere" aria-hidden="true"></div>
+
+    <!-- Subtle chess-square pattern overlay -->
+    <div class="hero-pattern" aria-hidden="true"></div>
+
+    <div class="container hero-grid">
+      <!-- Left: text content -->
+      <div class="hero-content">
+        <div class="hero-badge">Circolo affiliato FSI – CONI</div>
+        <h1>Circolo Scacchi<br /><span class="hero-accent">Santa Sabina</span></h1>
+        <p class="hero-sub">
+          Dal 2010 promuoviamo il gioco degli scacchi a Genova con tornei,
+          corsi per giovani e attività culturali presso il Circolo ACLI di Via Donghi.
+        </p>
+        <div class="hero-actions">
+          <a href="/contatti" class="btn btn-primary btn-hero">Vieni a trovarci</a>
+          <a href="/chi-siamo" class="btn btn-outline">Scopri il circolo</a>
+        </div>
+
+        <!-- Stats -->
+        <div class="hero-stats">
+          <div class="stat">
+            <span class="stat-number">15+</span>
+            <span class="stat-label">Anni di attività</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat">
+            <span class="stat-number">4</span>
+            <span class="stat-label">Squadre agonistiche</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat">
+            <span class="stat-number">10+</span>
+            <span class="stat-label">Tornei all'anno</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat">
+            <span class="stat-number">50+</span>
+            <span class="stat-label">Giovani tesserati</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: board with knight watermark behind -->
+      <div class="hero-visual">
+        <div class="hero-knight" aria-hidden="true">&#9822;</div>
+        <div class="hero-board-showcase">
+          <div class="board-3d">
+            {Array.from({ length: 64 }).map((_, i) => {
+              const row = Math.floor(i / 8);
+              const col = i % 8;
+              const isLight = (row + col) % 2 === 0;
+              const piece = boardPieces[i];
+              return (
+                <div class:list={['sq', isLight ? 'sq-l' : 'sq-d']}>
+                  {piece && <span class:list={['pc', i < 16 ? 'pc-b' : 'pc-w']}>{piece}</span>}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        <div class="hero-visual-glow" aria-hidden="true"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Prossimi eventi -->
+  <section class="section section-events">
+    <div class="section-bg-pattern" aria-hidden="true"></div>
+    <div class="container">
+      <h2 class="section-title">
+        <span class="title-icon">&#9816;</span>
+        Prossimi Eventi
+      </h2>
+      <p class="section-subtitle">Tornei e appuntamenti in programma</p>
+      <div class="events-grid">
+        {prossimieventi.map(ev => (
+          <article class="event-card">
+            <div class="event-card-top"></div>
+            <div class="event-card-body">
+              <div class="event-date">{ev.date}</div>
+              <h3>{ev.title}</h3>
+              <div class="event-meta">
+                <span>&#9200; {ev.time}</span>
+                <span>&#9823; {ev.desc}</span>
+              </div>
+              <a href={ev.link} target="_blank" rel="noopener" class="btn btn-outline btn-sm">
+                Iscriviti su VeSuS &rarr;
+              </a>
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Ultime notizie -->
+  <section class="section section-news">
+    <div class="section-bg-diagonal" aria-hidden="true"></div>
+    <div class="container">
+      <h2 class="section-title">
+        <span class="title-icon">&#9814;</span>
+        Ultime Notizie
+      </h2>
+      <p class="section-subtitle">Le novità dal circolo</p>
+      <div class="news-grid">
+        {notizie.map((n, idx) => {
+          const icons = ['\u265A', '\u265B', '\u265E', '\u265C'];
+          return (
+            <a href={`/notizie/${n.id}`} class="news-card">
+              <div class="news-watermark" aria-hidden="true">{icons[idx % 4]}</div>
+              <time>{new Date(n.data.date).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })}</time>
+              <h3>{n.data.title}</h3>
+              <p>{n.data.excerpt}</p>
+              <span class="news-link">Leggi &rarr;</span>
+            </a>
+          );
+        })}
+      </div>
+      <div class="section-cta">
+        <a href="/notizie" class="btn btn-outline">Tutte le notizie</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Info rapide -->
+  <section class="section section-info">
+    <div class="section-bg-radial" aria-hidden="true"></div>
+    <div class="container">
+      <h2 class="section-title section-title-center">Il Nostro Circolo</h2>
+      <p class="section-subtitle section-subtitle-center">Tutto quello che trovi alla Santa Sabina</p>
+      <div class="info-grid">
+        <div class="info-card">
+          <div class="info-icon">&#9823;</div>
+          <h3>Corsi Giovani</h3>
+          <p>Corsi base e perfezionamento per tutte le età. Centro di Avviamento allo Sport riconosciuto.</p>
+        </div>
+        <div class="info-card">
+          <div class="info-icon">&#9813;</div>
+          <h3>Tornei</h3>
+          <p>Memorial Bertolini, Memorial Sigona, GP Lampo, Trofeo Juniores e campionati a squadre.</p>
+        </div>
+        <div class="info-card">
+          <div class="info-icon">&#9822;</div>
+          <h3>Squadre</h3>
+          <p>Partecipiamo ai Campionati Italiani a Squadre in Serie B, C e Promozione.</p>
+        </div>
+        <div class="info-card">
+          <div class="info-icon">&#9814;</div>
+          <h3>Biblioteca</h3>
+          <p>Ampia collezione di libri scacchistici disponibile per tutti i soci del circolo.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  /* =============================================
+     HERO
+     ============================================= */
+  .hero {
+    position: relative;
+    min-height: 90vh;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    padding: 6rem 0 5rem;
+  }
+
+  /* --- atmospheric background --- */
+  .hero-atmosphere {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(212,160,84,0.12) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 30%, rgba(212,160,84,0.08) 0%, transparent 45%),
+      radial-gradient(ellipse at 50% 110%, rgba(107,58,42,0.25) 0%, transparent 50%),
+      var(--bg-primary);
+  }
+
+  /* --- subtle chess-square pattern overlay on hero --- */
+  .hero-pattern {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    opacity: 0.03;
+    background-image:
+      linear-gradient(45deg, rgba(212,160,84,1) 25%, transparent 25%),
+      linear-gradient(-45deg, rgba(212,160,84,1) 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, rgba(212,160,84,1) 75%),
+      linear-gradient(-45deg, transparent 75%, rgba(212,160,84,1) 75%);
+    background-size: 40px 40px;
+    background-position: 0 0, 0 20px, 20px -20px, -20px 0;
+    pointer-events: none;
+  }
+
+  /* --- hero grid: two-column layout --- */
+  .hero-grid {
+    position: relative;
+    z-index: 3;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    gap: 3rem;
+    max-width: var(--container);
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+
+  /* --- hero content (left) --- */
+  .hero-content {
+    max-width: 560px;
+  }
+
+  .hero-badge {
+    display: inline-block;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    border: 1px solid rgba(212,160,84,0.4);
+    padding: 0.35rem 1rem;
+    border-radius: 100px;
+    margin-bottom: 1.5rem;
+    background: rgba(212,160,84,0.06);
+    animation: fadeUp 0.7s ease-out;
+  }
+
+  .hero h1 {
+    font-size: clamp(2.4rem, 5vw, 4rem);
+    line-height: 1.08;
+    margin-bottom: 1.5rem;
+    animation: fadeUp 0.7s ease-out 0.1s both;
+  }
+
+  .hero-accent {
+    color: var(--accent);
+    text-shadow: 0 0 60px rgba(212,160,84,0.35);
+  }
+
+  .hero-sub {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    line-height: 1.75;
+    margin-bottom: 2.5rem;
+    animation: fadeUp 0.7s ease-out 0.2s both;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    animation: fadeUp 0.7s ease-out 0.3s both;
+  }
+
+  .btn-hero {
+    box-shadow: 0 4px 24px rgba(212,160,84,0.35);
+  }
+
+  .btn-hero:hover {
+    box-shadow: 0 6px 32px rgba(212,160,84,0.5);
+    transform: translateY(-2px);
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* --- hero stats --- */
+  .hero-stats {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(212,160,84,0.15);
+    animation: fadeUp 0.7s ease-out 0.5s both;
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .stat-number {
+    font-family: var(--font-heading);
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 0.3rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .stat-divider {
+    width: 1px;
+    height: 36px;
+    background: rgba(212,160,84,0.2);
+  }
+
+  /* --- hero visual (right) --- */
+  .hero-visual {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeUp 0.8s ease-out 0.3s both;
+  }
+
+  .hero-knight {
+    position: absolute;
+    z-index: 0;
+    font-size: clamp(240px, 28vw, 400px);
+    line-height: 1;
+    color: rgba(212,160,84,0.10);
+    text-shadow:
+      0 0 80px rgba(212,160,84,0.08),
+      0 0 160px rgba(212,160,84,0.04);
+    pointer-events: none;
+    user-select: none;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -55%);
+    animation: knightFloat 8s ease-in-out infinite;
+  }
+
+  @keyframes knightFloat {
+    0%, 100% { transform: translate(-50%, -55%); }
+    50% { transform: translate(-50%, calc(-55% - 12px)); }
+  }
+
+  .hero-board-showcase {
+    position: relative;
+    z-index: 1;
+    transform: perspective(900px) rotateX(18deg) rotateY(-22deg) rotateZ(2deg);
+    animation: boardFloat 8s ease-in-out infinite;
+  }
+
+  @keyframes boardFloat {
+    0%, 100% { transform: perspective(900px) rotateX(18deg) rotateY(-22deg) rotateZ(2deg); }
+    50% { transform: perspective(900px) rotateX(20deg) rotateY(-20deg) rotateZ(1deg) translateY(-10px); }
+  }
+
+  .hero-visual-glow {
+    position: absolute;
+    width: 120%;
+    height: 120%;
+    top: -10%;
+    left: -10%;
+    z-index: -1;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(212,160,84,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .board-3d {
+    display: grid;
+    grid-template-columns: repeat(8, clamp(36px, 5.5vw, 60px));
+    grid-template-rows: repeat(8, clamp(36px, 5.5vw, 60px));
+    border: 3px solid var(--wood-dark);
+    border-radius: 4px;
+    box-shadow:
+      0 25px 70px rgba(0,0,0,0.6),
+      0 0 100px rgba(212,160,84,0.1),
+      inset 0 0 30px rgba(0,0,0,0.3);
+  }
+
+  .sq {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .sq-l {
+    background: linear-gradient(135deg, #d9b176, #c89b5e);
+  }
+
+  .sq-d {
+    background: linear-gradient(135deg, #7a4430, #5c3120);
+  }
+
+  .pc {
+    font-size: clamp(20px, 3.2vw, 36px);
+    line-height: 1;
+    filter: drop-shadow(1px 2px 2px rgba(0,0,0,0.4));
+    user-select: none;
+  }
+
+  .pc-w {
+    color: #f5eed6;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }
+
+  .pc-b {
+    color: #2a1a0e;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  }
+
+  /* =============================================
+     SHARED SECTION STYLES
+     ============================================= */
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .title-icon {
+    font-size: 1.6rem;
+    color: var(--accent);
+  }
+
+  .section-title-center,
+  .section-subtitle-center {
+    text-align: center;
+    justify-content: center;
+  }
+
+  /* =============================================
+     SECTION BACKGROUND PATTERNS
+     ============================================= */
+
+  /* Checkerboard micro-pattern for events */
+  .section-events {
+    position: relative;
+    overflow: hidden;
+    background:
+      linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  }
+
+  .section-bg-pattern {
+    position: absolute;
+    inset: 0;
+    opacity: 0.025;
+    background-image:
+      linear-gradient(45deg, rgba(212,160,84,1) 25%, transparent 25%),
+      linear-gradient(-45deg, rgba(212,160,84,1) 25%, transparent 25%),
+      linear-gradient(45deg, transparent 75%, rgba(212,160,84,1) 75%),
+      linear-gradient(-45deg, transparent 75%, rgba(212,160,84,1) 75%);
+    background-size: 30px 30px;
+    background-position: 0 0, 0 15px, 15px -15px, -15px 0;
+    pointer-events: none;
+  }
+
+  .section-events .container {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Diagonal stripes for news */
+  .section-news {
+    position: relative;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse at 20% 80%, rgba(107,58,42,0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(212,160,84,0.06) 0%, transparent 50%),
+      var(--bg-secondary);
+  }
+
+  .section-bg-diagonal {
+    position: absolute;
+    inset: 0;
+    opacity: 0.03;
+    background: repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 20px,
+      rgba(212,160,84,1) 20px,
+      rgba(212,160,84,1) 21px
+    );
+    pointer-events: none;
+  }
+
+  .section-news .container {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Radial glow for info */
+  .section-info {
+    position: relative;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse at 50% 0%, rgba(212,160,84,0.07) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 100%, rgba(107,58,42,0.2) 0%, transparent 50%),
+      linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, var(--bg-primary) 100%);
+  }
+
+  .section-bg-radial {
+    position: absolute;
+    inset: 0;
+    opacity: 0.02;
+    background-image:
+      radial-gradient(circle at 20% 50%, rgba(212,160,84,1) 1px, transparent 1px),
+      radial-gradient(circle at 80% 50%, rgba(212,160,84,1) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+
+  .section-info .container {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* =============================================
+     EVENTS
+     ============================================= */
+  .events-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .event-card {
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+
+  .event-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.35);
+  }
+
+  .event-card-top {
+    height: 4px;
+    background: linear-gradient(90deg, var(--wood-dark), var(--accent), var(--wood-dark));
+  }
+
+  .event-card-body {
+    padding: 1.5rem 1.75rem;
+  }
+
+  .event-date {
+    font-size: 0.82rem;
+    color: var(--accent);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.5rem;
+  }
+
+  .event-card h3 {
+    font-size: 1.3rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .event-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .btn-sm {
+    padding: 0.5rem 1.15rem;
+    font-size: 0.85rem;
+  }
+
+  /* =============================================
+     NEWS
+     ============================================= */
+  .news-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .news-card {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.75rem;
+    color: inherit;
+    transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+  }
+
+  .news-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.35);
+    border-color: rgba(212,160,84,0.25);
+  }
+
+  .news-watermark {
+    position: absolute;
+    top: -8px;
+    right: -4px;
+    font-size: 5rem;
+    line-height: 1;
+    color: var(--accent);
+    opacity: 0.06;
+    transition: opacity 0.3s, transform 0.3s;
+    pointer-events: none;
+  }
+
+  .news-card:hover .news-watermark {
+    opacity: 0.12;
+    transform: scale(1.1) rotate(-5deg);
+  }
+
+  .news-card time {
+    font-size: 0.78rem;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+  }
+
+  .news-card h3 {
+    font-size: 1.1rem;
+    margin: 0.5rem 0;
+    transition: color 0.2s;
+  }
+
+  .news-card:hover h3 {
+    color: var(--accent);
+  }
+
+  .news-card p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    flex: 1;
+  }
+
+  .news-link {
+    display: inline-block;
+    margin-top: 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--accent);
+    opacity: 0;
+    transform: translateX(-6px);
+    transition: opacity 0.3s, transform 0.3s;
+  }
+
+  .news-card:hover .news-link {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .section-cta {
+    text-align: center;
+    margin-top: 2.5rem;
+  }
+
+  /* =============================================
+     INFO CARDS
+     ============================================= */
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .info-card {
+    text-align: center;
+    padding: 2.5rem 1.5rem 2rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .info-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .info-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.3);
+    border-color: rgba(212,160,84,0.2);
+  }
+
+  .info-card:hover::after {
+    opacity: 1;
+  }
+
+  .info-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 72px;
+    height: 72px;
+    font-size: 2.2rem;
+    color: var(--accent);
+    border-radius: 50%;
+    background: rgba(212,160,84,0.08);
+    border: 1px solid rgba(212,160,84,0.15);
+    margin-bottom: 1.25rem;
+    transition: transform 0.3s, background 0.3s;
+  }
+
+  .info-card:hover .info-icon {
+    transform: scale(1.1);
+    background: rgba(212,160,84,0.14);
+  }
+
+  .info-card h3 {
+    margin-bottom: 0.75rem;
+  }
+
+  .info-card p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+  }
+
+  /* =============================================
+     RESPONSIVE
+     ============================================= */
+  @media (max-width: 1100px) {
+    .hero-grid {
+      gap: 2rem;
+    }
+
+    .board-3d {
+      grid-template-columns: repeat(8, clamp(32px, 5vw, 52px));
+      grid-template-rows: repeat(8, clamp(32px, 5vw, 52px));
+    }
+  }
+
+  @media (max-width: 900px) {
+    .hero-grid {
+      grid-template-columns: 1fr;
+      text-align: center;
+    }
+
+    .hero-content {
+      max-width: 100%;
+      order: 1;
+    }
+
+    .hero-visual {
+      order: 0;
+      margin-bottom: -1rem;
+    }
+
+    .hero-board-showcase {
+      transform: perspective(900px) rotateX(25deg) rotateY(0deg) rotateZ(0deg);
+    }
+
+    @keyframes boardFloat {
+      0%, 100% { transform: perspective(900px) rotateX(25deg) rotateY(0deg) rotateZ(0deg); }
+      50% { transform: perspective(900px) rotateX(27deg) rotateY(0deg) rotateZ(0deg) translateY(-8px); }
+    }
+
+    .hero-knight {
+      font-size: 200px;
+    }
+
+    .hero-actions {
+      justify-content: center;
+    }
+
+    .hero-stats {
+      justify-content: center;
+      gap: 1rem;
+    }
+
+    .stat-number {
+      font-size: 1.6rem;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .hero {
+      min-height: auto;
+      padding: 4.5rem 0 3.5rem;
+    }
+
+    .hero-visual {
+      display: none;
+    }
+
+    .hero-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .hero-stats {
+      flex-wrap: wrap;
+      gap: 1rem 1.5rem;
+    }
+
+    .stat-divider {
+      display: none;
+    }
+
+    .stat {
+      min-width: calc(50% - 1rem);
+    }
+
+    .news-link {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+</style>

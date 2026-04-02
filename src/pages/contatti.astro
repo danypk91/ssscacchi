@@ -1,0 +1,131 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Contatti" description="Come raggiungere il Circolo Scacchi Santa Sabina a Genova. Indirizzo, orari e contatti.">
+  <section class="section">
+    <div class="container">
+      <h1 class="section-title">Contatti</h1>
+      <p class="section-subtitle">Vieni a trovarci o scrivici</p>
+
+      <div class="contact-grid">
+        <div class="contact-info">
+          <div class="card contact-card">
+            <h3>&#128205; Dove Siamo</h3>
+            <p>
+              <strong>Via Donghi 8, 16132 Genova</strong><br />
+              Presso la sede del Circolo ACLI Achille Grandi<br />
+              <em>Entrata dal cancello alla destra della Chiesa di Santa Sabina</em>
+            </p>
+          </div>
+
+          <div class="card contact-card">
+            <h3>&#128337; Orari</h3>
+            <ul class="schedule">
+              <li><strong>Martedì</strong> <span>21:15 – 23:30</span></li>
+              <li><strong>Venerdì</strong> <span>15:00 – 17:30 (giovani)</span></li>
+              <li><strong>Venerdì</strong> <span>21:15 – 23:00</span></li>
+              <li><strong>Sabato</strong> <span>10:00 – 11:30 (giovani ed eventi)</span></li>
+            </ul>
+          </div>
+
+          <div class="card contact-card">
+            <h3>&#9993; Scrivici</h3>
+            <p>
+              <a href="mailto:santasabinascacchi@gmail.com">santasabinascacchi@gmail.com</a>
+            </p>
+          </div>
+
+          <div class="card contact-card">
+            <h3>&#127760; Social</h3>
+            <p>
+              <a href="https://www.facebook.com/profile.php?id=100090810611492" target="_blank" rel="noopener">
+                Seguici su Facebook
+              </a>
+            </p>
+          </div>
+        </div>
+
+        <div class="map-container">
+          <iframe
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2878.0!2d8.9572!3d44.4117!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x12d343f5e5b5b5b5%3A0x0!2sVia+Donghi+8%2C+Genova!5e0!3m2!1sit!2sit!4v1"
+            width="100%"
+            height="100%"
+            style="border:0; border-radius: var(--radius);"
+            allowfullscreen=""
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+            title="Mappa sede Circolo Scacchi Santa Sabina">
+          </iframe>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .contact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    align-items: start;
+  }
+
+  .contact-info {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .contact-card h3 {
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+    color: var(--accent);
+  }
+
+  .contact-card p {
+    color: var(--text-secondary);
+    line-height: 1.7;
+    font-size: 0.95rem;
+  }
+
+  .contact-card em {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+
+  .schedule {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+  }
+
+  .schedule li {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .schedule strong {
+    color: var(--text-primary);
+  }
+
+  .map-container {
+    min-height: 500px;
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  @media (max-width: 768px) {
+    .contact-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .map-container {
+      min-height: 350px;
+    }
+  }
+</style>

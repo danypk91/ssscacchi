@@ -1,0 +1,184 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Chi Siamo" description="Storia, missione e attività del Circolo Scacchi Santa Sabina di Genova.">
+  <section class="section">
+    <div class="container page-content">
+      <h1 class="section-title">Chi Siamo</h1>
+      <p class="section-subtitle">La nostra storia e la nostra passione per gli scacchi</p>
+
+      <div class="content-grid">
+        <div class="main-content">
+          <div class="prose">
+            <h2>Il Circolo</h2>
+            <p>
+              Il Circolo Scacchi Santa Sabina è ospitato in <strong>Via Donghi 8</strong> presso il
+              Circolo ACLI Achille Grandi, nell'ingresso dal cancello alla destra della Chiesa di Santa Sabina.
+            </p>
+            <p>
+              La sezione promuove il gioco degli scacchi tra i giovani e gli adulti attraverso funzioni
+              <strong>sportive, ludiche e culturali</strong>. Giocare a scacchi sviluppa la capacità di
+              affrontare e risolvere situazioni problematiche, rafforzando memoria, riflessione e creatività.
+            </p>
+
+            <h2>La Nostra Storia</h2>
+            <p>
+              Fondata circa quindici anni fa grazie all'impegno di <strong>Rolando Bertolini</strong> e
+              <strong>Aldo Sigona</strong>, la sezione è cresciuta sotto la guida di <strong>Franco D'Ambrosio</strong>.
+              Il circolo è affiliato alla <strong>Federazione Scacchistica Italiana</strong> (FSI) e al
+              <strong>CONI</strong>, operando come polisportiva U.S. ACLI.
+            </p>
+
+            <h2>Attività</h2>
+            <p>
+              Organizziamo ogni anno i tornei <strong>Memorial Bertolini</strong> e <strong>Memorial Sigona</strong>,
+              oltre a numerose iniziative per i giovani. Il circolo è <strong>Centro di Avviamento allo Sport</strong>
+              con corsi base e di perfezionamento per tutte le età.
+            </p>
+            <p>
+              Contiamo numerosi giocatori classificati a livello nazionale, candidati maestri e squadre
+              che partecipano ai <strong>Campionati Italiani a Squadre</strong> in Serie B, C e Promozione.
+            </p>
+
+            <h2>Biblioteca</h2>
+            <p>
+              Il circolo dispone di una ricca <strong>biblioteca scacchistica</strong> con testi su aperture,
+              mediogioco, finali, narrativa e raccolte di partite. Il servizio di consultazione e prestito è
+              attivo il primo martedì e il terzo venerdì di ogni mese.
+            </p>
+          </div>
+        </div>
+
+        <aside class="sidebar">
+          <div class="card sidebar-card">
+            <h3>Orari di Apertura</h3>
+            <ul class="schedule">
+              <li>
+                <strong>Martedì</strong>
+                <span>21:15 – 23:30</span>
+              </li>
+              <li>
+                <strong>Venerdì</strong>
+                <span>15:00 – 17:30 <em>(giovani)</em></span>
+              </li>
+              <li>
+                <strong>Venerdì</strong>
+                <span>21:15 – 23:00</span>
+              </li>
+              <li>
+                <strong>Sabato</strong>
+                <span>10:00 – 11:30 <em>(giovani)</em></span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="card sidebar-card">
+            <h3>Quote Associative 2026</h3>
+            <p class="quote-note">Le quote variano da <strong>&euro;30</strong> (istruzione ragazzi) a <strong>&euro;130</strong> (istruttori).</p>
+            <a href="/contatti" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 1rem;">
+              Contattaci per info
+            </a>
+          </div>
+
+          <div class="card sidebar-card">
+            <h3>Affiliazioni</h3>
+            <ul class="affiliations">
+              <li>FSI – Federazione Scacchistica Italiana</li>
+              <li>CONI</li>
+              <li>U.S. ACLI</li>
+            </ul>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .content-grid {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 3rem;
+    align-items: start;
+  }
+
+  .prose h2 {
+    margin: 2rem 0 1rem;
+    font-size: 1.4rem;
+    color: var(--accent);
+  }
+
+  .prose h2:first-child {
+    margin-top: 0;
+  }
+
+  .prose p {
+    color: var(--text-secondary);
+    line-height: 1.8;
+    margin-bottom: 1rem;
+    font-size: 1.02rem;
+  }
+
+  .prose strong {
+    color: var(--text-primary);
+  }
+
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .sidebar-card h3 {
+    font-size: 1rem;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 1rem;
+  }
+
+  .schedule {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .schedule li {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+  }
+
+  .schedule strong {
+    color: var(--text-primary);
+  }
+
+  .schedule em {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+  }
+
+  .quote-note {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+
+  .affiliations {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+  }
+
+  @media (max-width: 900px) {
+    .content-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

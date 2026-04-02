@@ -1,0 +1,42 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Pagina non trovata">
+  <section class="not-found">
+    <div class="container">
+      <div class="nf-icon" aria-hidden="true">&#9812;</div>
+      <h1>Scacco matto!</h1>
+      <p>La pagina che cerchi non esiste o è stata spostata.</p>
+      <a href="/" class="btn btn-primary">Torna alla Home</a>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .not-found {
+    min-height: 60vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .nf-icon {
+    font-size: 5rem;
+    color: var(--accent);
+    opacity: 0.6;
+    margin-bottom: 1.5rem;
+  }
+
+  h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+  }
+</style>

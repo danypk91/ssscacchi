@@ -1,0 +1,117 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const tornei = await getCollection('tornei');
+  return tornei.map(entry => ({
+    params: { slug: entry.id },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+---
+
+<BaseLayout title={entry.data.title} description={entry.data.excerpt}>
+  <article class="section">
+    <div class="container article-container">
+      <a href="/tornei" class="back-link">&larr; Tutti i tornei</a>
+      <time>{new Date(entry.data.date).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })}</time>
+      <h1>{entry.data.title}</h1>
+
+      {(entry.data.vesus || entry.data.bando) && (
+        <div class="torneo-links">
+          {entry.data.vesus && (
+            <a href={entry.data.vesus} target="_blank" rel="noopener" class="btn btn-primary btn-sm">
+              Iscriviti su VeSuS
+            </a>
+          )}
+          {entry.data.bando && (
+            <a href={entry.data.bando} target="_blank" rel="noopener" class="btn btn-outline btn-sm">
+              Scarica bando
+            </a>
+          )}
+        </div>
+      )}
+
+      <div class="prose">
+        <Content />
+      </div>
+    </div>
+  </article>
+</BaseLayout>
+
+<style>
+  .article-container {
+    max-width: 750px;
+  }
+
+  .back-link {
+    display: inline-block;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+  }
+
+  .back-link:hover {
+    color: var(--accent);
+  }
+
+  time {
+    font-size: 0.85rem;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  h1 {
+    margin: 0.75rem 0 1.5rem;
+  }
+
+  .torneo-links {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  .prose {
+    color: var(--text-secondary);
+    line-height: 1.8;
+    font-size: 1.05rem;
+  }
+
+  .prose :global(h2) {
+    color: var(--text-primary);
+    margin: 2rem 0 1rem;
+    font-size: 1.4rem;
+  }
+
+  .prose :global(p) {
+    margin-bottom: 1rem;
+  }
+
+  .prose :global(ul), .prose :global(ol) {
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+  }
+
+  .prose :global(li) {
+    margin-bottom: 0.35rem;
+  }
+
+  .prose :global(strong) {
+    color: var(--text-primary);
+  }
+
+  .prose :global(a) {
+    color: var(--accent);
+  }
+</style>

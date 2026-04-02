@@ -1,0 +1,87 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const allTornei = await getCollection('tornei');
+const torneiByYear = allTornei
+  .sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime())
+  .reduce((acc, t) => {
+    const year = t.data.year;
+    if (!acc[year]) acc[year] = [];
+    acc[year].push(t);
+    return acc;
+  }, {} as Record<number, typeof allTornei>);
+
+const years = Object.keys(torneiByYear).sort((a, b) => Number(b) - Number(a));
+---
+
+<BaseLayout title="Tornei" description="Archivio tornei del Circolo Scacchi Santa Sabina di Genova.">
+  <section class="section">
+    <div class="container">
+      <h1 class="section-title">Tornei</h1>
+      <p class="section-subtitle">Archivio tornei organizzati dal circolo</p>
+
+      {years.map(year => (
+        <div class="year-section">
+          <h2 class="year-title">{year}</h2>
+          <div class="tornei-list">
+            {torneiByYear[Number(year)].map(t => (
+              <a href={`/tornei/${t.id}`} class="card torneo-card">
+                <time>{new Date(t.data.date).toLocaleDateString('it-IT', { day: 'numeric', month: 'long' })}</time>
+                <h3>{t.data.title}</h3>
+                <p>{t.data.excerpt}</p>
+              </a>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .year-section {
+    margin-bottom: 3rem;
+  }
+
+  .year-title {
+    font-size: 1.5rem;
+    color: var(--accent);
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tornei-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .torneo-card {
+    display: block;
+    color: inherit;
+  }
+
+  .torneo-card time {
+    font-size: 0.8rem;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .torneo-card h3 {
+    font-size: 1.15rem;
+    margin: 0.3rem 0;
+    transition: color 0.2s;
+  }
+
+  .torneo-card:hover h3 {
+    color: var(--accent);
+  }
+
+  .torneo-card p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+  }
+</style>
