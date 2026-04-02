@@ -533,7 +533,7 @@ const boardPieces: Record<number, string> = {
     background:
       radial-gradient(ellipse at 50% 0%, rgba(212,160,84,0.07) 0%, transparent 50%),
       radial-gradient(ellipse at 50% 100%, rgba(107,58,42,0.2) 0%, transparent 50%),
-      linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, var(--bg-primary) 100%);
+      linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 60%, var(--bg-secondary) 100%);
   }
 
   .section-bg-radial {
@@ -653,8 +653,9 @@ const boardPieces: Record<number, string> = {
   }
 
   .news-card:hover .news-watermark {
-    opacity: 0.28;
-    transform: scale(1.1) rotate(-5deg);
+    opacity: 0.45;
+    transform: scale(1.15) rotate(-5deg);
+    filter: drop-shadow(0 0 12px rgba(212,160,84,0.4));
   }
 
   .news-card time {
