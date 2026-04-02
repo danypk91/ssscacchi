@@ -641,18 +641,19 @@ const boardPieces: Record<number, string> = {
 
   .news-watermark {
     position: absolute;
-    top: -8px;
-    right: -4px;
-    font-size: 5rem;
+    top: -4px;
+    right: 4px;
+    font-size: 4.5rem;
     line-height: 1;
     color: var(--accent);
-    opacity: 0.06;
+    opacity: 0.15;
     transition: opacity 0.3s, transform 0.3s;
     pointer-events: none;
+    filter: drop-shadow(0 2px 8px rgba(212,160,84,0.15));
   }
 
   .news-card:hover .news-watermark {
-    opacity: 0.12;
+    opacity: 0.28;
     transform: scale(1.1) rotate(-5deg);
   }
 
