@@ -838,7 +838,25 @@ const boardPieces: Record<number, string> = {
     }
 
     .hero-visual {
-      display: none;
+      margin-bottom: 0;
+    }
+
+    .hero-board-showcase {
+      transform: perspective(900px) rotateX(30deg) rotateY(0deg) rotateZ(0deg);
+    }
+
+    @keyframes boardFloat {
+      0%, 100% { transform: perspective(900px) rotateX(30deg) rotateY(0deg) rotateZ(0deg); }
+      50% { transform: perspective(900px) rotateX(32deg) rotateY(0deg) rotateZ(0deg) translateY(-6px); }
+    }
+
+    .board-3d {
+      grid-template-columns: repeat(8, 36px);
+      grid-template-rows: repeat(8, 36px);
+    }
+
+    .hero-knight {
+      font-size: 160px;
     }
 
     .hero-grid {
