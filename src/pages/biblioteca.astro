@@ -12,10 +12,18 @@ const categorie = [
 ---
 
 <BaseLayout title="Biblioteca" description="Biblioteca scacchistica del Circolo Santa Sabina. Consultazione e prestito libri per i soci.">
-  <section class="section">
+  <section class="page-header">
+    <div class="page-header-bg" aria-hidden="true"></div>
+    <div class="page-header-decor" aria-hidden="true">&#9813;</div>
     <div class="container">
-      <h1 class="section-title">Biblioteca</h1>
-      <p class="section-subtitle">La nostra collezione scacchistica a disposizione dei soci</p>
+      <h1>Biblioteca</h1>
+      <p class="page-header-sub">La nostra collezione scacchistica a disposizione dei soci</p>
+    </div>
+  </section>
+
+  <section class="section section-body">
+    <div class="section-texture" aria-hidden="true"></div>
+    <div class="container">
 
       <div class="intro-card card">
         <div class="intro-grid">
@@ -69,6 +77,77 @@ const categorie = [
 </BaseLayout>
 
 <style>
+  /* --- Page Header --- */
+  .page-header {
+    position: relative;
+    padding: 5rem 0 3rem;
+    overflow: hidden;
+    text-align: center;
+  }
+
+  .page-header-bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 30% 50%, rgba(212,160,84,0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 70% 80%, rgba(107,58,42,0.12) 0%, transparent 50%),
+      linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  }
+
+  .page-header-decor {
+    position: absolute;
+    right: 10%;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: clamp(120px, 18vw, 220px);
+    color: rgba(212,160,84,0.06);
+    pointer-events: none;
+    user-select: none;
+    line-height: 1;
+  }
+
+  .page-header .container {
+    position: relative;
+    z-index: 1;
+  }
+
+  .page-header h1 {
+    font-size: clamp(2rem, 4vw, 3rem);
+    margin-bottom: 0.5rem;
+  }
+
+  .page-header-sub {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+  }
+
+  .section-body {
+    position: relative;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse at 80% 20%, rgba(212,160,84,0.04) 0%, transparent 50%),
+      var(--bg-primary);
+  }
+
+  .section-texture {
+    position: absolute;
+    inset: 0;
+    opacity: 0.015;
+    background: repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 20px,
+      rgba(212,160,84,1) 20px,
+      rgba(212,160,84,1) 21px
+    );
+    pointer-events: none;
+  }
+
+  .section-body .container {
+    position: relative;
+    z-index: 1;
+  }
+
   .intro-card {
     margin-bottom: 2rem;
   }
@@ -162,12 +241,42 @@ const categorie = [
   .cat-card {
     text-align: center;
     padding: 1.75rem 1.25rem;
+    transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cat-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .cat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    border-color: rgba(212,160,84,0.2);
+  }
+
+  .cat-card:hover::after {
+    opacity: 1;
   }
 
   .cat-icon {
     font-size: 2rem;
     color: var(--accent);
     margin-bottom: 0.75rem;
+    transition: transform 0.3s;
+  }
+
+  .cat-card:hover .cat-icon {
+    transform: scale(1.15);
   }
 
   .cat-card h3 {

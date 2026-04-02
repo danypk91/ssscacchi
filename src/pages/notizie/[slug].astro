@@ -15,11 +15,16 @@ const { Content } = await render(entry);
 ---
 
 <BaseLayout title={entry.data.title} description={entry.data.excerpt}>
-  <article class="section">
+  <article class="article-page">
+    <div class="article-bg" aria-hidden="true"></div>
+    <div class="article-texture" aria-hidden="true"></div>
     <div class="container article-container">
       <a href="/notizie" class="back-link">&larr; Tutte le notizie</a>
-      <time>{new Date(entry.data.date).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })}</time>
-      <h1>{entry.data.title}</h1>
+      <div class="article-head">
+        <div class="article-accent-bar" aria-hidden="true"></div>
+        <time>{new Date(entry.data.date).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })}</time>
+        <h1>{entry.data.title}</h1>
+      </div>
       <div class="prose">
         <Content />
       </div>
@@ -28,19 +33,68 @@ const { Content } = await render(entry);
 </BaseLayout>
 
 <style>
+  .article-page {
+    position: relative;
+    overflow: hidden;
+    padding: 5rem 0;
+  }
+
+  .article-bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 10%, rgba(212,160,84,0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 90%, rgba(107,58,42,0.08) 0%, transparent 50%),
+      var(--bg-primary);
+  }
+
+  .article-texture {
+    position: absolute;
+    inset: 0;
+    opacity: 0.012;
+    background: repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 20px,
+      rgba(212,160,84,1) 20px,
+      rgba(212,160,84,1) 21px
+    );
+    pointer-events: none;
+  }
+
   .article-container {
     max-width: 750px;
+    position: relative;
+    z-index: 1;
   }
 
   .back-link {
     display: inline-block;
-    margin-bottom: 1.5rem;
+    margin-bottom: 2rem;
     font-size: 0.9rem;
     color: var(--text-muted);
+    transition: color 0.2s, transform 0.2s;
   }
 
   .back-link:hover {
     color: var(--accent);
+    transform: translateX(-3px);
+  }
+
+  .article-head {
+    position: relative;
+    padding-left: 1.5rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .article-accent-bar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, var(--accent), var(--wood-dark));
+    border-radius: 2px;
   }
 
   time {
@@ -51,7 +105,7 @@ const { Content } = await render(entry);
   }
 
   h1 {
-    margin: 0.75rem 0 2rem;
+    margin: 0.75rem 0 0;
   }
 
   .prose {
