@@ -17,6 +17,8 @@ const cdnBase = (import.meta.env.PUBLIC_CDN_URL || '').replace(/\/$/, '');
 const bandoUrl = entry.data.bando ? `${cdnBase}/${entry.data.bando}` : null;
 const classificaUrl = entry.data.classifica || null;
 const fotoAlbum = entry.data.fotoAlbum || null;
+const isCurrent = new Date(entry.data.date) > new Date();
+const vesusLabel = isCurrent ? 'Iscriviti su VeSuS' : 'Risultati su VeSuS';
 const documenti = (entry.data.documenti || []).map((d: {label: string; file: string}) => ({
   label: d.label,
   url: `${cdnBase}/${d.file}`,
@@ -38,8 +40,8 @@ const documenti = (entry.data.documenti || []).map((d: {label: string; file: str
       {(entry.data.vesus || bandoUrl || classificaUrl || fotoAlbum || documenti.length > 0) && (
         <div class="torneo-links">
           {entry.data.vesus && (
-            <a href={entry.data.vesus} target="_blank" rel="noopener" class="btn btn-primary btn-sm">
-              Iscriviti su VeSuS
+            <a href={entry.data.vesus} target="_blank" rel="noopener" class:list={['btn btn-sm', isCurrent ? 'btn-primary' : 'btn-outline']}>
+              {vesusLabel}
             </a>
           )}
           {bandoUrl && (
