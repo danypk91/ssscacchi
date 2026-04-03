@@ -29,6 +29,11 @@ const years = Object.keys(torneiByYear).sort((a, b) => Number(b) - Number(a));
     <div class="section-texture" aria-hidden="true"></div>
     <div class="container">
 
+      <div class="search-box">
+        <input type="text" id="torneo-search" placeholder="Cerca torneo..." autocomplete="off" />
+      </div>
+      <p id="no-results" class="no-results" style="display:none;">Nessun torneo trovato.</p>
+
       {years.map(year => (
         <div class="year-section">
           <h2 class="year-title">{year}</h2>
@@ -163,4 +168,69 @@ const years = Object.keys(torneiByYear).sort((a, b) => Number(b) - Number(a));
     color: var(--text-secondary);
     font-size: 0.9rem;
   }
+
+  .search-box {
+    margin-bottom: 2rem;
+  }
+
+  #torneo-search {
+    width: 100%;
+    max-width: 400px;
+    padding: 0.75rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-family: var(--font-body);
+    transition: border-color 0.2s;
+  }
+  #torneo-search::placeholder {
+    color: var(--text-muted);
+  }
+  #torneo-search:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  .no-results {
+    color: var(--text-muted);
+    text-align: center;
+    padding: 2rem 0;
+  }
 </style>
+
+<script>
+  function initSearch() {
+    const input = document.getElementById('torneo-search') as HTMLInputElement;
+    const noResults = document.getElementById('no-results')!;
+    if (!input) return;
+
+    const sections = document.querySelectorAll<HTMLElement>('.year-section');
+
+    input.addEventListener('input', () => {
+      const q = input.value.toLowerCase().trim();
+      let anyVisible = false;
+
+      sections.forEach((section) => {
+        const cards = section.querySelectorAll<HTMLElement>('.torneo-card');
+        let sectionVisible = false;
+
+        cards.forEach((card) => {
+          const title = card.querySelector('h3')?.textContent?.toLowerCase() || '';
+          const match = !q || title.includes(q);
+          card.style.display = match ? '' : 'none';
+          if (match) sectionVisible = true;
+        });
+
+        section.style.display = sectionVisible ? '' : 'none';
+        if (sectionVisible) anyVisible = true;
+      });
+
+      noResults.style.display = anyVisible ? 'none' : '';
+    });
+  }
+
+  initSearch();
+  document.addEventListener('astro:after-swap', initSearch);
+</script>
