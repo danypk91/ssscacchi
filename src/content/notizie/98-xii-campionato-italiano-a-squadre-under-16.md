@@ -1,0 +1,10 @@
+---
+title: "XII Campionato Italiano a squadre Under 16"
+date: "2015-11-15"
+excerpt: "Dal 29 ottobre al 1 novembre, a Rivarolo Canavese (TO), si sono svolte le finali nazionali del Campionato Italiano a Squadre Under 16. Trentacinque le formazioni ai nastri di partenza, tra cui due ..."
+---
+
+**Dal 29 ottobre al 1 novembre, a Rivarolo Canavese (TO)**, si sono svolte le finali nazionali del **Campionato Italiano a Squadre Under 16**.
+Trentacinque le formazioni ai nastri di partenza, tra cui due del nostro circolo, che avevano acquisito il diritto a partecipare alla fase finale classificandosi brillantemente alle piazze d’onore durante la selezione regionale tenutasi a S. Margherita Ligure nello scorso mese di giugno.
+Entrambe le squadre, una delle quali composta esclusivamente da giovanissimi Under 10, hanno affrontato il torneo con il massimo d'impegno e concentrazione pur dovendo, a più riprese, deporre le armi di fronte ad avversari più esperti e titolati (basti pensare che alcune squadre – e citiamo a titolo d’esempio solo la vincitrice assoluta Società Scacchistica Torinese – potevano contare su giocatori di categoria magistrale o comunque con rating superiore ai 2000 punti), ottenendo in alcuni casi risultati di tutto rispetto.
+Tra tutti i nostri valorosi rappresentanti meritano una menzione particolare **Filippo Poggi**, vincitore di entrambi gli incontri disputati, **Alberto Carena**, che ha costretto alla patta un avversario molto più quotato, **Dario Demetri**, anch’egli imbattuto e, tra i più piccini, **Rocco Vairo** e **Kevin Tusha**, autori di partite coraggiose anche se non sempre premiate dalla buona sorte. **Il bilancio conclusivo, condiviso dalle famiglie, è quello di un’utile esperienza**, resa ancor più piacevole dall’entusiasmo e dallo spirito di squadra dei nostri giovani scacchisti, che tutti auspichiamo si possa ripetere in futuro con risultati più lusinghieri. ([fotografie](https://santasabina.altervista.org/index.php/fotografie/category/60-campionato-a-squadre-2015-under-16))

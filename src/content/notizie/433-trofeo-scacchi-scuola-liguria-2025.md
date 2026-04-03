@@ -1,0 +1,7 @@
+---
+title: "Trofeo Scacchi Scuola - Liguria - 2025"
+date: "2025-04-16"
+excerpt: "Mercoledì 16 aprile si è svolta la fase regionale del Trofeo Scacchi Scuola 2025 (TSS).  Nella sezione \"scuola primaria\" hanno partecipato ben 11 squadre allenate dagli istruttori del nostro Circol..."
+---
+
+**Mercoledì 16 aprile si è svolta la fase regionale del Trofeo Scacchi Scuola 2025 (TSS).**  Nella sezione "**scuola primaria**" hanno partecipato **ben 11 squadre allenate dagli istruttori del nostro Circolo** per un totale di 60 ragazzini coinvolti. Ottimi i risultati raggiunti dai "nostri ragazzi" che hanno vinto, sia il torneo femminile che quello maschile - quest'ultimo a punteggio pieno - con le squadre della **primaria N.S. del Monte.** Ottimi piazzamenti anche per le squadre della **primaria Solari:** seconda posizione per la femminile e quarta per la maschile, e per la **primaria Cesare Battista** arrivata quinta nel torneo maschile. Posizioni di metà classifica per la **primaria Marconi** anche a causa di una sconfitta a tavolino per errori tecnici. Da sottolineare che quattro dei nostri ragazzini (Francesca, Elena, Riccardo e Diego) hanno ottenuto la migliore prestazione individuale in prima e seconda scacchiera.Tutti i risultati sono disponibili al seguente indirizzo *[https://vesus.org/event/5T1zaewQ](https://vesus.org/event/5T1zaewQ)*

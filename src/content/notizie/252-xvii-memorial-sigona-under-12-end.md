@@ -1,0 +1,8 @@
+---
+title: "XVII Memorial Sigona Under 12"
+date: "2019-05-19"
+excerpt: "Ben trentotto ragazzini hanno partecipato al torneo Under 12 svoltosi Sabato 18 maggio 2019 in occasione della \"FESTA DELLA CITTADINANZA ATTIVA\" della Bassa Valbisagno. Il Torneo, organizzato dal C..."
+---
+
+Ben **trentotto ragazzini** hanno partecipato al torneo Under 12 svoltosi **Sabato 18 maggio 2019** in occasione della **"FESTA DELLA CITTADINANZA ATTIVA"** della Bassa Valbisagno. Il Torneo, organizzato dal Circolo scacchistico S. Sabina in collaborazione con il Circolo ACLI A.Grandi e l’U.S. ACLI S. Sabina, si è svolto nella sala consiliare del Municipio Bassa Val Bisagno.
+**Simone Musso**, primo nella categoria "Piccoli Alfiieri", ha vinto la **coppa "Memorial Sigona"** con il miglior punteggio assoluto. Nella stessa categoria si è imposto al secondo posto **Leonardo Greco**. Nella la categoria "Pulcini",  si è imposta **Layla Binelli** seguita da **Mattia Fregara**.  ([bando](https://santasabina.altervista.org/images/tornei/2019/2019_memorial_sigona/20190518_memorial_sigona.pdf), [classifica e abbinamenti "Piccoli Alfieri"](https://santasabina.altervista.org/images/tornei/2019/2019_memorial_sigona/classifica/memorial_sigona_piccoli_alfieri/wwwXVII%20SIGONA%20PICCOLI%20ALFIERI/standing.html), [classifica e abbinamenti "Pulcini"](https://santasabina.altervista.org/images/tornei/2019/2019_memorial_sigona/classifica/memorial_sigona_pulcini_giovanissimi/wwwXVII%20SIGONA%20PULCINI%20GIOVANISSIMI/standing.html), [fotografie](https://santasabina.altervista.org/index.php/fotografie/category/102-xvii-memorial-sigona-under-12))

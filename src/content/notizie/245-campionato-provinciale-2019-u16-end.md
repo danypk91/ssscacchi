@@ -1,0 +1,8 @@
+---
+title: "Campionato provinciale 2019 Under 16"
+date: "2019-04-13"
+excerpt: "Sabato 13 aprile,presso il salone parrocchiale in via Donghi, 8, si è svolto ilCampionato provinciale 2019 UNDER 16. Il torneo, organizzato dal Circolo Scacchistico U.S. ACLI Santa Sabina, in colla..."
+---
+
+**Sabato 13 aprile,**presso il salone parrocchiale in via Donghi, 8, si è svolto il**Campionato provinciale 2019 UNDER 16. I**l torneo, organizzato dal Circolo Scacchistico U.S. ACLI Santa Sabina, in collaborazione con l’U.S. ACLI provinciale e con il Patrocinio e la partecipazione finanziaria del Comune di Genova - Municipio Bassa Val Bisagno, è valido per la selezione al Campionato nazionale Under 16.
+Hanno partecipato al torneo 25 giovani giocatori suddivisi in due distinte competizioni. I nuovi campioni provinciali sono: **Tommaso Bricola** per la categoria "Allievi, **Giovanni Maria Tiby** per la categoria "Cadetti", **Andrea Mastrolonardo** per la categoria "Giovanissimi" insieme ad **Aurora Lombardelli**che si è imposta fra le femmina, **Giacomo Campodonico** nella categori a "Pulcini" e **Dario Mortola** nella categoria "Piccoli Alfieri". [classifica e abbinamenti per i nati fino al 2006](https://santasabina.altervista.org/images/tornei/2019/2019_prov_u16/classifica_a/standing.html), [classifica e abbinamenti per i nati dal 2007 al 2012](https://santasabina.altervista.org/images/tornei/2019/2019_prov_u16/classifica_b/standing.html),  [bando](https://santasabina.altervista.org/images/tornei/2019/2019_prov_u16/2019_provinciale_u16_bando.pdf), [fotografie](https://santasabina.altervista.org/index.php/fotografie/category/101-campionato-provinciale-2019-under-16))

@@ -2,7 +2,11 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
 
-const notizie = (await getCollection('notizie'))
+const notizie = await getCollection('notizie');
+const years = [...new Set(notizie.map(n => new Date(n.data.date).getFullYear()))].sort((a, b) => b - a);
+const currentYear = years[0];
+const items = notizie
+  .filter(n => new Date(n.data.date).getFullYear() === currentYear)
   .sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime());
 ---
 
@@ -16,12 +20,22 @@ const notizie = (await getCollection('notizie'))
     </div>
   </section>
 
-  <section class="section section-body">
-    <div class="section-texture" aria-hidden="true"></div>
+  <section class="page-body">
+    <div class="page-body-texture" aria-hidden="true"></div>
     <div class="container">
 
-      <div class="news-list">
-        {notizie.map(n => (
+      <div class="page-search">
+        <input type="search" id="search-input" placeholder="Cerca nelle notizie..." autocomplete="off" />
+      </div>
+
+      <nav class="page-years" aria-label="Navigazione per anno">
+        {years.map(y => (
+          <a href={y === currentYear ? '/notizie' : `/notizie/${y}`} class={y === currentYear ? 'active' : ''}>{y}</a>
+        ))}
+      </nav>
+
+      <div class="news-list" id="news-list">
+        {items.map(n => (
           <a href={`/notizie/${n.id}`} class="card news-item">
             <time>{new Date(n.data.date).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })}</time>
             <h2>{n.data.title}</h2>
@@ -30,82 +44,79 @@ const notizie = (await getCollection('notizie'))
           </a>
         ))}
       </div>
+
+      <div id="search-results" class="news-list" style="display:none;"></div>
+      <p id="search-empty" style="display:none; text-align:center; color:var(--text-muted); padding:2rem 0;">Nessun risultato trovato.</p>
     </div>
   </section>
 </BaseLayout>
 
+<script>
+  const input = document.getElementById('search-input') as HTMLInputElement;
+  const newsList = document.getElementById('news-list')!;
+  const searchResults = document.getElementById('search-results')!;
+  const searchEmpty = document.getElementById('search-empty')!;
+  const yearNav = document.querySelector('.page-years') as HTMLElement;
+  let searchIndex: Array<{ id: string; title: string; date: string; excerpt: string }> | null = null;
+
+  async function loadIndex() {
+    if (searchIndex) return searchIndex;
+    const res = await fetch('/notizie/ricerca.json');
+    searchIndex = await res.json();
+    return searchIndex!;
+  }
+
+  let debounceTimer: ReturnType<typeof setTimeout>;
+  input.addEventListener('input', () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(doSearch, 250);
+  });
+
+  async function doSearch() {
+    const q = input.value.trim().toLowerCase();
+    if (!q) {
+      newsList.style.display = '';
+      searchResults.style.display = 'none';
+      searchEmpty.style.display = 'none';
+      yearNav.style.display = '';
+      return;
+    }
+
+    const index = await loadIndex();
+    const terms = q.split(/\s+/);
+    const results = index.filter(item => {
+      const text = `${item.title} ${item.excerpt}`.toLowerCase();
+      return terms.every(t => text.includes(t));
+    });
+
+    newsList.style.display = 'none';
+    yearNav.style.display = 'none';
+
+    if (results.length === 0) {
+      searchResults.style.display = 'none';
+      searchEmpty.style.display = '';
+      return;
+    }
+
+    searchEmpty.style.display = 'none';
+    searchResults.innerHTML = results.map(r => {
+      const dateStr = new Date(r.date).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' });
+      return `<a href="/notizie/${r.id}" class="card news-item">
+        <time>${dateStr}</time>
+        <h2>${escapeHtml(r.title)}</h2>
+        <p>${escapeHtml(r.excerpt)}</p>
+        <span class="read-more">Leggi tutto &rarr;</span>
+      </a>`;
+    }).join('');
+    searchResults.style.display = '';
+  }
+
+  function escapeHtml(s: string) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+</script>
+
 <style>
-  /* --- Page Header --- */
-  .page-header {
-    position: relative;
-    padding: 5rem 0 3rem;
-    overflow: hidden;
-    text-align: center;
-  }
-
-  .page-header-bg {
-    position: absolute;
-    inset: 0;
-    background:
-      radial-gradient(ellipse at 30% 50%, rgba(212,160,84,0.08) 0%, transparent 50%),
-      radial-gradient(ellipse at 70% 80%, rgba(107,58,42,0.12) 0%, transparent 50%),
-      linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
-  }
-
-  .page-header-decor {
-    position: absolute;
-    right: 10%;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: clamp(120px, 18vw, 220px);
-    color: rgba(212,160,84,0.06);
-    pointer-events: none;
-    user-select: none;
-    line-height: 1;
-  }
-
-  .page-header .container {
-    position: relative;
-    z-index: 1;
-  }
-
-  .page-header h1 {
-    font-size: clamp(2rem, 4vw, 3rem);
-    margin-bottom: 0.5rem;
-  }
-
-  .page-header-sub {
-    color: var(--text-secondary);
-    font-size: 1.1rem;
-  }
-
-  .section-body {
-    position: relative;
-    overflow: hidden;
-    background:
-      radial-gradient(ellipse at 80% 20%, rgba(212,160,84,0.04) 0%, transparent 50%),
-      var(--bg-primary);
-  }
-
-  .section-texture {
-    position: absolute;
-    inset: 0;
-    opacity: 0.015;
-    background: repeating-linear-gradient(
-      -45deg,
-      transparent,
-      transparent 20px,
-      rgba(212,160,84,1) 20px,
-      rgba(212,160,84,1) 21px
-    );
-    pointer-events: none;
-  }
-
-  .section-body .container {
-    position: relative;
-    z-index: 1;
-  }
-
   .news-list {
     display: flex;
     flex-direction: column;

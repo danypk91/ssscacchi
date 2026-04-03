@@ -14,14 +14,18 @@ const { entry } = Astro.props;
 const { Content } = await render(entry);
 
 const cdnBase = (import.meta.env.PUBLIC_CDN_URL || '').replace(/\/$/, '');
-const bandoUrl = entry.data.bando ? `${cdnBase}/${entry.data.bando}` : null;
-const classificaUrl = entry.data.classifica || null;
-const fotoAlbum = entry.data.fotoAlbum || null;
+function resolveUrl(path: string | undefined) {
+  if (!path) return null;
+  return path.startsWith('http') ? path : `${cdnBase}/${path}`;
+}
+const bandoUrl = resolveUrl(entry.data.bando);
+const classificaUrl = resolveUrl(entry.data.classifica);
+const fotoAlbum = resolveUrl(entry.data.fotoAlbum);
 const isCurrent = new Date(entry.data.date) > new Date();
 const vesusLabel = isCurrent ? 'Iscriviti su VeSuS' : 'Risultati su VeSuS';
 const documenti = (entry.data.documenti || []).map((d: {label: string; file: string}) => ({
   label: d.label,
-  url: `${cdnBase}/${d.file}`,
+  url: resolveUrl(d.file)!,
 }));
 ---
 

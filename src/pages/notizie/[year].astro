@@ -1,0 +1,170 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const notizie = await getCollection('notizie');
+  const years = [...new Set(notizie.map(n => new Date(n.data.date).getFullYear()))].sort((a, b) => b - a);
+
+  return years.map(year => {
+    const items = notizie
+      .filter(n => new Date(n.data.date).getFullYear() === year)
+      .sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime());
+    return {
+      params: { year: String(year) },
+      props: { year, items, years },
+    };
+  });
+}
+
+const { year, items, years } = Astro.props;
+---
+
+<BaseLayout title={`Notizie ${year}`} description={`Notizie dal Circolo Scacchi Santa Sabina - Anno ${year}.`}>
+  <section class="page-header">
+    <div class="page-header-bg" aria-hidden="true"></div>
+    <div class="page-header-decor" aria-hidden="true">&#9819;</div>
+    <div class="container">
+      <h1>Notizie {year}</h1>
+      <p class="page-header-sub">{items.length} notizie</p>
+    </div>
+  </section>
+
+  <section class="page-body">
+    <div class="page-body-texture" aria-hidden="true"></div>
+    <div class="container">
+
+      <div class="page-search">
+        <input type="search" id="search-input" placeholder="Cerca nelle notizie..." autocomplete="off" />
+      </div>
+
+      <nav class="page-years" aria-label="Navigazione per anno">
+        {years.map(y => (
+          <a href={y === years[0] ? '/notizie' : `/notizie/${y}`} class={y === year ? 'active' : ''}>{y}</a>
+        ))}
+      </nav>
+
+      <div class="news-list" id="news-list">
+        {items.map(n => (
+          <a href={`/notizie/${n.id}`} class="card news-item">
+            <time>{new Date(n.data.date).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })}</time>
+            <h2>{n.data.title}</h2>
+            <p>{n.data.excerpt}</p>
+            <span class="read-more">Leggi tutto &rarr;</span>
+          </a>
+        ))}
+      </div>
+
+      <div id="search-results" class="news-list" style="display:none;"></div>
+      <p id="search-empty" style="display:none; text-align:center; color:var(--text-muted); padding:2rem 0;">Nessun risultato trovato.</p>
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  const input = document.getElementById('search-input') as HTMLInputElement;
+  const newsList = document.getElementById('news-list')!;
+  const searchResults = document.getElementById('search-results')!;
+  const searchEmpty = document.getElementById('search-empty')!;
+  const yearNav = document.querySelector('.page-years') as HTMLElement;
+  let searchIndex: Array<{ id: string; title: string; date: string; excerpt: string }> | null = null;
+
+  async function loadIndex() {
+    if (searchIndex) return searchIndex;
+    const res = await fetch('/notizie/ricerca.json');
+    searchIndex = await res.json();
+    return searchIndex!;
+  }
+
+  let debounceTimer: ReturnType<typeof setTimeout>;
+  input.addEventListener('input', () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(doSearch, 250);
+  });
+
+  async function doSearch() {
+    const q = input.value.trim().toLowerCase();
+    if (!q) {
+      newsList.style.display = '';
+      searchResults.style.display = 'none';
+      searchEmpty.style.display = 'none';
+      yearNav.style.display = '';
+      return;
+    }
+
+    const index = await loadIndex();
+    const terms = q.split(/\s+/);
+    const results = index.filter(item => {
+      const text = `${item.title} ${item.excerpt}`.toLowerCase();
+      return terms.every(t => text.includes(t));
+    });
+
+    newsList.style.display = 'none';
+    yearNav.style.display = 'none';
+
+    if (results.length === 0) {
+      searchResults.style.display = 'none';
+      searchEmpty.style.display = '';
+      return;
+    }
+
+    searchEmpty.style.display = 'none';
+    searchResults.innerHTML = results.map(r => {
+      const dateStr = new Date(r.date).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' });
+      return `<a href="/notizie/${r.id}" class="card news-item">
+        <time>${dateStr}</time>
+        <h2>${escapeHtml(r.title)}</h2>
+        <p>${escapeHtml(r.excerpt)}</p>
+        <span class="read-more">Leggi tutto &rarr;</span>
+      </a>`;
+    }).join('');
+    searchResults.style.display = '';
+  }
+
+  function escapeHtml(s: string) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+</script>
+
+<style>
+  .news-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .news-item {
+    display: block;
+    color: inherit;
+  }
+
+  .news-item time {
+    font-size: 0.8rem;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .news-item h2 {
+    font-size: 1.35rem;
+    margin: 0.4rem 0;
+    transition: color 0.2s;
+  }
+
+  .news-item:hover h2 {
+    color: var(--accent);
+  }
+
+  .news-item p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+  }
+
+  .read-more {
+    display: inline-block;
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--accent);
+    font-weight: 600;
+  }
+</style>
