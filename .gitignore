@@ -17,6 +17,19 @@ pnpm-debug.log*
 .env
 .env.production
 
+# wrangler local state
+.wrangler/
+
+# local photo/pdf cache
+foto/
+tornei-pdf/
+
+# scraping scripts
+scrape-photos.mjs
+upload-r2.sh
+import-tornei.mjs
+update-tornei.mjs
+
 # macOS-specific files
 .DS_Store
 

@@ -1,0 +1,146 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Gallery from '../../../components/Gallery.astro';
+import { listFolders, scanGallery } from '../../../lib/r2';
+
+export async function getStaticPaths() {
+  const yearFolders = await listFolders('foto/');
+  const paths = [];
+
+  for (const yearPrefix of yearFolders) {
+    const year = yearPrefix.replace(/^foto\//, '').replace(/\/$/, '');
+    const albumFolders = await listFolders(`foto/${year}/`);
+
+    for (const albumPrefix of albumFolders) {
+      const album = albumPrefix.replace(`foto/${year}/`, '').replace(/\/$/, '');
+      paths.push({ params: { year, album } });
+    }
+  }
+
+  return paths;
+}
+
+const { year, album } = Astro.params;
+const photoUrls = await scanGallery(`foto/${year}/${album}/`);
+const images = photoUrls.map((src) => ({
+  src,
+  alt: `${album.replace(/_/g, ' ')} - Circolo Scacchi Santa Sabina`,
+}));
+
+const albumName = album
+  .replace(/^\d{4}_/, '')
+  .replace(/_/g, ' ')
+  .replace(/\b\w/g, (c) => c.toUpperCase());
+---
+
+<BaseLayout title={`${albumName} - ${year}`} description={`Foto: ${albumName} (${year}) - Circolo Scacchi Santa Sabina`}>
+  <section class="page-header">
+    <div class="page-header-bg" aria-hidden="true"></div>
+    <div class="page-header-decor" aria-hidden="true">&#9815;</div>
+    <div class="container">
+      <h1>{albumName}</h1>
+      <p class="page-header-sub">
+        <a href={`/fotografie/${year}`} class="back-link">&larr; {year}</a>
+        <span class="photo-count">{images.length} foto</span>
+      </p>
+    </div>
+  </section>
+
+  <section class="section section-body">
+    <div class="section-texture" aria-hidden="true"></div>
+    <div class="container">
+      {images.length > 0 ? (
+        <Gallery images={images} columns={images.length <= 6 ? 3 : 4} />
+      ) : (
+        <p class="no-content">Nessuna foto trovata in questo album.</p>
+      )}
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .page-header {
+    position: relative;
+    padding: 5rem 0 3rem;
+    overflow: hidden;
+    text-align: center;
+  }
+  .page-header-bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 30% 50%, rgba(212,160,84,0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 70% 80%, rgba(107,58,42,0.12) 0%, transparent 50%),
+      linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  }
+  .page-header-decor {
+    position: absolute;
+    right: 10%;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: clamp(120px, 18vw, 220px);
+    color: rgba(212,160,84,0.06);
+    pointer-events: none;
+    user-select: none;
+    line-height: 1;
+  }
+  .page-header .container {
+    position: relative;
+    z-index: 1;
+  }
+  .page-header h1 {
+    font-size: clamp(1.8rem, 3.5vw, 2.5rem);
+    margin-bottom: 0.5rem;
+  }
+
+  .page-header-sub {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+  }
+
+  .back-link {
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 1rem;
+    transition: color 0.2s;
+  }
+  .back-link:hover {
+    color: var(--accent-hover);
+  }
+
+  .photo-count {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+
+  .section-body {
+    position: relative;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse at 80% 20%, rgba(212,160,84,0.04) 0%, transparent 50%),
+      var(--bg-primary);
+  }
+  .section-texture {
+    position: absolute;
+    inset: 0;
+    opacity: 0.015;
+    background: repeating-linear-gradient(
+      -45deg,
+      transparent, transparent 20px,
+      rgba(212,160,84,1) 20px, rgba(212,160,84,1) 21px
+    );
+    pointer-events: none;
+  }
+  .section-body .container {
+    position: relative;
+    z-index: 1;
+  }
+
+  .no-content {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 3rem 0;
+  }
+</style>

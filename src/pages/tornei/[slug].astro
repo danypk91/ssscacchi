@@ -12,6 +12,15 @@ export async function getStaticPaths() {
 
 const { entry } = Astro.props;
 const { Content } = await render(entry);
+
+const cdnBase = (import.meta.env.PUBLIC_CDN_URL || '').replace(/\/$/, '');
+const bandoUrl = entry.data.bando ? `${cdnBase}/${entry.data.bando}` : null;
+const classificaUrl = entry.data.classifica || null;
+const fotoAlbum = entry.data.fotoAlbum || null;
+const documenti = (entry.data.documenti || []).map((d: {label: string; file: string}) => ({
+  label: d.label,
+  url: `${cdnBase}/${d.file}`,
+}));
 ---
 
 <BaseLayout title={entry.data.title} description={entry.data.excerpt}>
@@ -26,18 +35,33 @@ const { Content } = await render(entry);
         <h1>{entry.data.title}</h1>
       </div>
 
-      {(entry.data.vesus || entry.data.bando) && (
+      {(entry.data.vesus || bandoUrl || classificaUrl || fotoAlbum || documenti.length > 0) && (
         <div class="torneo-links">
           {entry.data.vesus && (
             <a href={entry.data.vesus} target="_blank" rel="noopener" class="btn btn-primary btn-sm">
               Iscriviti su VeSuS
             </a>
           )}
-          {entry.data.bando && (
-            <a href={entry.data.bando} target="_blank" rel="noopener" class="btn btn-outline btn-sm">
+          {bandoUrl && (
+            <a href={bandoUrl} target="_blank" rel="noopener" class="btn btn-outline btn-sm">
               Scarica bando
             </a>
           )}
+          {classificaUrl && (
+            <a href={classificaUrl} target="_blank" rel="noopener" class="btn btn-outline btn-sm">
+              Classifica
+            </a>
+          )}
+          {fotoAlbum && (
+            <a href={fotoAlbum} class="btn btn-outline btn-sm">
+              Fotografie
+            </a>
+          )}
+          {documenti.map((doc: {label: string; url: string}) => (
+            <a href={doc.url} target="_blank" rel="noopener" class="btn btn-outline btn-sm">
+              {doc.label}
+            </a>
+          ))}
         </div>
       )}
 

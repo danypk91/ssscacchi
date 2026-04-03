@@ -20,6 +20,11 @@ const tornei = defineCollection({
     bando: z.string().optional(),
     classifica: z.string().optional(),
     vesus: z.string().optional(),
+    fotoAlbum: z.string().optional(),
+    documenti: z.array(z.object({
+      label: z.string(),
+      file: z.string(),
+    })).optional(),
   }),
 });
 
