@@ -18,53 +18,103 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
       <div class="contact-grid">
         <div class="contact-info">
-          <div class="card contact-card">
-            <h3>&#128205; Dove Siamo</h3>
-            <p>
-              <strong>Via Donghi 8, 16132 Genova</strong><br />
-              Presso la sede del Circolo ACLI Achille Grandi<br />
-              <em>Entrata dal cancello alla destra della Chiesa di Santa Sabina</em>
-            </p>
+
+          <div class="card contact-card card-location">
+            <div class="card-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                <circle cx="12" cy="10" r="3"/>
+              </svg>
+            </div>
+            <div class="card-content">
+              <h3>Dove Siamo</h3>
+              <p class="address">Via Donghi 8, 16132 Genova</p>
+              <p>Presso la sede del Circolo ACLI Achille Grandi</p>
+              <p class="hint">Entrata dal cancello alla destra della Chiesa di Santa Sabina</p>
+            </div>
+          </div>
+
+          <div class="card contact-card card-schedule">
+            <div class="card-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+            </div>
+            <div class="card-content">
+              <h3>Orari</h3>
+              <ul class="schedule">
+                <li>
+                  <span class="day">Martedi</span>
+                  <span class="time">21:15 &ndash; 23:30</span>
+                </li>
+                <li>
+                  <span class="day">Venerdi</span>
+                  <span class="time">15:00 &ndash; 17:30</span>
+                  <span class="badge">giovani</span>
+                </li>
+                <li>
+                  <span class="day">Venerdi</span>
+                  <span class="time">21:15 &ndash; 23:00</span>
+                </li>
+                <li>
+                  <span class="day">Sabato</span>
+                  <span class="time">10:00 &ndash; 11:30</span>
+                  <span class="badge">giovani ed eventi</span>
+                </li>
+              </ul>
+            </div>
           </div>
 
           <div class="card contact-card">
-            <h3>&#128337; Orari</h3>
-            <ul class="schedule">
-              <li><strong>Martedì</strong> <span>21:15 – 23:30</span></li>
-              <li><strong>Venerdì</strong> <span>15:00 – 17:30 (giovani)</span></li>
-              <li><strong>Venerdì</strong> <span>21:15 – 23:00</span></li>
-              <li><strong>Sabato</strong> <span>10:00 – 11:30 (giovani ed eventi)</span></li>
-            </ul>
+            <div class="card-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="4" width="20" height="16" rx="2"/>
+                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+              </svg>
+            </div>
+            <div class="card-content">
+              <h3>Scrivici</h3>
+              <p><a href="mailto:santasabinascacchi@gmail.com">santasabinascacchi@gmail.com</a></p>
+            </div>
           </div>
 
           <div class="card contact-card">
-            <h3>&#9993; Scrivici</h3>
-            <p>
-              <a href="mailto:santasabinascacchi@gmail.com">santasabinascacchi@gmail.com</a>
-            </p>
+            <div class="card-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+              </svg>
+            </div>
+            <div class="card-content">
+              <h3>Social</h3>
+              <div class="social-links">
+                <a href="https://www.facebook.com/profile.php?id=100090810611492" target="_blank" rel="noopener">Facebook</a>
+                <span class="sep">&middot;</span>
+                <a href="https://www.instagram.com/scacchi_santa_sabina/" target="_blank" rel="noopener">Instagram</a>
+              </div>
+            </div>
           </div>
 
-          <div class="card contact-card">
-            <h3>&#127760; Social</h3>
-            <p>
-              <a href="https://www.facebook.com/profile.php?id=100090810611492" target="_blank" rel="noopener">
-                Seguici su Facebook
-              </a>
-            </p>
-          </div>
         </div>
 
-        <div class="map-container">
-          <iframe
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2878.0!2d8.9572!3d44.4117!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x12d343f5e5b5b5b5%3A0x0!2sVia+Donghi+8%2C+Genova!5e0!3m2!1sit!2sit!4v1"
-            width="100%"
-            height="100%"
-            style="border:0; border-radius: var(--radius);"
-            allowfullscreen=""
-            loading="lazy"
-            referrerpolicy="no-referrer-when-downgrade"
-            title="Mappa sede Circolo Scacchi Santa Sabina">
-          </iframe>
+        <div class="map-wrapper">
+          <div class="map-container">
+            <iframe
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2878.0!2d8.9572!3d44.4117!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x12d343f5e5b5b5b5%3A0x0!2sVia+Donghi+8%2C+Genova!5e0!3m2!1sit!2sit!4v1"
+              width="100%"
+              height="100%"
+              style="border:0;"
+              allowfullscreen=""
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"
+              title="Mappa sede Circolo Scacchi Santa Sabina">
+            </iframe>
+          </div>
+          <div class="map-caption">
+            <a href="https://maps.google.com/?q=Via+Donghi+8+Genova" target="_blank" rel="noopener">
+              Apri in Google Maps &rarr;
+            </a>
+          </div>
         </div>
       </div>
     </div>
@@ -130,10 +180,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     opacity: 0.015;
     background: repeating-linear-gradient(
       -45deg,
-      transparent,
-      transparent 20px,
-      rgba(212,160,84,1) 20px,
-      rgba(212,160,84,1) 21px
+      transparent, transparent 20px,
+      rgba(212,160,84,1) 20px, rgba(212,160,84,1) 21px
     );
     pointer-events: none;
   }
@@ -143,6 +191,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     z-index: 1;
   }
 
+  /* --- Grid --- */
   .contact-grid {
     display: grid;
     grid-template-columns: 1fr 1.2fr;
@@ -153,69 +202,178 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   .contact-info {
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 1rem;
   }
 
+  /* --- Cards --- */
   .contact-card {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
     transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
   }
 
   .contact-card:hover {
     transform: translateY(-3px);
     box-shadow: 0 12px 30px rgba(0,0,0,0.25);
-    border-color: rgba(212,160,84,0.2);
+    border-color: rgba(212,160,84,0.25);
+  }
+
+  .card-icon {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: linear-gradient(135deg, rgba(212,160,84,0.15), rgba(107,58,42,0.2));
+    color: var(--accent);
+  }
+
+  .card-content {
+    flex: 1;
+    min-width: 0;
   }
 
   .contact-card h3 {
-    font-size: 1.1rem;
-    margin-bottom: 0.75rem;
-    color: var(--accent);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 0.4rem;
+    font-family: var(--font-body);
+    font-weight: 600;
   }
 
   .contact-card p {
     color: var(--text-secondary);
-    line-height: 1.7;
+    line-height: 1.6;
     font-size: 0.95rem;
   }
 
-  .contact-card em {
-    color: var(--text-muted);
-    font-size: 0.9rem;
+  .address {
+    font-size: 1.1rem !important;
+    font-weight: 600;
+    color: var(--text-primary) !important;
+    margin-bottom: 0.25rem;
   }
 
+  .hint {
+    color: var(--text-muted) !important;
+    font-style: italic;
+    font-size: 0.85rem !important;
+    margin-top: 0.35rem;
+  }
+
+  /* --- Schedule --- */
   .schedule {
     list-style: none;
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    color: var(--text-secondary);
-    font-size: 0.95rem;
   }
 
   .schedule li {
     display: flex;
-    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.95rem;
+    color: var(--text-secondary);
   }
 
-  .schedule strong {
+  .day {
     color: var(--text-primary);
+    font-weight: 600;
+    min-width: 75px;
+  }
+
+  .time {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .badge {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.15rem 0.5rem;
+    border-radius: 20px;
+    background: rgba(212,160,84,0.12);
+    color: var(--accent);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .social-links {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+    font-size: 0.9rem;
+  }
+
+  .social-links a {
+    color: var(--accent);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .social-links a:hover {
+    color: var(--accent-hover);
+  }
+
+  .sep {
+    color: var(--text-muted);
+  }
+
+  /* --- Map --- */
+  .map-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
   }
 
   .map-container {
-    min-height: 550px;
+    flex: 1;
+    min-height: 520px;
     border-radius: var(--radius-lg);
     overflow: hidden;
     border: 1px solid var(--border);
-    box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    box-shadow:
+      0 8px 30px rgba(0,0,0,0.3),
+      0 0 0 1px rgba(212,160,84,0.05);
   }
 
+  .map-caption {
+    text-align: right;
+  }
+
+  .map-caption a {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .map-caption a:hover {
+    color: var(--accent);
+  }
+
+  /* --- Mobile --- */
   @media (max-width: 768px) {
     .contact-grid {
       grid-template-columns: 1fr;
     }
 
     .map-container {
-      min-height: 400px;
+      min-height: 350px;
+    }
+
+    .schedule li {
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      margin-left: 0;
     }
   }
 </style>
