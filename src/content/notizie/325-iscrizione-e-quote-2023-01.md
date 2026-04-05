@@ -1,7 +1,7 @@
 ---
 title: "Iscrizione al Circolo e quote 2023"
 date: "2022-11-27"
-excerpt: "Nel 2023 il Circolo osserverà i seguneti orari di apertura: martedì sera dalle 21,15 alle 24 evenerdì pomeriggio, dalle ore 15 alle ore 17,30.In particolare le attività del venerdì pomeriggio sonod..."
+excerpt: "Nel 2023 il Circolo osserverà i seguneti orari di apertura: martedì sera dalle 21,15 alle 24 e venerdì pomeriggio, dalle ore 15 alle ore 17,30.In particolare le attività del venerdì pomeriggio sonod..."
 ---
 
 Nel 2023 il Circolo osserverà i seguneti orari di apertura: **martedì sera dalle 21,15 alle 24 e****venerdì pomeriggio, dalle ore 15 alle ore 17,30.**In particolare le attività del venerdì pomeriggio sono**dedicate ai più giovani** che possono imparare o migliorare il gioco alla presenza di due istruttori FIDE.

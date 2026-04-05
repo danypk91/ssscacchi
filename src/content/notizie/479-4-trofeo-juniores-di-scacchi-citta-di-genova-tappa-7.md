@@ -12,4 +12,4 @@ Come di consueto la tappa di marzo si è svolta presso il nostro circolo **con l
  Torneo B (32 partecipanti): tutti gli altri
  Nel Torneo A vincono a mano bassa i ragazzi del Merlino con **Giorgio Fedeli**, **Davide Giraldo** e **Leonardo Longo** ai primi tre posti seguiti dalla nostra **Martina Parodi**.
  Nel Torneo B tre dei nostri ragazzi ai primi quattro posti, **Alexander Beolet** primo a punteggio pieno, **Emanuele Villamaina** secondo e**Andrii Shurkhovetskyy** quarto.
- Nel torneo C splendida prestazione di **Mattia Lisco Chiaiso** che vince a punteggio pieno seguito da **Ivan Vignolo**, **Lanzone Pietro** e **Lamparelli Mattia**, tutti del nostro vivaio.
+ Nel torneo C splendida prestazione di **Mattia Lisco Chiaiso** che vince a punteggio pieno seguito da **Ivan Vignolo**, **Lanzone Pietro** e **Lamparelli Mattia**, tutti del nostro vivaio.  ([*classifiche e abbinamenti*](https://vesus.org/event/UUqjuzgK))
