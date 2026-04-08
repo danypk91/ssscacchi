@@ -1,5 +1,5 @@
 ---
-title: "4° Trofeo Juniores di Scacchi città di Genova - tappa 7"
+title: "4° Trofeo Juniores città di Genova - tappa 7"
 date: "2026-03-29"
 excerpt: "Domenica 29 marzo si è svolta la settima tappa del 4° Trofeo Juniores città di Genova, percorso a tappe organizzato dai circoli dell'area genovese (Merlino, Golfo Paradiso, Poldo, Santa Sabina e Ce..."
 ---
