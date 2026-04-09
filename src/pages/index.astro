@@ -109,7 +109,7 @@ const boardPieces: Record<number, string> = {
     <div class="section-bg-pattern" aria-hidden="true"></div>
     <div class="container">
       <h2 class="section-title">
-        <span class="title-icon">&#9816;</span>
+        <span class="title-icon" aria-hidden="true">&#9816;</span>
         Prossimi Eventi
       </h2>
       <p class="section-subtitle">Tornei e appuntamenti in programma</p>
@@ -121,8 +121,8 @@ const boardPieces: Record<number, string> = {
               <div class="event-date">{ev.date}</div>
               <h3>{ev.title}</h3>
               <div class="event-meta">
-                <span>&#9200; {ev.time}</span>
-                <span>&#9823; {ev.desc}</span>
+                <span><svg class="meta-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> {ev.time}</span>
+                <span><svg class="meta-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg> {ev.desc}</span>
               </div>
               <a href={ev.link} target="_blank" rel="noopener" class="btn btn-outline btn-sm">
                 Iscriviti su VeSuS &rarr;
@@ -139,7 +139,7 @@ const boardPieces: Record<number, string> = {
     <div class="section-bg-diagonal" aria-hidden="true"></div>
     <div class="container">
       <h2 class="section-title">
-        <span class="title-icon">&#9814;</span>
+        <span class="title-icon" aria-hidden="true">&#9814;</span>
         Ultime Notizie
       </h2>
       <p class="section-subtitle">Le novità dal circolo</p>
@@ -171,22 +171,22 @@ const boardPieces: Record<number, string> = {
       <p class="section-subtitle section-subtitle-center">Tutto quello che trovi alla Santa Sabina</p>
       <div class="info-grid">
         <div class="info-card">
-          <div class="info-icon">&#9823;</div>
+          <div class="info-icon" aria-hidden="true">&#9823;</div>
           <h3>Corsi Giovani</h3>
           <p>Corsi base e perfezionamento per tutte le età. Centro di Avviamento allo Sport riconosciuto.</p>
         </div>
         <div class="info-card">
-          <div class="info-icon">&#9813;</div>
+          <div class="info-icon" aria-hidden="true">&#9813;</div>
           <h3>Tornei</h3>
           <p>Memorial Bertolini, Memorial Sigona, GP Lampo, Trofeo Juniores e campionati a squadre.</p>
         </div>
         <div class="info-card">
-          <div class="info-icon">&#9822;</div>
+          <div class="info-icon" aria-hidden="true">&#9822;</div>
           <h3>Squadre</h3>
           <p>Partecipiamo ai Campionati Italiani a Squadre in Serie B, C e Promozione.</p>
         </div>
         <div class="info-card">
-          <div class="info-icon">&#9814;</div>
+          <div class="info-icon" aria-hidden="true">&#9814;</div>
           <h3>Biblioteca</h3>
           <p>Ampia collezione di libri scacchistici disponibile per tutti i soci del circolo.</p>
         </div>
@@ -613,6 +613,17 @@ const boardPieces: Record<number, string> = {
     margin-bottom: 1.25rem;
   }
 
+  .event-meta span {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .meta-icon {
+    flex-shrink: 0;
+    opacity: 0.7;
+  }
+
   .btn-sm {
     padding: 0.5rem 1.15rem;
     font-size: 0.85rem;
@@ -641,7 +652,7 @@ const boardPieces: Record<number, string> = {
   }
 
   .news-card:hover {
-    transform: translateY(-5px);
+    transform: translateY(-4px);
     box-shadow: 0 16px 40px rgba(0,0,0,0.35);
     border-color: rgba(212,160,84,0.25);
   }
@@ -695,14 +706,11 @@ const boardPieces: Record<number, string> = {
     font-size: 0.85rem;
     font-weight: 600;
     color: var(--accent);
-    opacity: 0;
-    transform: translateX(-6px);
-    transition: opacity 0.3s, transform 0.3s;
+    transition: transform 0.3s;
   }
 
   .news-card:hover .news-link {
-    opacity: 1;
-    transform: translateX(0);
+    transform: translateX(4px);
   }
 
   .section-cta {
@@ -743,7 +751,7 @@ const boardPieces: Record<number, string> = {
   }
 
   .info-card:hover {
-    transform: translateY(-5px);
+    transform: translateY(-4px);
     box-shadow: 0 16px 40px rgba(0,0,0,0.3);
     border-color: rgba(212,160,84,0.2);
   }
@@ -883,9 +891,5 @@ const boardPieces: Record<number, string> = {
       min-width: calc(50% - 1rem);
     }
 
-    .news-link {
-      opacity: 1;
-      transform: translateX(0);
-    }
   }
 </style>
