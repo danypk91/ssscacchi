@@ -22,7 +22,7 @@ const bandoUrl = resolveUrl(entry.data.bando);
 const classificaUrl = resolveUrl(entry.data.classifica);
 const fotoAlbum = resolveUrl(entry.data.fotoAlbum);
 const isCurrent = new Date(entry.data.date) > new Date();
-const vesusLabel = isCurrent ? 'Iscriviti su VeSuS' : 'Risultati su VeSuS';
+const vesusLabel = isCurrent ? 'Iscriviti su VeSuS' : 'Classifica e abbinamenti';
 const documenti = (entry.data.documenti || []).map((d: {label: string; file: string}) => ({
   label: d.label,
   url: resolveUrl(d.file)!,
@@ -50,7 +50,7 @@ const documenti = (entry.data.documenti || []).map((d: {label: string; file: str
           )}
           {bandoUrl && (
             <a href={bandoUrl} target="_blank" rel="noopener" class="btn btn-outline btn-sm">
-              Scarica bando
+              &nbsp;&nbsp;&nbsp;&nbsp;Bando&nbsp;&nbsp;&nbsp;&nbsp;
             </a>
           )}
           {classificaUrl && (
