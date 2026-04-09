@@ -33,7 +33,7 @@ Requires Node >= 22.12.0.
 
 ## Assets (Cloudflare R2)
 
-Photos and tournament PDFs are stored in the **R2 bucket `santasabina`**, publicly accessible at `https://pub-812e1f1ad3fc456eb064b72091f1e1d9.r2.dev`. Structure:
+Photos and tournament PDFs are stored in the **R2 bucket `santasabina`**, publicly accessible at `https://assets.santasabinascacchi.it`. Structure:
 
 - `foto/{year}/{album}/{file}.jpg` — photo galleries (910+ photos, 2010–2023)
 - `tornei/{year}/{slug}_bando.pdf` — tournament regulation PDFs
