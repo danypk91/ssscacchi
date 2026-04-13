@@ -15,7 +15,7 @@
   /* Testo */
   --text-primary: #f5f0e8;
   --text-secondary: #c4b8a8;
-  --text-muted: #8a7e70;
+  --text-muted: #9e9284;
 
   /* Accenti */
   --accent: #d4a054;
@@ -54,7 +54,7 @@ body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
   line-height: 1.6;
-  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 a {
@@ -293,7 +293,8 @@ h4 { font-size: 1.25rem; }
 }
 
 .page-search input:focus {
-  outline: none;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
   border-color: var(--accent);
 }
 
@@ -338,4 +339,46 @@ h4 { font-size: 1.25rem; }
   .section {
     padding: 3rem 0;
   }
+}
+
+/* ===== Reduced Motion ===== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ===== Skip Link ===== */
+.skip-link {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+  padding: 0.75rem 1.5rem;
+  background: var(--accent);
+  color: var(--bg-primary);
+  font-weight: 600;
+  transform: translateY(-100%);
+  transition: transform 0.2s;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+  color: var(--bg-primary);
+}
+
+/* ===== Visually Hidden (a11y) ===== */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }

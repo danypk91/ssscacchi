@@ -212,7 +212,7 @@ const colClass = { 2: 'cols-2', 3: 'cols-3', 4: 'cols-4' }[columns];
   }
 
   @media (max-width: 640px) {
-    .lightbox-nav { width: 2.5rem; height: 2.5rem; }
+    .lightbox-nav { width: 2.75rem; height: 2.75rem; }
     .lightbox-prev { left: 0.5rem; }
     .lightbox-next { right: 0.5rem; }
   }
@@ -225,6 +225,11 @@ const colClass = { 2: 'cols-2', 3: 'cols-3', 4: 'cols-4' }[columns];
       const initialCount = parseInt(gallery.dataset.initialCount || '12', 10);
       const lightbox = document.querySelector<HTMLElement>(`[data-gallery-lightbox="${galleryId}"]`);
       if (!lightbox) return;
+
+      // Move lightbox to body to escape any parent stacking context
+      if (lightbox.parentElement !== document.body) {
+        document.body.appendChild(lightbox);
+      }
 
       const pageSize = parseInt(gallery.dataset.pageSize || '12', 10);
       const allItems = Array.from(gallery.querySelectorAll<HTMLElement>('[data-gallery-item]'));

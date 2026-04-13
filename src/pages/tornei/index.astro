@@ -30,7 +30,8 @@ const years = Object.keys(torneiByYear).sort((a, b) => Number(b) - Number(a));
     <div class="container">
 
       <div class="page-search">
-        <input type="text" id="torneo-search" placeholder="Cerca torneo..." autocomplete="off" />
+        <label for="torneo-search" class="visually-hidden">Cerca torneo</label>
+        <input type="search" id="torneo-search" placeholder="Cerca torneo..." autocomplete="off" />
       </div>
       <p id="no-results" class="no-results" style="display:none;">Nessun torneo trovato.</p>
 

@@ -131,7 +131,19 @@ const navLinks = [
     height: 2px;
     background: var(--text-primary);
     border-radius: 2px;
-    transition: all 0.3s;
+    transition: transform 0.3s, opacity 0.3s;
+  }
+
+  .mobile-toggle.active span:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+  }
+
+  .mobile-toggle.active span:nth-child(2) {
+    opacity: 0;
+  }
+
+  .mobile-toggle.active span:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
   }
 
   @media (max-width: 900px) {
@@ -140,7 +152,6 @@ const navLinks = [
     }
 
     .nav {
-      display: none;
       position: absolute;
       top: 4.5rem;
       left: 0;
@@ -148,11 +159,17 @@ const navLinks = [
       background: var(--bg-secondary);
       border-bottom: 1px solid var(--border);
       flex-direction: column;
-      padding: 1rem;
+      padding: 0 1rem;
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: max-height 0.3s ease, opacity 0.2s ease, padding 0.3s ease;
     }
 
     .nav.open {
-      display: flex;
+      max-height: 500px;
+      opacity: 1;
+      padding: 1rem;
     }
 
     .nav-link {
@@ -164,8 +181,18 @@ const navLinks = [
 <script>
   const toggle = document.querySelector('.mobile-toggle');
   const nav = document.querySelector('.nav');
+
   toggle?.addEventListener('click', () => {
     const isOpen = nav?.classList.toggle('open');
     toggle.setAttribute('aria-expanded', String(isOpen));
+    toggle.classList.toggle('active', !!isOpen);
+  });
+
+  nav?.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', () => {
+      nav.classList.remove('open');
+      toggle?.setAttribute('aria-expanded', 'false');
+      toggle?.classList.remove('active');
+    });
   });
 </script>
