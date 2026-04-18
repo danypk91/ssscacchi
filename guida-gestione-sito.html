@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guida Gestione Sito - Circolo Scacchi Santa Sabina</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    color: #1a1a2e;
+    line-height: 1.7;
+    font-size: 11pt;
+    background: #fff;
+  }
+
+  @media print {
+    body { font-size: 10pt; }
+    .page-break { page-break-before: always; }
+    a { color: #1a1a2e !important; text-decoration: underline; }
+  }
+
+  .cover {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    text-align: center;
+    background: linear-gradient(135deg, #1a1410 0%, #2d2117 100%);
+    color: #f5f0e8;
+    padding: 3rem;
+  }
+
+  .cover h1 {
+    font-size: 2.2rem;
+    margin-bottom: 0.5rem;
+    color: #d4a054;
+  }
+
+  .cover .subtitle {
+    font-size: 1.1rem;
+    color: #c4b8a8;
+    margin-bottom: 2rem;
+  }
+
+  .cover .meta {
+    font-size: 0.9rem;
+    color: #8a7e70;
+  }
+
+  .cover .chess-icon {
+    font-size: 5rem;
+    color: #d4a054;
+    margin-bottom: 1.5rem;
+    opacity: 0.8;
+  }
+
+  .content {
+    max-width: 750px;
+    margin: 0 auto;
+    padding: 2rem 2.5rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+    color: #6b3a2a;
+    margin: 2.5rem 0 1rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 2px solid #d4a054;
+  }
+
+  h3 {
+    font-size: 1.15rem;
+    color: #4a2519;
+    margin: 1.8rem 0 0.6rem;
+  }
+
+  h4 {
+    font-size: 1rem;
+    color: #6b3a2a;
+    margin: 1.2rem 0 0.4rem;
+  }
+
+  p { margin-bottom: 0.8rem; }
+
+  ul, ol {
+    margin-bottom: 0.8rem;
+    padding-left: 1.5rem;
+  }
+
+  li { margin-bottom: 0.3rem; }
+
+  code {
+    font-family: 'JetBrains Mono', monospace;
+    background: #f4f0eb;
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.9em;
+    color: #6b3a2a;
+  }
+
+  pre {
+    background: #1a1410;
+    color: #f5f0e8;
+    padding: 1rem 1.25rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin-bottom: 1rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85em;
+    line-height: 1.6;
+  }
+
+  pre code {
+    background: none;
+    padding: 0;
+    color: inherit;
+  }
+
+  .highlight { color: #d4a054; }
+  .comment { color: #8a7e70; }
+  .string { color: #a8c97f; }
+
+  .callout {
+    background: #fdf6ec;
+    border-left: 4px solid #d4a054;
+    padding: 0.8rem 1rem;
+    margin: 1rem 0;
+    border-radius: 0 6px 6px 0;
+  }
+
+  .callout-warning {
+    background: #fef3f0;
+    border-left-color: #c0392b;
+  }
+
+  .callout strong {
+    color: #6b3a2a;
+  }
+
+  .step-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: #d4a054;
+    color: #fff;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 0.85rem;
+    margin-right: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  .step {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .step-content { flex: 1; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 0.9em;
+  }
+
+  th, td {
+    border: 1px solid #ddd;
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+  }
+
+  th {
+    background: #f4f0eb;
+    color: #4a2519;
+    font-weight: 600;
+  }
+
+  .file-tree {
+    background: #f9f7f4;
+    border: 1px solid #e5ddd4;
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85em;
+    line-height: 1.8;
+    margin: 1rem 0;
+  }
+
+  .toc {
+    background: #f9f7f4;
+    border: 1px solid #e5ddd4;
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0;
+  }
+
+  .toc h3 {
+    margin-top: 0;
+    margin-bottom: 0.75rem;
+  }
+
+  .toc ol { margin-bottom: 0; }
+  .toc li { margin-bottom: 0.2rem; }
+
+  hr {
+    border: none;
+    border-top: 1px solid #e5ddd4;
+    margin: 2rem 0;
+  }
+</style>
+</head>
+<body>
+
+<!-- COPERTINA -->
+<div class="cover">
+  <div class="chess-icon">&#9816;</div>
+  <h1>Guida alla Gestione del Sito</h1>
+  <p class="subtitle">Circolo Scacchi Santa Sabina</p>
+  <p class="meta">santasabina.vercel.app</p>
+  <p class="meta">Aprile 2026</p>
+</div>
+
+<!-- INDICE -->
+<div class="content">
+
+<div class="toc">
+  <h3>Indice</h3>
+  <ol>
+    <li><strong>Installazione ambiente di lavoro</strong> &mdash; Git, Node.js, editor, clonazione progetto</li>
+    <li><strong>Avviare il sito in locale</strong> &mdash; Comandi per sviluppo e anteprima</li>
+    <li><strong>Struttura del progetto</strong> &mdash; Dove si trovano i file</li>
+    <li><strong>Scrivere in Markdown</strong> &mdash; Guida completa con esempi</li>
+    <li><strong>Aggiungere una notizia</strong></li>
+    <li><strong>Aggiungere un torneo</strong></li>
+    <li><strong>Aggiungere foto</strong></li>
+    <li><strong>Pubblicare le modifiche</strong> &mdash; Commit, push e deploy</li>
+    <li><strong>Comandi utili</strong> &mdash; Riferimento rapido</li>
+  </ol>
+</div>
+
+<!-- ============================================================ -->
+<div class="page-break"></div>
+<h2>1. Installazione ambiente di lavoro</h2>
+
+<p>Questa sezione spiega come preparare il tuo PC Windows per lavorare sul sito.</p>
+
+<h3>1.1 Installare Git</h3>
+
+<div class="step">
+  <span class="step-number">1</span>
+  <div class="step-content">
+    Vai su <strong>https://git-scm.com/download/win</strong> e scarica l'installer.
+  </div>
+</div>
+<div class="step">
+  <span class="step-number">2</span>
+  <div class="step-content">
+    Esegui l'installer. Lascia tutte le opzioni predefinite e clicca <strong>Next</strong> fino alla fine.
+  </div>
+</div>
+<div class="step">
+  <span class="step-number">3</span>
+  <div class="step-content">
+    Verifica l'installazione aprendo il <strong>Terminale</strong> (cerca "cmd" o "PowerShell" nel menu Start):
+    <pre><code>git --version</code></pre>
+    Deve mostrare qualcosa come <code>git version 2.47.0</code>.
+  </div>
+</div>
+
+<h3>1.2 Installare Node.js</h3>
+
+<div class="step">
+  <span class="step-number">1</span>
+  <div class="step-content">
+    Vai su <strong>https://nodejs.org</strong> e scarica la versione <strong>LTS</strong> (quella consigliata).
+  </div>
+</div>
+<div class="step">
+  <span class="step-number">2</span>
+  <div class="step-content">
+    Esegui l'installer con le opzioni predefinite.
+  </div>
+</div>
+<div class="step">
+  <span class="step-number">3</span>
+  <div class="step-content">
+    Verifica:
+    <pre><code>node --version
+npm --version</code></pre>
+    Node deve essere almeno <code>v22</code>.
+  </div>
+</div>
+
+<h3>1.3 Installare un editor di testo</h3>
+
+<p>Consigliamo <strong>Visual Studio Code</strong> (gratuito):</p>
+<ol>
+  <li>Scarica da <strong>https://code.visualstudio.com</strong></li>
+  <li>Installa e aprilo</li>
+  <li>Installa l'estensione <strong>Astro</strong> (cerca "Astro" nel pannello estensioni)</li>
+</ol>
+
+<h3>1.4 Scaricare il progetto</h3>
+
+<p>Apri il terminale e scegli dove salvare il progetto (es. Desktop):</p>
+
+<pre><code><span class="comment"># Spostati sul Desktop</span>
+cd %USERPROFILE%\Desktop
+
+<span class="comment"># Clona il progetto da GitHub</span>
+git clone https://github.com/danypk91/ssscacchi.git
+
+<span class="comment"># Entra nella cartella</span>
+cd ssscacchi
+
+<span class="comment"># Installa le dipendenze</span>
+npm install</code></pre>
+
+<div class="callout">
+  <strong>Nota:</strong> Per clonare il progetto serve accesso al repository GitHub. Se non hai un account GitHub, creane uno su <strong>github.com</strong> e chiedi di essere aggiunto come collaboratore.
+</div>
+
+<!-- ============================================================ -->
+<div class="page-break"></div>
+<h2>2. Avviare il sito in locale</h2>
+
+<p>Dopo aver scaricato il progetto, puoi vedere il sito sul tuo computer.</p>
+
+<h3>Modalita sviluppo (consigliata per lavorare)</h3>
+<pre><code>npm run dev</code></pre>
+<p>Apri il browser su <strong>http://localhost:4321</strong>. Il sito si aggiorna automaticamente quando salvi un file.</p>
+
+<h3>Creare la versione di produzione</h3>
+<pre><code>npm run build</code></pre>
+
+<h3>Anteprima della versione di produzione</h3>
+<pre><code>npm run preview</code></pre>
+
+<div class="callout">
+  <strong>Per fermare il server:</strong> premi <code>Ctrl + C</code> nel terminale.
+</div>
+
+<!-- ============================================================ -->
+<div class="page-break"></div>
+<h2>3. Struttura del progetto</h2>
+
+<p>I file che modificherai piu spesso:</p>
+
+<div class="file-tree">
+ssscacchi/<br>
+&ensp;&ensp;src/<br>
+&ensp;&ensp;&ensp;&ensp;content/<br>
+&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;<strong>notizie/</strong> &larr; File .md delle notizie<br>
+&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;<strong>tornei/</strong> &ensp;&larr; File .md dei tornei<br>
+&ensp;&ensp;&ensp;&ensp;pages/<br>
+&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;index.astro &ensp;&larr; Homepage<br>
+&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;contatti.astro<br>
+&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;fotografie.astro<br>
+&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;...<br>
+&ensp;&ensp;public/<br>
+&ensp;&ensp;&ensp;&ensp;images/ &ensp;&larr; Immagini statiche del sito
+</div>
+
+<p>Le <strong>notizie</strong> e i <strong>tornei</strong> si gestiscono creando/modificando file <code>.md</code> (Markdown) nelle rispettive cartelle. Le <strong>foto</strong> si caricano su Cloudflare R2.</p>
+
+<!-- ============================================================ -->
+<div class="page-break"></div>
+<h2>4. Scrivere in Markdown</h2>
+
+<p>I contenuti del sito (notizie e tornei) sono scritti in <strong>Markdown</strong>, un linguaggio semplice per formattare il testo. Ecco una guida completa.</p>
+
+<h3>4.1 Titoli</h3>
+
+<pre><code># Titolo principale (H1)
+## Sottotitolo (H2)
+### Sotto-sottotitolo (H3)
+#### Titolo piccolo (H4)</code></pre>
+
+<div class="callout">
+  <strong>Regola:</strong> nei file delle notizie/tornei, usa <code>##</code> come livello massimo (il titolo H1 viene dal frontmatter).
+</div>
+
+<h3>4.2 Testo formattato</h3>
+
+<pre><code>Testo normale.
+
+Testo in <span class="highlight">**grassetto**</span>.
+
+Testo in <span class="highlight">*corsivo*</span>.
+
+Testo in <span class="highlight">***grassetto e corsivo***</span>.
+
+Testo ~~barrato~~.</code></pre>
+
+<p><strong>Risultato:</strong> Testo normale. Testo in <strong>grassetto</strong>. Testo in <em>corsivo</em>.</p>
+
+<h3>4.3 Paragrafi e a capo</h3>
+
+<pre><code>Questo e' il primo paragrafo.
+
+Questo e' il secondo paragrafo.
+(Serve una riga vuota per separare i paragrafi)
+
+Per andare a capo senza nuovo paragrafo,
+metti due spazi alla fine della riga.  </code></pre>
+
+<h3>4.4 Elenchi puntati</h3>
+
+<pre><code>- Primo elemento
+- Secondo elemento
+- Terzo elemento
+  - Sotto-elemento (indentato con 2 spazi)
+  - Altro sotto-elemento</code></pre>
+
+<h3>4.5 Elenchi numerati</h3>
+
+<pre><code>1. Primo passo
+2. Secondo passo
+3. Terzo passo</code></pre>
+
+<h3>4.6 Link</h3>
+
+<pre><code><span class="comment">Link a un sito esterno:</span>
+[Testo del link](https://www.esempio.it)
+
+<span class="comment">Esempio reale:</span>
+Iscrizioni su [VeSuS](https://vesus.org/tournament/xxx).</code></pre>
+
+<p><strong>Risultato:</strong> Iscrizioni su <a href="#">VeSuS</a>.</p>
+
+<h3>4.7 Testo in evidenza (citazione)</h3>
+
+<pre><code>> Questo testo appare come citazione evidenziata.
+> Puo' continuare su piu' righe.</code></pre>
+
+<h3>4.8 Linea separatrice</h3>
+
+<pre><code>Testo sopra
+
+---
+
+Testo sotto</code></pre>
+
+<h3>4.9 Tabelle</h3>
+
+<pre><code>| Pos. | Giocatore      | Punti |
+|------|----------------|-------|
+| 1    | Mario Rossi    | 6/7   |
+| 2    | Luigi Bianchi  | 5.5/7 |
+| 3    | Paolo Verdi    | 5/7   |</code></pre>
+
+<p><strong>Risultato:</strong></p>
+<table>
+  <tr><th>Pos.</th><th>Giocatore</th><th>Punti</th></tr>
+  <tr><td>1</td><td>Mario Rossi</td><td>6/7</td></tr>
+  <tr><td>2</td><td>Luigi Bianchi</td><td>5.5/7</td></tr>
+  <tr><td>3</td><td>Paolo Verdi</td><td>5/7</td></tr>
+</table>
+
+<h3>4.10 Esempio completo di contenuto</h3>
+
+<pre><code>## Risultati
+
+Il torneo si e' concluso con **42 partecipanti**.
+
+### Classifica finale
+
+| Pos. | Giocatore      | Punti | Elo  |
+|------|----------------|-------|------|
+| 1    | Mario Rossi    | 6/7   | 1850 |
+| 2    | Luigi Bianchi  | 5.5/7 | 1790 |
+| 3    | Paolo Verdi    | 5/7   | 1720 |
+
+### Prossimi appuntamenti
+
+- **Memorial Bertolini** &mdash; 20 giugno 2026
+- **Torneo Patronale** &mdash; ottobre 2026
+
+Per maggiori info scrivere a
+[santasabinascacchi@gmail.com](mailto:santasabinascacchi@gmail.com).</code></pre>
+
+<!-- ============================================================ -->
+<div class="page-break"></div>
+<h2>5. Aggiungere una notizia</h2>
+
+<h3>Passo 1: Crea il file</h3>
+
+<p>Crea un nuovo file nella cartella <code>src/content/notizie/</code>. Il nome del file diventa l'indirizzo web (URL), quindi usa lettere minuscole, trattini e niente spazi:</p>
+
+<pre><code>src/content/notizie/<span class="highlight">risultati-sigona-2026.md</span></code></pre>
+
+<h3>Passo 2: Scrivi il frontmatter</h3>
+
+<p>All'inizio del file, tra i due <code>---</code>, inserisci i metadati obbligatori:</p>
+
+<pre><code><span class="comment">---</span>
+<span class="highlight">title</span>: <span class="string">"Risultati Memorial Sigona 2026"</span>
+<span class="highlight">date</span>: <span class="string">"2026-05-18"</span>
+<span class="highlight">excerpt</span>: <span class="string">"Grande successo per la XX edizione con 35 giovani scacchisti."</span>
+<span class="comment">---</span></code></pre>
+
+<table>
+  <tr><th>Campo</th><th>Obbligatorio</th><th>Descrizione</th></tr>
+  <tr><td><code>title</code></td><td>Si</td><td>Titolo della notizia</td></tr>
+  <tr><td><code>date</code></td><td>Si</td><td>Data in formato AAAA-MM-GG</td></tr>
+  <tr><td><code>excerpt</code></td><td>Si</td><td>Riassunto breve (appare nell'elenco notizie)</td></tr>
+</table>
+
+<h3>Passo 3: Scrivi il contenuto</h3>
+
+<p>Dopo il secondo <code>---</code>, scrivi il testo in Markdown:</p>
+
+<pre><code><span class="comment">---</span>
+title: "Risultati Memorial Sigona 2026"
+date: "2026-05-18"
+excerpt: "Grande successo per la XX edizione con 35 giovani scacchisti."
+<span class="comment">---</span>
+
+## Cronaca del torneo
+
+Sabato 18 maggio si e' svolta la **XX edizione del Memorial Sigona**
+presso la sede del circolo, con la partecipazione di 35 giovani
+scacchisti provenienti da tutta la Liguria.
+
+## Classifica finale
+
+| Pos. | Giocatore       | Punti |
+|------|-----------------|-------|
+| 1    | Marco Neri      | 5.5/6 |
+| 2    | Anna Colombo    | 5/6   |
+| 3    | Luca Ferretti   | 4.5/6 |
+
+## Ringraziamenti
+
+Un grazie speciale a tutti i volontari e agli arbitri che hanno
+reso possibile questa giornata.</code></pre>
+
+<p>La notizia apparira automaticamente nella pagina <strong>/notizie</strong> del sito, ordinata per data.</p>
+
+<!-- ============================================================ -->
+<div class="page-break"></div>
+<h2>6. Aggiungere un torneo</h2>
+
+<h3>Passo 1: Crea il file</h3>
+
+<pre><code>src/content/tornei/<span class="highlight">sociale-autunno-2026.md</span></code></pre>
+
+<h3>Passo 2: Scrivi il frontmatter</h3>
+
+<pre><code><span class="comment">---</span>
+<span class="highlight">title</span>: <span class="string">"Torneo Sociale di Autunno 2026"</span>
+<span class="highlight">year</span>: 2026
+<span class="highlight">date</span>: <span class="string">"2026-09-15"</span>
+<span class="highlight">excerpt</span>: <span class="string">"7 turni su 7 giornate"</span>
+<span class="highlight">bando</span>: <span class="string">"tornei/2026/sociale-autunno-2026_bando.pdf"</span>
+<span class="highlight">vesus</span>: <span class="string">"https://vesus.org/tournament/abc123"</span>
+<span class="comment">---</span></code></pre>
+
+<table>
+  <tr><th>Campo</th><th>Obbligatorio</th><th>Descrizione</th></tr>
+  <tr><td><code>title</code></td><td>Si</td><td>Nome completo del torneo</td></tr>
+  <tr><td><code>year</code></td><td>Si</td><td>Anno (numero, senza virgolette)</td></tr>
+  <tr><td><code>date</code></td><td>Si</td><td>Data inizio in formato AAAA-MM-GG</td></tr>
+  <tr><td><code>excerpt</code></td><td>Si</td><td>Formato breve (es. "7 turni su 7 giornate")</td></tr>
+  <tr><td><code>bando</code></td><td>No</td><td>Percorso del PDF su R2 (vedi sotto)</td></tr>
+  <tr><td><code>classifica</code></td><td>No</td><td>URL della classifica</td></tr>
+  <tr><td><code>vesus</code></td><td>No</td><td>Link alla pagina VeSuS del torneo</td></tr>
+  <tr><td><code>fotoAlbum</code></td><td>No</td><td>Percorso album foto (es. "/fotografie/2026/album")</td></tr>
+</table>
+
+<h3>Passo 3: Scrivi il contenuto</h3>
+
+<pre><code><span class="comment">---</span>
+title: "Torneo Sociale di Autunno 2026"
+year: 2026
+date: "2026-09-15"
+excerpt: "7 turni su 7 giornate"
+bando: "tornei/2026/sociale-autunno-2026_bando.pdf"
+vesus: "https://vesus.org/tournament/abc123"
+<span class="comment">---</span>
+
+## Dettagli
+
+- **Formato:** 7 turni su 7 giornate
+- **Cadenza:** 60 minuti + 30 secondi per mossa
+- **Orario:** ogni martedi alle 21:15
+- **Sede:** Via Donghi 8, Genova
+
+## Calendario
+
+1. **1o turno** &mdash; 15 settembre
+2. **2o turno** &mdash; 22 settembre
+3. **3o turno** &mdash; 29 settembre
+4. **4o turno** &mdash; 6 ottobre
+5. **5o turno** &mdash; 13 ottobre
+6. **6o turno** &mdash; 20 ottobre
+7. **7o turno** &mdash; 27 ottobre</code></pre>
+
+<h3>Caricare il PDF del bando su R2</h3>
+
+<p>Se il torneo ha un bando PDF, caricalo su Cloudflare R2 prima di pubblicare:</p>
+
+<pre><code><span class="comment"># Da terminale, nella cartella del progetto:</span>
+npx wrangler r2 object put <span class="string">"santasabina/tornei/2026/sociale-autunno-2026_bando.pdf"</span> \
+  --file=<span class="string">"percorso/del/bando.pdf"</span> \
+  --content-type=<span class="string">"application/pdf"</span> \
+  --remote</code></pre>
+
+<div class="callout">
+  <strong>Importante:</strong> il valore del campo <code>bando</code> nel frontmatter deve corrispondere al percorso su R2 <strong>senza</strong> il nome del bucket. Esempio: se carichi su <code>santasabina/tornei/2026/bando.pdf</code>, nel frontmatter scrivi <code>tornei/2026/bando.pdf</code>.
+</div>
+
+<!-- ============================================================ -->
+<div class="page-break"></div>
+<h2>7. Aggiungere foto</h2>
+
+<p>Le foto sono organizzate su Cloudflare R2 con questa struttura:</p>
+
+<div class="file-tree">
+foto/<br>
+&ensp;&ensp;2026/<br>
+&ensp;&ensp;&ensp;&ensp;2026_sociale_primavera/<br>
+&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;foto1.jpg<br>
+&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;foto2.jpg<br>
+&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;...<br>
+&ensp;&ensp;&ensp;&ensp;2026_memorial_bertolini/<br>
+&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;foto1.jpg<br>
+&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;...
+</div>
+
+<h3>Caricare un album fotografico</h3>
+
+<p>Supponiamo di avere una cartella di foto del Torneo Sociale Primavera 2026:</p>
+
+<pre><code><span class="comment"># Carica ogni foto singolarmente:</span>
+npx wrangler r2 object put <span class="string">"santasabina/foto/2026/2026_sociale_primavera/foto1.jpg"</span> \
+  --file=<span class="string">"foto1.jpg"</span> \
+  --content-type=<span class="string">"image/jpeg"</span> \
+  --remote
+
+npx wrangler r2 object put <span class="string">"santasabina/foto/2026/2026_sociale_primavera/foto2.jpg"</span> \
+  --file=<span class="string">"foto2.jpg"</span> \
+  --content-type=<span class="string">"image/jpeg"</span> \
+  --remote
+
+<span class="comment"># Oppure, per caricare tutte le foto di una cartella in un colpo solo (PowerShell):</span>
+Get-ChildItem .\mie_foto\*.jpg | ForEach-Object {
+  npx wrangler r2 object put "santasabina/foto/2026/2026_sociale_primavera/$($_.Name)" `
+    --file="$($_.FullName)" `
+    --content-type="image/jpeg" `
+    --remote
+}</code></pre>
+
+<h3>Convenzioni per i nomi</h3>
+
+<ul>
+  <li>Nome cartella album: <code>{anno}_{nome_evento}</code> (es. <code>2026_sociale_primavera</code>)</li>
+  <li>Usa lettere minuscole, numeri e underscore <code>_</code></li>
+  <li>No spazi, no caratteri speciali, no accenti</li>
+</ul>
+
+<div class="callout">
+  <strong>Le pagine galleria si generano automaticamente!</strong> Non serve creare nessun file. Basta caricare le foto su R2 e fare un nuovo deploy (vedi sezione 8). Il sito crea da solo la pagina dell'anno e dell'album.
+</div>
+
+<h3>Collegare un album a un torneo</h3>
+
+<p>Per far apparire il pulsante "Fotografie" nella pagina del torneo, aggiungi il campo <code>fotoAlbum</code> nel frontmatter:</p>
+
+<pre><code><span class="comment">---</span>
+title: "Torneo Sociale di Primavera 2026"
+year: 2026
+date: "2026-05-01"
+excerpt: "7 turni su 7 giornate"
+<span class="highlight">fotoAlbum</span>: <span class="string">"/fotografie/2026/2026_sociale_primavera"</span>
+<span class="comment">---</span></code></pre>
+
+<!-- ============================================================ -->
+<div class="page-break"></div>
+<h2>8. Pubblicare le modifiche</h2>
+
+<p>Dopo aver modificato i file, devi inviarli su GitHub. Vercel pubblichera il sito automaticamente.</p>
+
+<h3>Metodo 1: Da terminale</h3>
+
+<pre><code><span class="comment"># 1. Controlla cosa hai modificato</span>
+git status
+
+<span class="comment"># 2. Aggiungi i file modificati</span>
+git add src/content/notizie/risultati-sigona-2026.md
+git add src/content/tornei/sociale-autunno-2026.md
+
+<span class="comment"># 3. Crea il commit (descrivi brevemente cosa hai fatto)</span>
+git commit -m "Aggiunti risultati Sigona e torneo autunno 2026"
+
+<span class="comment"># 4. Invia a GitHub</span>
+git push</code></pre>
+
+<p>Dopo il push, attendi 1-2 minuti e il sito sara aggiornato su <strong>santasabina.vercel.app</strong>.</p>
+
+<h3>Metodo 2: Da Visual Studio Code</h3>
+
+<ol>
+  <li>Apri il pannello <strong>Source Control</strong> (icona ramificazione, terza nella barra laterale sinistra)</li>
+  <li>Vedrai i file modificati. Clicca il <strong>+</strong> accanto a ciascuno per aggiungerli</li>
+  <li>Scrivi un messaggio di commit nel campo di testo in alto</li>
+  <li>Clicca il pulsante <strong>Commit</strong></li>
+  <li>Clicca <strong>Sync Changes</strong> per inviare a GitHub</li>
+</ol>
+
+<h3>Forzare il deploy senza modifiche al codice</h3>
+
+<p>Se hai solo caricato foto o PDF su R2 (senza modificare file <code>.md</code>), devi forzare un redeploy:</p>
+
+<ol>
+  <li>Vai su <strong>vercel.com</strong> &rarr; progetto <strong>ssscacchi</strong></li>
+  <li>Vai nella tab <strong>Deployments</strong></li>
+  <li>Clicca i <strong>tre puntini (...)</strong> sull'ultimo deploy</li>
+  <li>Seleziona <strong>Redeploy</strong></li>
+</ol>
+
+<!-- ============================================================ -->
+<div class="page-break"></div>
+<h2>9. Comandi utili &mdash; Riferimento rapido</h2>
+
+<h3>Comandi del progetto</h3>
+<table>
+  <tr><th>Comando</th><th>Cosa fa</th></tr>
+  <tr><td><code>npm run dev</code></td><td>Avvia il sito in locale (http://localhost:4321)</td></tr>
+  <tr><td><code>npm run build</code></td><td>Genera la versione di produzione</td></tr>
+  <tr><td><code>npm run preview</code></td><td>Anteprima della versione di produzione</td></tr>
+</table>
+
+<h3>Comandi Git</h3>
+<table>
+  <tr><th>Comando</th><th>Cosa fa</th></tr>
+  <tr><td><code>git status</code></td><td>Mostra i file modificati</td></tr>
+  <tr><td><code>git add nomefile</code></td><td>Prepara un file per il commit</td></tr>
+  <tr><td><code>git commit -m "messaggio"</code></td><td>Salva le modifiche con una descrizione</td></tr>
+  <tr><td><code>git push</code></td><td>Invia le modifiche a GitHub (e pubblica)</td></tr>
+  <tr><td><code>git pull</code></td><td>Scarica le ultime modifiche da GitHub</td></tr>
+</table>
+
+<h3>Comandi Cloudflare R2 (foto e PDF)</h3>
+<table>
+  <tr><th>Comando</th><th>Cosa fa</th></tr>
+  <tr><td style="font-size:0.8em"><code>npx wrangler r2 object put "santasabina/percorso/file" --file="file" --content-type="tipo" --remote</code></td><td>Carica un file su R2</td></tr>
+</table>
+
+<p>Content-type comuni:</p>
+<ul>
+  <li>Foto JPG: <code>image/jpeg</code></li>
+  <li>Foto PNG: <code>image/png</code></li>
+  <li>PDF: <code>application/pdf</code></li>
+</ul>
+
+<hr>
+
+<div class="callout">
+  <strong>Serve aiuto?</strong> Per qualsiasi dubbio o problema, contatta Daniele Longheu.
+</div>
+
+</div>
+</body>
+</html>

@@ -104,6 +104,763 @@ const boardPieces: Record<number, string> = {
     </div>
   </section>
 
+  <!-- Partita in diretta da Lichess -->
+  <section
+    id="live-section"
+    class="section section-live"
+    data-lichess-user="dany_parkour91"
+    hidden
+  >
+    <div class="container">
+      <h2 class="section-title">
+        <span class="title-icon" aria-hidden="true">&#9823;</span>
+        In Diretta da Lichess
+        <span class="live-dot" aria-hidden="true"></span>
+      </h2>
+      <p class="section-subtitle">
+        <span id="live-player-name">dany_parkour91</span> sta giocando proprio ora
+      </p>
+      <div class="live-frame-wrap">
+        <div id="live-result" class="live-result" hidden></div>
+        <div class="live-player-row">
+          <span class="live-player-info">
+            <span id="live-title-top" class="live-title"></span>
+            <span id="live-name-top" class="live-name">?</span>
+            <span id="live-elo-top" class="live-elo"></span>
+          </span>
+          <span id="live-clock-top" class="live-clock">--:--</span>
+        </div>
+        <div id="live-board" class="live-board" aria-label="Scacchiera in diretta"></div>
+        <div class="live-player-row">
+          <span class="live-player-info">
+            <span id="live-title-bot" class="live-title"></span>
+            <span id="live-name-bot" class="live-name">?</span>
+            <span id="live-elo-bot" class="live-elo"></span>
+          </span>
+          <span id="live-clock-bot" class="live-clock">--:--</span>
+        </div>
+      </div>
+
+      <div class="section-cta">
+        <a id="live-link" href="#" target="_blank" rel="noopener" class="btn btn-outline btn-sm">
+          Apri su Lichess &rarr;
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    import { Chess } from 'chess.js';
+    (function () {
+      const section = document.getElementById('live-section');
+      if (!section) return;
+      const username = section.dataset.lichessUser;
+      const board = document.getElementById('live-board');
+      const meta = document.getElementById('live-meta');
+      const link = document.getElementById('live-link');
+      if (!username || !board || !link) return;
+
+      const PIECE_CDN = 'https://lichess1.org/assets/piece/cburnett/';
+      const resultEl = document.getElementById('live-result');
+      let gameFinished = false;
+
+      const nameTop = document.getElementById('live-name-top');
+      const nameBot = document.getElementById('live-name-bot');
+      const titleTop = document.getElementById('live-title-top');
+      const titleBot = document.getElementById('live-title-bot');
+      const eloTop = document.getElementById('live-elo-top');
+      const eloBot = document.getElementById('live-elo-bot');
+      const clockTop = document.getElementById('live-clock-top');
+      const clockBot = document.getElementById('live-clock-bot');
+
+      let currentlyPlaying = false;
+      let currentGameId = null;
+      let streamAbort = null;
+      let orientationBlack = false;
+      let playerNames = { white: '', black: '' };
+      let playerTitles = { white: '', black: '' };
+      let playerElos = { white: '', black: '' };
+      let clocks = { w: null, b: null };
+      let turn = 'w';
+      let clockTicker = null;
+      let lastTickAt = 0;
+      let seenMoves = 0;
+      let syncTimer = null;
+
+      function buildBoard() {
+        board.innerHTML = '';
+        for (let i = 0; i < 64; i++) {
+          const sq = document.createElement('div');
+          const row = Math.floor(i / 8);
+          const col = i % 8;
+          sq.className = 'sq ' + ((row + col) % 2 === 0 ? 'sq-l' : 'sq-d');
+          // Coordinate: file sulla riga in basso, rank sulla colonna di sinistra
+          if (row === 7) {
+            const file = document.createElement('span');
+            file.className = 'sq-coord sq-file';
+            file.textContent = String.fromCharCode(97 + (orientationBlack ? 7 - col : col));
+            sq.appendChild(file);
+          }
+          if (col === 0) {
+            const rank = document.createElement('span');
+            rank.className = 'sq-coord sq-rank';
+            rank.textContent = String(orientationBlack ? row + 1 : 8 - row);
+            sq.appendChild(rank);
+          }
+          board.appendChild(sq);
+        }
+      }
+
+      function squareToIdx(sq) {
+        // sq es. "e4" → idx 0..63 (dalla prospettiva bianco)
+        const file = sq.charCodeAt(0) - 97; // a=0..h=7
+        const rank = parseInt(sq[1], 10);     // 1..8
+        const idx = (8 - rank) * 8 + file;
+        return orientationBlack ? 63 - idx : idx;
+      }
+
+      function clearHighlights() {
+        for (const sq of board.children) sq.classList.remove('sq-last');
+      }
+
+      function applyLastMove(lm) {
+        clearHighlights();
+        if (!lm || lm.length < 4) return;
+        const from = lm.slice(0, 2);
+        const to = lm.slice(2, 4);
+        const fi = squareToIdx(from);
+        const ti = squareToIdx(to);
+        if (board.children[fi]) board.children[fi].classList.add('sq-last');
+        if (board.children[ti]) board.children[ti].classList.add('sq-last');
+      }
+
+      function renderFen(fen) {
+        const rows = fen.split(' ')[0].split('/');
+        const parts = fen.split(' ');
+        if (parts[1]) turn = parts[1];
+        const squares = board.children;
+        // Espandi FEN in array 64 di caratteri ('' = vuoto)
+        const target = new Array(64).fill('');
+        let idx = 0;
+        for (let r = 0; r < 8; r++) {
+          for (const ch of rows[r]) {
+            if (/\d/.test(ch)) idx += Number(ch);
+            else { target[idx] = ch; idx++; }
+          }
+        }
+        for (let i = 0; i < 64; i++) {
+          const viewIdx = orientationBlack ? 63 - i : i;
+          const sq = squares[viewIdx];
+          if (!sq) continue;
+          const want = target[i];
+          const cur = sq.querySelector('.pc');
+          const wantCode = want ? (want === want.toUpperCase() ? 'w' : 'b') + want.toUpperCase() : '';
+          if (!want) {
+            if (cur) cur.remove();
+          } else {
+            if (cur && cur.dataset.code === wantCode) continue;
+            if (cur) cur.remove();
+            const img = document.createElement('img');
+            img.className = 'pc';
+            img.src = PIECE_CDN + wantCode + '.svg';
+            img.alt = '';
+            img.draggable = false;
+            img.dataset.code = wantCode;
+            sq.appendChild(img);
+          }
+        }
+      }
+
+      function extractName(side) {
+        if (!side) return '';
+        if (side.userId) return side.userId;
+        if (side.user && side.user.name) return side.user.name;
+        if (side.name) return side.name;
+        return '';
+      }
+
+      function formatClock(sec) {
+        if (sec == null || sec < 0) return '--:--';
+        const s = Math.floor(sec);
+        const m = Math.floor(s / 60);
+        const r = s % 60;
+        return m + ':' + (r < 10 ? '0' : '') + r;
+      }
+
+      function renderClocks() {
+        const topSide = orientationBlack ? 'w' : 'b';
+        const botSide = orientationBlack ? 'b' : 'w';
+        clockTop.textContent = formatClock(clocks[topSide]);
+        clockBot.textContent = formatClock(clocks[botSide]);
+        clockTop.classList.toggle('live-clock-active', turn === topSide);
+        clockBot.classList.toggle('live-clock-active', turn === botSide);
+        clockTop.classList.toggle('live-clock-low', clocks[topSide] != null && clocks[topSide] < 30);
+        clockBot.classList.toggle('live-clock-low', clocks[botSide] != null && clocks[botSide] < 30);
+      }
+
+      function renderNames() {
+        const topSide = orientationBlack ? 'white' : 'black';
+        const botSide = orientationBlack ? 'black' : 'white';
+        nameTop.textContent = playerNames[topSide] || '?';
+        nameBot.textContent = playerNames[botSide] || '?';
+        titleTop.textContent = playerTitles[topSide] || '';
+        titleBot.textContent = playerTitles[botSide] || '';
+        eloTop.textContent = playerElos[topSide] ? playerElos[topSide] : '';
+        eloBot.textContent = playerElos[botSide] ? playerElos[botSide] : '';
+      }
+
+      function startClockTicker() {
+        stopClockTicker();
+        lastTickAt = Date.now();
+        clockTicker = setInterval(function () {
+          const now = Date.now();
+          const dt = (now - lastTickAt) / 1000;
+          lastTickAt = now;
+          if (clocks[turn] != null) {
+            clocks[turn] = Math.max(0, clocks[turn] - dt);
+            renderClocks();
+          }
+        }, 200);
+      }
+
+      function stopClockTicker() {
+        if (clockTicker) { clearInterval(clockTicker); clockTicker = null; }
+      }
+
+      let snapshotTimer = null;
+      let lastPgn = '';
+      let lastRenderedMoves = 0;
+      let animTimer = null;
+
+      function parseTag(pgn, tag) {
+        const m = pgn.match(new RegExp('\\[' + tag + ' "([^"]*)"'));
+        return m ? m[1] : '';
+      }
+
+      function parseLastClocks(pgn) {
+        // Trova tutti i commenti [%clk H:MM:SS] — si alternano: bianco, nero, bianco, nero…
+        const body = pgn.split('\n\n').slice(1).join('\n\n');
+        const regex = /\[%clk\s+(\d+):(\d+):(\d+)\]/g;
+        const arr = [];
+        let m;
+        while ((m = regex.exec(body)) !== null) {
+          arr.push(parseInt(m[1], 10) * 3600 + parseInt(m[2], 10) * 60 + parseInt(m[3], 10));
+        }
+        // L'ultimo clock del bianco = ultimo a indice pari (0-based); del nero = ultimo a indice dispari
+        let wc = null, bc = null;
+        for (let i = 0; i < arr.length; i++) {
+          if (i % 2 === 0) wc = arr[i]; else bc = arr[i];
+        }
+        return { wc: wc, bc: bc };
+      }
+
+      async function fetchSnapshot(gameId) {
+        // Apriamo una nuova connessione stream e leggiamo solo il PRIMO evento:
+        // Lichess lo genera al momento del connect (non è caché) quindi contiene
+        // sempre la posizione attuale — a differenza di /game/export che è caché.
+        const ac = new AbortController();
+        const timer = setTimeout(function () { ac.abort(); }, 5000);
+        try {
+          const t0 = performance.now();
+          const res = await fetch('https://lichess.org/api/stream/game/' + gameId, {
+            signal: ac.signal,
+            cache: 'no-store',
+            headers: { 'Accept': 'application/x-ndjson' }
+          });
+          if (!res.ok || !res.body) { clearTimeout(timer); return; }
+          const reader = res.body.getReader();
+          const decoder = new TextDecoder();
+          let buf = '';
+          let gotFen = false;
+          let eventsProcessed = 0;
+          // Legge finché riceviamo un evento con fen (posizione vera) o 3 eventi max
+          while (!gotFen && eventsProcessed < 3) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buf += decoder.decode(value, { stream: true });
+            let nl;
+            while ((nl = buf.indexOf('\n')) !== -1) {
+              const line = buf.slice(0, nl).trim();
+              buf = buf.slice(nl + 1);
+              if (!line) continue;
+              try {
+                const parsed = JSON.parse(line);
+                applyStreamEvent(parsed);
+                eventsProcessed++;
+                if (parsed.fen) { gotFen = true; break; }
+              } catch (_) {}
+            }
+          }
+          try { reader.cancel(); } catch (_) {}
+        } catch (_) {
+          /* ignore */
+        } finally {
+          clearTimeout(timer);
+        }
+        return;
+        // --- Fallback vecchio (PGN via game export) — disabilitato, era caché ---
+        try {
+          const t0 = performance.now();
+          const res = await fetch(
+            'https://lichess.org/game/export/' + gameId + '?moves=true&tags=true&clocks=true&evals=false&opening=false',
+            { cache: 'no-store', headers: { 'Accept': 'application/x-chess-pgn' } }
+          );
+          if (!res.ok) return;
+          const pgn = await res.text();
+          if (pgn === lastPgn) return; // niente cambiato, skip
+          lastPgn = pgn;
+
+          const result = parseTag(pgn, 'Result');
+          if (result && result !== '*') {
+            stopStream();
+            section.hidden = true;
+            currentlyPlaying = false;
+            currentGameId = null;
+            return;
+          }
+
+          // Nomi giocatori + titolo + elo
+          const w = parseTag(pgn, 'White') || 'Bianco';
+          const b = parseTag(pgn, 'Black') || 'Nero';
+          const wt = parseTag(pgn, 'WhiteTitle');
+          const bt = parseTag(pgn, 'BlackTitle');
+          const we = parseTag(pgn, 'WhiteElo');
+          const be = parseTag(pgn, 'BlackElo');
+          if (w !== playerNames.white || b !== playerNames.black || wt !== playerTitles.white || bt !== playerTitles.black || we !== playerElos.white || be !== playerElos.black) {
+            const orientationChanged = w !== playerNames.white || b !== playerNames.black;
+            playerNames.white = w; playerNames.black = b;
+            playerTitles.white = wt; playerTitles.black = bt;
+            playerElos.white = we; playerElos.black = be;
+            if (orientationChanged) {
+              orientationBlack = b.toLowerCase() === username.toLowerCase();
+              buildBoard();
+            }
+            renderNames();
+          }
+
+          // Riproduci le mosse con chess.js per ottenere FEN + ultima mossa
+          const game = new Chess();
+          try {
+            game.loadPgn(pgn, { strict: false });
+          } catch (err) {
+            return;
+          }
+          const fen = game.fen();
+          const history = game.history({ verbose: true });
+          const last = history.length ? history[history.length - 1] : null;
+
+          const moveCount = history.length;
+
+          // Se saltiamo 2+ mosse rispetto a quanto mostrato, animiamo le intermedie
+          const gap = moveCount - lastRenderedMoves;
+          if (animTimer) { clearTimeout(animTimer); animTimer = null; }
+
+          if (gap > 1 && lastRenderedMoves > 0) {
+            // Ricostruisci le FEN intermedie
+            const replay = new Chess();
+            const uciList = history.map(function (h) { return { from: h.from, to: h.to, fen: null }; });
+            for (let i = 0; i < history.length; i++) {
+              replay.move(history[i]);
+              uciList[i].fen = replay.fen();
+            }
+            // Parti da (lastRenderedMoves + 1) e vai fino a moveCount
+            const animateStep = function (idx) {
+              if (idx > moveCount) {
+                animTimer = null;
+                return;
+              }
+              const step = uciList[idx - 1];
+              renderFen(step.fen);
+              applyLastMove(step.from + step.to);
+              lastRenderedMoves = idx;
+              if (idx < moveCount) {
+                animTimer = setTimeout(function () { animateStep(idx + 1); }, 250);
+              } else {
+                animTimer = null;
+              }
+            };
+            animateStep(lastRenderedMoves + 1);
+          } else {
+            renderFen(fen);
+            if (last) applyLastMove(last.from + last.to); else clearHighlights();
+            lastRenderedMoves = moveCount;
+          }
+
+          // Clock: aggiorna solo quando cambia il numero di mosse
+          if (moveCount !== seenMoves) {
+            seenMoves = moveCount;
+            const cl = parseLastClocks(pgn);
+            if (cl.wc != null) clocks.w = cl.wc;
+            if (cl.bc != null) clocks.b = cl.bc;
+            renderClocks();
+            lastTickAt = Date.now();
+          }
+          if (!clockTicker) startClockTicker();
+        } catch (e) {
+        }
+      }
+
+      function startSnapshotLoop(gameId) {
+        stopSnapshotLoop();
+        lastPgn = '';
+        // Stream = canale principale, push in tempo reale quando la rete coopera.
+        startPushStream(gameId);
+        // Safety net contro il buffering HTTP: polling leggero ogni 2s.
+        // "Skip se PGN identico" + "update clocks solo a mossa nuova" fanno sì che
+        // non sprechi lavoro se lo stream sta già consegnando in tempo.
+        fetchSnapshot(gameId);
+        snapshotTimer = setInterval(function () { fetchSnapshot(gameId); }, 2000);
+      }
+
+      function stopSnapshotLoop() {
+        if (snapshotTimer) { clearInterval(snapshotTimer); snapshotTimer = null; }
+      }
+
+      let initialFen = 'startpos';
+
+      const STATUS_LABELS = {
+        mate: 'Scacco matto',
+        resign: 'Abbandono',
+        stalemate: 'Stallo',
+        timeout: 'Tempo scaduto',
+        draw: 'Patta',
+        outoftime: 'Tempo scaduto',
+        cheat: 'Barare',
+        noStart: 'Partita non iniziata',
+        unknownFinish: 'Partita conclusa',
+        variantEnd: 'Partita conclusa'
+      };
+
+      function showResultBanner(statusName, winner) {
+        const label = STATUS_LABELS[statusName] || statusName || 'Partita conclusa';
+        let winText = '';
+        if (winner === 'white') winText = ' — vince ' + (playerNames.white || 'bianco');
+        else if (winner === 'black') winText = ' — vince ' + (playerNames.black || 'nero');
+        else if (statusName === 'draw' || statusName === 'stalemate') winText = ' — patta';
+        resultEl.textContent = label + winText;
+        resultEl.hidden = false;
+      }
+
+      function hideResultBanner() {
+        resultEl.hidden = true;
+        resultEl.textContent = '';
+      }
+
+      function checkGameOver(status, winner) {
+        const st = status && (typeof status === 'string' ? status : status.name);
+        if (st && st !== 'started' && st !== 'created') {
+          // Ferma flussi attivi ma NON nascondiamo la sezione: la manteniamo visibile
+          // con il banner risultato fino a che non parte una nuova partita o refresh
+          stopStream();
+          stopClockTicker();
+          gameFinished = true;
+          currentlyPlaying = false;
+          showResultBanner(st, winner);
+          return true;
+        }
+        return false;
+      }
+
+      function applyStreamEvent(ev) {
+        // --- Formato VECCHIO (public stream senza "type") ---
+        // Primo evento: { id, variant, players:{white:{...}, black:{...}}, initialFen, ... }
+        // Eventi mossa: { fen, lm, wc, bc }
+        if (!ev.type) {
+          if (ev.players) {
+            // Bootstrap
+            const wp = ev.players.white || {};
+            const bp = ev.players.black || {};
+            const w = (wp.user && wp.user.name) || wp.userId || wp.name || 'Bianco';
+            const b = (bp.user && bp.user.name) || bp.userId || bp.name || 'Nero';
+            playerNames.white = w; playerNames.black = b;
+            playerTitles.white = (wp.user && wp.user.title) || '';
+            playerTitles.black = (bp.user && bp.user.title) || '';
+            playerElos.white = wp.rating ? String(wp.rating) : '';
+            playerElos.black = bp.rating ? String(bp.rating) : '';
+            const newOrientation = b.toLowerCase() === username.toLowerCase();
+            const orientationChanged = newOrientation !== orientationBlack;
+            orientationBlack = newOrientation;
+            initialFen = ev.initialFen === 'startpos' || !ev.initialFen
+              ? 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
+              : ev.initialFen;
+            // Ricostruisci la scacchiera solo se serve (primo bootstrap o orientamento cambiato)
+            if (board.children.length !== 64 || orientationChanged) buildBoard();
+            renderNames();
+            // Renderizza la FEN del bootstrap SOLO se la scacchiera è ancora vuota.
+            // Sui reconnect il bootstrap contiene la FEN iniziale, non quella attuale,
+            // quindi la ignoriamo per non resettare la posizione corrente.
+            const hasPieces = board.querySelector('.pc');
+            if (ev.fen && !hasPieces) renderFen(ev.fen);
+            if (ev.lastMove && !hasPieces) applyLastMove(ev.lastMove);
+            if (checkGameOver(ev.status, ev.winner)) return;
+            if (!clockTicker) startClockTicker();
+            return;
+          }
+          // Evento con fen. Due casi:
+          // 1. Mossa vera → ha lm (last move) → applichiamo sempre
+          // 2. Snapshot bootstrap del reconnect → NO lm → la fen può essere iniziale
+          //    (non quella attuale); applichiamo solo se la scacchiera è vuota
+          const hasPieces = board.querySelector('.pc');
+          if (ev.fen && (ev.lm || !hasPieces)) {
+            renderFen(ev.fen);
+            if (ev.lm) applyLastMove(ev.lm);
+          }
+          // I clock nel snapshot bootstrap sono iniziali (non attuali): applichiamo
+          // solo se c'è una mossa vera (lm) oppure se i clock non sono ancora stati impostati
+          if (ev.lm || clocks.w == null) {
+            if (typeof ev.wc === 'number') clocks.w = ev.wc;
+            if (typeof ev.bc === 'number') clocks.b = ev.bc;
+          }
+          renderClocks();
+          lastTickAt = Date.now();
+          if (!clockTicker) startClockTicker();
+          checkGameOver(ev.status, ev.winner);
+          return;
+        }
+
+        // --- Formato NUOVO (con "type": "gameFull" / "gameState") ---
+        if (ev.type === 'gameFull') {
+          // Bootstrap completo della partita dal primo evento
+          const w = (ev.white && (ev.white.name || ev.white.id)) || 'Bianco';
+          const b = (ev.black && (ev.black.name || ev.black.id)) || 'Nero';
+          const we = (ev.white && ev.white.rating) ? String(ev.white.rating) : '';
+          const be = (ev.black && ev.black.rating) ? String(ev.black.rating) : '';
+          const wt = (ev.white && ev.white.title) || '';
+          const bt = (ev.black && ev.black.title) || '';
+
+          playerNames.white = w; playerNames.black = b;
+          playerTitles.white = wt; playerTitles.black = bt;
+          playerElos.white = we; playerElos.black = be;
+          const newOrientation = b.toLowerCase() === username.toLowerCase();
+          const orientationChanged = newOrientation !== orientationBlack;
+          orientationBlack = newOrientation;
+          initialFen = ev.initialFen === 'startpos' || !ev.initialFen
+            ? 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
+            : ev.initialFen;
+
+          if (board.children.length !== 64 || orientationChanged) buildBoard();
+          renderNames();
+
+          // Renderizza la FEN iniziale SOLO se la scacchiera è ancora vuota.
+          // Sui reconnect questo evento ha la FEN di partenza, non quella attuale:
+          // la ignoriamo per preservare la posizione già visibile.
+          const hasPieces = board.querySelector('.pc');
+          if (!hasPieces) {
+            if (ev.fen) renderFen(ev.fen);
+            else renderFen(initialFen);
+          }
+
+          // Se gameFull contiene già uno state con moves, applicalo
+          if (ev.state) applyGameState(ev.state);
+          if (checkGameOver(ev.status, ev.winner)) return;
+          return;
+        }
+
+        if (ev.type === 'gameState') {
+          applyGameState(ev);
+          return;
+        }
+      }
+
+      function applyGameState(st) {
+        if (checkGameOver(st.status, st.winner)) return;
+
+        // Ricostruisci la posizione dalla lista UCI
+        const movesStr = (st.moves || '').trim();
+        const moves = movesStr ? movesStr.split(/\s+/) : [];
+
+        let fen = initialFen;
+        let lastMove = null;
+        if (moves.length) {
+          const game = new Chess(initialFen);
+          for (const uci of moves) {
+            const m = {
+              from: uci.slice(0, 2),
+              to: uci.slice(2, 4),
+              promotion: uci.length > 4 ? uci.slice(4, 5) : undefined
+            };
+            try { game.move(m); } catch (_) { break; }
+          }
+          fen = game.fen();
+          lastMove = moves[moves.length - 1];
+        }
+
+        renderFen(fen);
+        if (lastMove) applyLastMove(lastMove); else clearHighlights();
+
+        if (typeof st.wtime === 'number') clocks.w = st.wtime / 1000;
+        if (typeof st.btime === 'number') clocks.b = st.btime / 1000;
+        renderClocks();
+        lastTickAt = Date.now();
+        if (!clockTicker) startClockTicker();
+
+        seenMoves = moves.length;
+        lastRenderedMoves = moves.length;
+      }
+
+      async function startPushStream(gameId) {
+        if (streamAbort) streamAbort.abort();
+        streamAbort = new AbortController();
+        const myAbort = streamAbort;
+        try {
+          const res = await fetch('https://lichess.org/api/stream/game/' + gameId, {
+            signal: streamAbort.signal,
+            cache: 'no-store',
+            headers: { 'Accept': 'application/x-ndjson' }
+          });
+          if (!res.ok || !res.body) throw new Error('stream non ok: ' + res.status);
+          const reader = res.body.getReader();
+          const decoder = new TextDecoder();
+          let buf = '';
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buf += decoder.decode(value, { stream: true });
+            let nl;
+            while ((nl = buf.indexOf('\n')) !== -1) {
+              const line = buf.slice(0, nl).trim();
+              buf = buf.slice(nl + 1);
+              if (!line) continue;
+              try { applyStreamEvent(JSON.parse(line)); } catch (_) {}
+            }
+          }
+          // Se lo stream si chiude mentre la partita è ancora attiva, riconnetti
+          if (currentGameId === gameId && !myAbort.signal.aborted) {
+            setTimeout(function () {
+              if (currentGameId === gameId) startPushStream(gameId);
+            }, 1000);
+          }
+        } catch (e) {
+          if (e.name !== 'AbortError') {
+            setTimeout(function () {
+              if (currentGameId === gameId) startPushStream(gameId);
+            }, 2000);
+          }
+        }
+      }
+
+      function stopStream() {
+        if (streamAbort) { streamAbort.abort(); streamAbort = null; }
+        stopSnapshotLoop();
+        stopClockTicker();
+      }
+
+      function countPgnMoves(pgn) {
+        const body = pgn.split('\n\n').slice(1).join('\n\n').trim();
+        if (!body) return 0;
+        const tokens = body.replace(/\{[^}]*\}/g, '').replace(/\d+\.(\.\.)?/g, '').trim().split(/\s+/);
+        return tokens.filter(function (t) {
+          return t && t !== '*' && t !== '1-0' && t !== '0-1' && t !== '1/2-1/2';
+        }).length;
+      }
+
+      async function syncCheck() {
+        if (!currentGameId) return;
+        try {
+          const res = await fetch(
+            'https://lichess.org/api/user/' + username + '/current-game?moves=true&tags=false&clocks=false&evals=false&opening=false',
+            { cache: 'no-store', headers: { 'Accept': 'application/x-chess-pgn' } }
+          );
+          if (!res.ok) return;
+          const pgn = await res.text();
+          const actual = countPgnMoves(pgn);
+          if (actual > seenMoves) {
+            const gid = currentGameId;
+            if (streamAbort) { streamAbort.abort(); streamAbort = null; }
+            streamGame(gid);
+          }
+        } catch (_) {}
+      }
+
+      function startSync() {
+        stopSync();
+        syncTimer = setInterval(syncCheck, 2000);
+      }
+
+      function stopSync() {
+        if (syncTimer) { clearInterval(syncTimer); syncTimer = null; }
+      }
+
+      async function fetchCurrentGameId() {
+        try {
+          const res = await fetch(
+            'https://lichess.org/api/user/' + username + '/current-game?moves=false&tags=true&clocks=false&evals=false&opening=false',
+            { cache: 'no-store', headers: { 'Accept': 'application/x-chess-pgn' } }
+          );
+          if (!res.ok) return null;
+          const pgn = await res.text();
+          const resultMatch = pgn.match(/\[Result "([^"]+)"/);
+          if (resultMatch && resultMatch[1] !== '*') return null;
+          const m = pgn.match(/\[Site "https?:\/\/lichess\.org\/([a-zA-Z0-9]{8})/);
+          return m ? m[1] : null;
+        } catch (e) { return null; }
+      }
+
+      async function check() {
+        try {
+          const res = await fetch(
+            'https://lichess.org/api/users/status?ids=' + username,
+            { cache: 'no-store' }
+          );
+          if (!res.ok) return;
+          const data = await res.json();
+          const playing = Array.isArray(data) && data[0] && data[0].playing === true;
+          if (playing) {
+            const gameId = await fetchCurrentGameId();
+            if (gameId && gameId !== currentGameId) {
+              // Nuova partita: reset completo, rimuovi eventuale banner risultato
+              currentGameId = gameId;
+              seenMoves = 0;
+              gameFinished = false;
+              hideResultBanner();
+              // Reset visivo immediato: scacchiera in posizione iniziale, clocks e
+              // metadati vuoti. Verranno popolati dal bootstrap dello stream.
+              playerNames = { white: '', black: '' };
+              playerTitles = { white: '', black: '' };
+              playerElos = { white: '', black: '' };
+              clocks = { w: null, b: null };
+              turn = 'w';
+              lastRenderedMoves = 0;
+              orientationBlack = false;
+              buildBoard();
+              renderFen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+              clearHighlights();
+              renderNames();
+              renderClocks();
+              link.href = 'https://lichess.org/' + gameId;
+              section.hidden = false;
+              currentlyPlaying = true;
+              startSnapshotLoop(gameId);
+            } else if (gameId) {
+              section.hidden = false;
+              currentlyPlaying = true;
+            }
+          } else if (!playing) {
+            // Non sta giocando. Se stiamo mostrando una partita finita,
+            // NON nascondiamo niente (il banner resta visibile fino al refresh
+            // o fino all'inizio di una nuova partita)
+            if (!gameFinished && !currentGameId) {
+              section.hidden = true;
+            }
+            if (currentlyPlaying && !gameFinished) {
+              // La partita sembra terminata ma non abbiamo ricevuto evento di fine
+              // (può capitare se lo stream era buffered). Forziamo fine senza winner.
+              stopStream();
+              stopClockTicker();
+              currentlyPlaying = false;
+              gameFinished = true;
+              showResultBanner('unknownFinish', null);
+            }
+          }
+        } catch (_) { /* ignore */ }
+      }
+
+      buildBoard();
+      check();
+      setInterval(check, 10000);
+    })();
+  </script>
+
   <!-- Prossimi eventi -->
   <section class="section section-events">
     <div class="section-bg-pattern" aria-hidden="true"></div>
@@ -558,6 +1315,191 @@ const boardPieces: Record<number, string> = {
       background-attachment: scroll;
     }
   }
+
+  /* =============================================
+     LIVE (Lichess)
+     ============================================= */
+  .section-live {
+    position: relative;
+    background:
+      radial-gradient(ellipse at 70% 20%, rgba(212,160,84,0.10) 0%, transparent 55%),
+      var(--bg-primary);
+  }
+
+  .live-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #e23b3b;
+    box-shadow: 0 0 0 0 rgba(226,59,59,0.7);
+    animation: livePulse 1.6s ease-out infinite;
+    margin-left: 0.4rem;
+  }
+
+  @keyframes livePulse {
+    0%   { box-shadow: 0 0 0 0 rgba(226,59,59,0.7); }
+    70%  { box-shadow: 0 0 0 12px rgba(226,59,59,0); }
+    100% { box-shadow: 0 0 0 0 rgba(226,59,59,0); }
+  }
+
+  .live-result[hidden] {
+    display: none;
+  }
+
+  .live-result {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1.5rem;
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--accent);
+    text-shadow: 0 2px 12px rgba(0,0,0,0.6);
+    background: rgba(12, 9, 7, 0.72);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border-radius: var(--radius-lg);
+    animation: resultIn 0.3s ease-out;
+  }
+
+  @keyframes resultIn {
+    from { opacity: 0; backdrop-filter: blur(0); }
+    to { opacity: 1; backdrop-filter: blur(4px); }
+  }
+
+  .live-frame-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 0.5rem;
+    border-radius: var(--radius-lg);
+    background: #17130f;
+    box-shadow: 0 16px 50px rgba(0,0,0,0.45);
+  }
+
+  .live-player-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 0.55rem 0.5rem;
+    font-size: 1rem;
+    line-height: 1.1;
+  }
+
+  .live-player-info {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.45rem;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .live-title {
+    color: var(--accent);
+    font-weight: 800;
+    font-size: 0.85em;
+    letter-spacing: 0.03em;
+  }
+
+  .live-title:empty { display: none; }
+
+  .live-name {
+    font-weight: 600;
+    color: #f0e6d2;
+  }
+
+  .live-elo {
+    color: rgba(240,230,210,0.5);
+    font-size: 0.88em;
+    font-weight: 500;
+  }
+
+  .live-elo:empty { display: none; }
+
+  .live-clock {
+    font-family: 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: rgba(240,230,210,0.55);
+    letter-spacing: 0.02em;
+    transition: color 0.2s;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .live-clock-active {
+    color: #f0e6d2;
+  }
+
+  .live-clock-low {
+    color: #e88a3a;
+  }
+
+  .live-clock-active.live-clock-low {
+    color: #ff6b3a;
+  }
+
+  .live-board {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .live-board :global(.sq) {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .live-board :global(.sq-l) { background: #f0d9b5; }
+  .live-board :global(.sq-d) { background: #b58863; }
+  .live-board :global(.sq-last) { background: #cdd26a !important; }
+
+  .live-board :global(.pc) {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    user-select: none;
+    pointer-events: none;
+    position: relative;
+    z-index: 1;
+  }
+
+  .live-board :global(.sq-coord) {
+    position: absolute;
+    font-size: 0.65rem;
+    font-weight: 700;
+    font-family: var(--font-body);
+    line-height: 1;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .live-board :global(.sq-file) {
+    bottom: 2px;
+    right: 3px;
+  }
+
+  .live-board :global(.sq-rank) {
+    top: 2px;
+    left: 3px;
+  }
+
+  /* colore coordinate: inverso del quadretto */
+  .live-board :global(.sq-l) :global(.sq-coord) { color: #b58863; }
+  .live-board :global(.sq-d) :global(.sq-coord) { color: #f0d9b5; }
 
   /* =============================================
      EVENTS
