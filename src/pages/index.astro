@@ -2,6 +2,9 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
 
+// Flag per abilitare/disabilitare la sezione partita live Lichess
+const LIVE_ENABLED = false;
+
 const allNotizie = await getCollection('notizie');
 const notizie = allNotizie
   .sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime())
@@ -104,6 +107,7 @@ const boardPieces: Record<number, string> = {
     </div>
   </section>
 
+  {LIVE_ENABLED && (
   <!-- Partita in diretta da Lichess -->
   <section
     id="live-section"
@@ -860,6 +864,7 @@ const boardPieces: Record<number, string> = {
       setInterval(check, 10000);
     })();
   </script>
+  )}
 
   <!-- Prossimi eventi -->
   <section class="section section-events">
