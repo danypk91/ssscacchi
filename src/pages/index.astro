@@ -905,17 +905,6 @@ const boardPieces: Record<number, string> = {
             </div>
           </article>
         ))}
-        {prossimieventi.length === 1 && (
-          <aside class="events-companion">
-            <div class="events-companion-piece" aria-hidden="true">&#9822;</div>
-            <div class="events-companion-body">
-              <span class="events-companion-eyebrow">Calendario torneistico</span>
-              <h3>Tutti i tornei del circolo</h3>
-              <p>Esplora il programma della stagione, i bandi e gli archivi delle edizioni passate.</p>
-              <a href="/tornei" class="btn btn-outline btn-sm">Vai ai tornei &rarr;</a>
-            </div>
-          </aside>
-        )}
       </div>
     </div>
   </section>
@@ -1540,70 +1529,8 @@ const boardPieces: Record<number, string> = {
   }
 
   .events-grid--single {
-    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
-    align-items: stretch;
-  }
-
-  .events-companion {
-    position: relative;
-    overflow: hidden;
-    border-radius: var(--radius-lg);
-    border: 1px dashed rgba(212, 160, 84, 0.3);
-    background:
-      radial-gradient(ellipse at top right, rgba(212, 160, 84, 0.05) 0%, transparent 55%),
-      radial-gradient(ellipse at bottom left, rgba(107, 58, 42, 0.08) 0%, transparent 60%),
-      var(--bg-card);
-    padding: 2rem 2rem 2rem 2.25rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-  }
-
-  .events-companion-piece {
-    position: absolute;
-    top: 50%;
-    right: -1.5rem;
-    transform: translateY(-50%);
-    font-size: 12rem;
-    line-height: 1;
-    color: var(--accent);
-    opacity: 0.1;
-    pointer-events: none;
-    filter: drop-shadow(0 4px 16px rgba(212, 160, 84, 0.2));
-  }
-
-  .events-companion-body {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: 0.6rem;
-    max-width: 34ch;
-  }
-
-  .events-companion-eyebrow {
-    font-size: 0.78rem;
-    color: var(--accent);
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-  }
-
-  .events-companion h3 {
-    font-size: 1.35rem;
-    margin: 0;
-    color: var(--text);
-  }
-
-  .events-companion p {
-    color: var(--text-secondary);
-    font-size: 0.95rem;
-    line-height: 1.55;
-    margin: 0;
-  }
-
-  .events-companion .btn {
-    align-self: flex-start;
-    margin-top: 0.4rem;
+    grid-template-columns: minmax(320px, 560px);
+    justify-content: center;
   }
 
   .event-card {
@@ -1905,20 +1832,6 @@ const boardPieces: Record<number, string> = {
   }
 
   @media (max-width: 900px) {
-    .events-grid--single {
-      grid-template-columns: 1fr;
-    }
-
-    .events-companion {
-      padding: 1.75rem;
-    }
-
-    .events-companion-piece {
-      font-size: 9rem;
-      right: -1rem;
-      opacity: 0.08;
-    }
-
     .hero-grid {
       grid-template-columns: 1fr;
       text-align: center;
