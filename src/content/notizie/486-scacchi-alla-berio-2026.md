@@ -1,7 +1,7 @@
 ---
 title: "Scacchi alla Berio 2026"
 date: "2026-05-16"
-excerpt: "Si è tenuto oggi, 16 maggio, un torneo scacchi alla Biblioteca Berio organizzato dal nostro circolo."
+excerpt: "Si è tenuto oggi, 16 maggio, un torneo scacchi alla Biblioteca Berio organizzato dal nostro circolo. ..."
 ---
 Si è tenuto oggi, **16 maggio**, il torneo "Scacchi alla Biblioteca Berio" organizzato dal nostro circolo presso la sala Lignea della Biblioteca Berio.<br>
 L'evento ha coinvolto 34 partecipanti amanti degli scacchi che non si sono mai confrontati in un contesto agonistico.<br>
