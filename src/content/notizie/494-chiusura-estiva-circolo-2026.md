@@ -5,8 +5,8 @@ excerpt: "Arriva l'estate e anche il Circolo Scacchistico Santa Sabina si conced
 ---
 
 Arriva l'estate e anche il Circolo Scacchistico Santa Sabina si concede qualche pausa secondo il seguente calendario:
-- *Attività giovani del sabato mattina: ultima lezione il 18 luglio e ricominceranno il 19 settembre*
-- *Attività del venerdì pomeriggio: ultimo giorno il 17 luglio e ricominceranno il 18 settembre*
-- *Attività serali del martedì: ultimo giorno il 14 luglio e ricominceranno l'8 settembre*
+- *Sabato mattina: ultima lezione il 18 luglio e ricominceranno il 19 settembre*
+- *Venerdì pomeriggio: ultimo giorno il 17 luglio e ricominceremo il 18 settembre*
+- *Martedì sera: ultimo giorno il 14 luglio e ricominceremo l'8 settembre*
 <br>
 *Buona estate a tutti*
