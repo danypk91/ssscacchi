@@ -5,7 +5,7 @@ date: "2025-12-09"
 excerpt: "5 turni su 1 giornata"
 bando: ""
 vesus: "https://vesus.org/tournament/IGz7VCUX"
-fotoAlbum: "https://www.santasabinascacchi.it/fotografie/2025/2025_regine_scacchi"
+fotoAlbum: "https://www.santasabinascacchi.it/fotografie/2025/le_regine_degli_scacchi/"
 ---
 
 5 turni su 1 giornata
