@@ -1,7 +1,7 @@
 ---
 title: "XXII WE Valbisagno"
 year: 2024
-date: "2024-010-18"
+date: "2024-10-18"
 excerpt: "5 turni su 3 giornate"
 bando: ""
 vesus: "https://vesus.org/event/jDeZi2w5"
