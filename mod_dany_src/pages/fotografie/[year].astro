@@ -1,0 +1,185 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { listFolders } from '../../lib/r2';
+
+export async function getStaticPaths() {
+  const yearFolders = await listFolders('foto/');
+  return yearFolders.map((prefix) => {
+    // prefix = "foto/2023/"
+    const year = prefix.replace(/^foto\//, '').replace(/\/$/, '');
+    return { params: { year } };
+  });
+}
+
+const { year } = Astro.params;
+const albumFolders = await listFolders(`foto/${year}/`);
+
+const albums = albumFolders.map((prefix) => {
+  // prefix = "foto/2023/2023_xxi_we_valbisagno/"
+  const slug = prefix.replace(`foto/${year}/`, '').replace(/\/$/, '');
+  const name = slug
+    .replace(/^\d{4}_/, '')
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+  return { slug, name };
+});
+---
+
+<BaseLayout title={`Fotografie ${year}`} description={`Gallerie fotografiche anno ${year} - Circolo Scacchi Santa Sabina`}>
+  <section class="page-header">
+    <div class="page-header-bg" aria-hidden="true"></div>
+    <div class="page-header-decor" aria-hidden="true">&#9815;</div>
+    <div class="container">
+      <h1>Fotografie {year}</h1>
+      <p class="page-header-sub">
+        <a href="/fotografie" class="back-link">&larr; Tutti gli anni</a>
+      </p>
+    </div>
+  </section>
+
+  <section class="section section-body">
+    <div class="section-texture" aria-hidden="true"></div>
+    <div class="container">
+      {albums.length > 0 ? (
+        <div class="album-grid">
+          {albums.map((album) => (
+            <a href={`/fotografie/${year}/${album.slug}`} class="card album-card">
+              <div class="album-icon">&#9816;</div>
+              <h2 class="album-name">{album.name}</h2>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <p class="no-content">Nessun album trovato per il {year}.</p>
+      )}
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .page-header {
+    position: relative;
+    padding: 5rem 0 3rem;
+    overflow: hidden;
+    text-align: center;
+  }
+  .page-header-bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 30% 50%, rgba(212,160,84,0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 70% 80%, rgba(107,58,42,0.12) 0%, transparent 50%),
+      linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  }
+  .page-header-decor {
+    position: absolute;
+    right: 10%;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: clamp(120px, 18vw, 220px);
+    color: rgba(212,160,84,0.06);
+    pointer-events: none;
+    user-select: none;
+    line-height: 1;
+  }
+  .page-header .container {
+    position: relative;
+    z-index: 1;
+  }
+  .page-header h1 {
+    font-size: clamp(2rem, 4vw, 3rem);
+    margin-bottom: 0.5rem;
+  }
+
+  .back-link {
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 1rem;
+    transition: color 0.2s;
+  }
+  .back-link:hover {
+    color: var(--accent-hover);
+  }
+
+  .section-body {
+    position: relative;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse at 80% 20%, rgba(212,160,84,0.04) 0%, transparent 50%),
+      var(--bg-primary);
+  }
+  .section-texture {
+    position: absolute;
+    inset: 0;
+    opacity: 0.015;
+    background: repeating-linear-gradient(
+      -45deg,
+      transparent, transparent 20px,
+      rgba(212,160,84,1) 20px, rgba(212,160,84,1) 21px
+    );
+    pointer-events: none;
+  }
+  .section-body .container {
+    position: relative;
+    z-index: 1;
+  }
+
+  .album-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.25rem;
+  }
+
+  .album-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 2rem 1rem;
+    color: inherit;
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+  }
+  .album-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    background: radial-gradient(circle at 50% 40%, rgba(212,160,84,0.08) 0%, transparent 70%);
+    transition: opacity 0.3s;
+  }
+  .album-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    border-color: rgba(212,160,84,0.25);
+  }
+  .album-card:hover::before {
+    opacity: 1;
+  }
+
+  .album-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.75rem;
+    color: var(--accent);
+    transition: transform 0.3s;
+    position: relative;
+  }
+  .album-card:hover .album-icon {
+    transform: scale(1.12);
+  }
+
+  .album-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    position: relative;
+  }
+
+  .no-content {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 3rem 0;
+  }
+</style>

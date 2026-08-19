@@ -1,0 +1,8 @@
+---
+title: "Torneo sociale Grand Prix 2015"
+date: "2015-10-06"
+excerpt: "Martedì 3 novembresi è svolta la nona e penultima tappa del torneo sociale Grand Prix lampo 2015 con le consuete modalità di svolgimento: 7 turni e 5 minuti di tempo di riflessione.   Ha vinto la t..."
+---
+
+**Martedì 3 novembre**si è svolta la nona e penultima tappa del torneo sociale Grand Prix lampo 2015 con le consuete modalità di svolgimento: 7 turni e 5 minuti di tempo di riflessione. 
+ Ha vinto la tappa Lorenzo Algeri con sette punti (!!), seguito da Marco Rossi e da da Ruzhdi Tusha, rispettivamente con cinque e quattro punti ([bando e regolamento](https://santasabina.altervista.org/images/tornei/2015/2015_gp_lampo/2015_gp_lampo_bando.pdf), [classifica](https://santasabina.altervista.org/index.php/tornei/2-non-categorizzato/77-torneo-sociale-grand-prix-2015))

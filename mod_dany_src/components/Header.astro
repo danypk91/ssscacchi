@@ -1,0 +1,198 @@
+---
+const currentPath = Astro.url.pathname;
+
+const navLinks = [
+  { href: '/', label: 'Home' },
+  { href: '/chi-siamo', label: 'Chi Siamo' },
+  { href: '/notizie', label: 'Notizie' },
+  { href: '/tornei', label: 'Tornei' },
+  { href: '/biblioteca', label: 'Biblioteca' },
+  { href: '/fotografie', label: 'Fotografie' },
+  { href: '/link', label: 'Link' },
+  { href: '/contatti', label: 'Contatti' },
+];
+---
+
+<header class="header">
+  <div class="container header-inner">
+    <a href="/" class="logo">
+      <img src="/images/logo-gold.png" alt="Logo Circolo Scacchi Santa Sabina" class="logo-img" />
+      <div class="logo-text">
+        <span class="logo-name">Santa Sabina</span>
+        <span class="logo-sub">Circolo Scacchi</span>
+      </div>
+    </a>
+
+    <button class="mobile-toggle" aria-label="Menu" aria-expanded="false">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <nav class="nav" role="navigation">
+      {navLinks.map(link => (
+        <a
+          href={link.href}
+          class:list={['nav-link', { active: currentPath === link.href || (link.href !== '/' && currentPath.startsWith(link.href)) }]}
+        >
+          {link.label}
+        </a>
+      ))}
+    </nav>
+  </div>
+</header>
+
+<style>
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(26, 20, 16, 0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 4.5rem;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--text-primary);
+  }
+
+  .logo:hover {
+    color: var(--text-primary);
+  }
+
+  .logo-img {
+    height: 3rem;
+    width: auto;
+    object-fit: contain;
+  }
+
+  .logo-name {
+    font-family: var(--font-heading);
+    font-size: 1.3rem;
+    font-weight: 700;
+    display: block;
+    line-height: 1.1;
+  }
+
+  .logo-sub {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+  }
+
+  .nav {
+    display: flex;
+    gap: 0.25rem;
+  }
+
+  .nav-link {
+    padding: 0.5rem 0.85rem;
+    border-radius: var(--radius);
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+
+  .nav-link:hover {
+    color: var(--text-primary);
+    background: var(--accent-glow);
+  }
+
+  .nav-link.active {
+    color: var(--accent);
+    background: var(--accent-glow);
+  }
+
+  .mobile-toggle {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+  }
+
+  .mobile-toggle span {
+    display: block;
+    width: 24px;
+    height: 2px;
+    background: var(--text-primary);
+    border-radius: 2px;
+    transition: transform 0.3s, opacity 0.3s;
+  }
+
+  .mobile-toggle.active span:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+  }
+
+  .mobile-toggle.active span:nth-child(2) {
+    opacity: 0;
+  }
+
+  .mobile-toggle.active span:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+  }
+
+  @media (max-width: 900px) {
+    .mobile-toggle {
+      display: flex;
+    }
+
+    .nav {
+      position: absolute;
+      top: 4.5rem;
+      left: 0;
+      right: 0;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      flex-direction: column;
+      padding: 0 1rem;
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: max-height 0.3s ease, opacity 0.2s ease, padding 0.3s ease;
+    }
+
+    .nav.open {
+      max-height: 500px;
+      opacity: 1;
+      padding: 1rem;
+    }
+
+    .nav-link {
+      padding: 0.75rem 1rem;
+    }
+  }
+</style>
+
+<script>
+  const toggle = document.querySelector('.mobile-toggle');
+  const nav = document.querySelector('.nav');
+
+  toggle?.addEventListener('click', () => {
+    const isOpen = nav?.classList.toggle('open');
+    toggle.setAttribute('aria-expanded', String(isOpen));
+    toggle.classList.toggle('active', !!isOpen);
+  });
+
+  nav?.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', () => {
+      nav.classList.remove('open');
+      toggle?.setAttribute('aria-expanded', 'false');
+      toggle?.classList.remove('active');
+    });
+  });
+</script>
