@@ -1,11 +1,11 @@
 ---
 title: "Torneo sociale di autunno 2026"
 date: "2026-10-13"
-excerpt: "Il consueto Torneo Sociale di autunno si svolge su sette turni, da martedì  13 ottobre a martedì 24 novembre presso i locali del Circolo. La cadenza di gioco è di 50 minuti con incremento di 20\" a moss..."
+excerpt: "Il consueto Torneo Sociale di autunno si svolge su sette turni, da martedì  13 ottobre a martedì 24 novembre presso i locali del Circolo. La cadenza di gioco è di 50 minuti con incremento di 20 secondi a moss..."
 ---
 
 Il consueto **Torneo Sociale di autunno**si svolge su **sette turni, da martedì  13 ottobre a martedì 24 novembre**presso i locali del Circolo.
-La cadenza di gioco è di 50 minuti con incremento di 20" a mossa.
+La cadenza di gioco è di 50 minuti con incremento di 20 secondi a mossa.
 **L'inizio di ciascun turno è fissato alle ore 21,15**.
 
 Gli abbinamenti saranno effettuati dieci minuti prima dell’inizio di ogni singolo turno e, in caso di ritardo, è obbligatorio avvisare entro le ore 21,00 del giorno nel quale si effettua il turno
