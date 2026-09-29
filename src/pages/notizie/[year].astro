@@ -20,7 +20,7 @@ export async function getStaticPaths() {
 const { year, items, years } = Astro.props;
 ---
 
-<BaseLayout title={`Notizie ${year}`} description={`Notizie dal Circolo Scacchi Santa Sabina - Anno ${year}.`}>
+<BaseLayout title={`Notizie ${year}`} description={`Notizie ${year} dal Circolo Scacchi Santa Sabina di Genova: tornei, risultati ed eventi.`} noindex={Number(year) === new Date().getFullYear()}>
   <section class="page-header">
     <div class="page-header-bg" aria-hidden="true"></div>
     <div class="page-header-decor" aria-hidden="true">&#9819;</div>

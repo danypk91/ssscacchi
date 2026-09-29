@@ -3,13 +3,44 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import Analytics from '@vercel/analytics/astro';
 import '../styles/global.css';
+import { club, SITE_URL } from '../data/club';
 
 interface Props {
   title: string;
   description?: string;
+  /** Se true, usa `title` così com'è senza suffisso (solo home). */
+  rawTitle?: boolean;
+  /** Path assoluto (es. /images/x.jpg) o URL completo */
+  image?: string;
+  type?: 'website' | 'article';
+  noindex?: boolean;
+  /** Uno o più oggetti JSON-LD già completi di @context */
+  jsonLd?: object | object[];
+  /** ISO date, solo per type=article */
+  publishedTime?: string;
 }
 
-const { title, description = 'Circolo Scacchi Santa Sabina - Genova. Tornei, corsi per giovani, eventi scacchistici.' } = Astro.props;
+const {
+  title,
+  description = club.description,
+  rawTitle = false,
+  image = club.ogImage,
+  type = 'website',
+  noindex = false,
+  jsonLd,
+  publishedTime,
+} = Astro.props;
+
+const fullTitle = rawTitle ? title : `${title} | Circolo Scacchi Santa Sabina Genova`;
+
+// Canonical: sempre dominio www, senza slash finale (tranne la root)
+let path = Astro.url.pathname.replace(/\/index\.html$/, '/').replace(/\.html$/, '');
+if (path.length > 1) path = path.replace(/\/+$/, '');
+const canonical = `${SITE_URL}${path}`;
+
+const imageUrl = image.startsWith('http') ? image : `${SITE_URL}${image}`;
+const cleanDescription = description.replace(/\s*(\.\.\.|…)\s*$/, '').trim();
+const ldList = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
 ---
 
 <!DOCTYPE html>
@@ -17,13 +48,43 @@ const { title, description = 'Circolo Scacchi Santa Sabina - Genova. Tornei, cor
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content={description} />
-  <title>{title} | Santa Sabina Scacchi</title>
+  <title>{fullTitle}</title>
+  <meta name="description" content={cleanDescription} />
+  <link rel="canonical" href={canonical} />
+  {noindex && <meta name="robots" content="noindex, follow" />}
+
+  <!-- Open Graph -->
+  <meta property="og:type" content={type} />
+  <meta property="og:site_name" content={club.name} />
+  <meta property="og:locale" content="it_IT" />
+  <meta property="og:title" content={fullTitle} />
+  <meta property="og:description" content={cleanDescription} />
+  <meta property="og:url" content={canonical} />
+  <meta property="og:image" content={imageUrl} />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content={club.name} />
+  {type === 'article' && publishedTime && <meta property="article:published_time" content={publishedTime} />}
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content={fullTitle} />
+  <meta name="twitter:description" content={cleanDescription} />
+  <meta name="twitter:image" content={imageUrl} />
+
+  <meta name="theme-color" content="#1a1410" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet" />
-  <link rel="icon" type="image/png" href="/favicon-256.png" />
   <link rel="icon" href="/favicon.ico" sizes="32x32" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" type="image/png" href="/favicon-256.png" />
+  <link rel="apple-touch-icon" href="/favicon-256.png" />
+  <link rel="sitemap" href="/sitemap-index.xml" />
+
+  {ldList.map((ld) => (
+    <script type="application/ld+json" set:html={JSON.stringify(ld)} />
+  ))}
   <Analytics />
 </head>
 <body>

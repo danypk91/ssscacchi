@@ -1,4 +1,5 @@
 ---
+import { club, fullAddress } from '../data/club';
 const year = new Date().getFullYear();
 ---
 
@@ -9,7 +10,7 @@ const year = new Date().getFullYear();
         <div class="footer-logo">
           <span class="footer-icon" aria-hidden="true">&#9822;</span>
           <div>
-            <strong>Santa Sabina Scacchi</strong>
+            <strong>{club.name}</strong>
             <a href="https://www.facebook.com/santa.sabina.92/?locale=it_IT" target="_blank" rel="noopener noreferrer">ASD U.S. ACLI Santa Sabina</a>
           </div>
         </div>
@@ -21,24 +22,26 @@ const year = new Date().getFullYear();
       <div class="footer-col">
         <h4>Orari</h4>
         <ul class="footer-list">
-          <li><strong>Martedì</strong> 21:15 – 23:30</li>
-          <li><strong>Venerdì</strong> 15:00 – 17:30</li>
-          <!-- <li><strong>Venerdì</strong> 21:15 – 23:00</li> -->
-          <li><strong>Sabato</strong> 10:00 – 11:30 (giovani)</li>
+          {club.hours.map((h) => (
+            <li><strong>{h.day}</strong> {h.opens} – {h.closes}{h.note && ` (${h.note})`}</li>
+          ))}
         </ul>
       </div>
 
       <div class="footer-col">
         <h4>Contatti</h4>
         <ul class="footer-list">
-          <li>Via Donghi 8, Genova</li>
+          <li>{fullAddress}</li>
           <li>
-            <a href="mailto:santasabinascacchi@gmail.com">santasabinascacchi@gmail.com</a>
+            <a href={`mailto:${club.email}`}>{club.email}</a>
           </li>
           <li>
-            <a href="https://www.facebook.com/profile.php?id=100090810611492" target="_blank" rel="noopener">
+            <a href={club.social.facebook} target="_blank" rel="noopener">
               Facebook
             </a>
+          </li>
+          <li>
+            <a href={club.social.instagram} target="_blank" rel="noopener">Instagram</a>
           </li>
         </ul>
       </div>

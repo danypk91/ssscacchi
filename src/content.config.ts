@@ -25,6 +25,8 @@ const tornei = defineCollection({
       label: z.string(),
       file: z.string(),
     })).optional(),
+    luogo: z.string().optional(),      // es. "Palazzo Reale"
+    indirizzo: z.string().optional(),  // es. "Via Balbi 10, 16126 Genova"
   }),
 });
 

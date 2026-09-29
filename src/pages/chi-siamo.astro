@@ -1,8 +1,13 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { club, clubJsonLd } from '../data/club';
 ---
 
-<BaseLayout title="Chi Siamo" description="Storia, missione e attività del Circolo Scacchi Santa Sabina di Genova.">
+<BaseLayout
+  title="Chi Siamo – Storia del circolo"
+  description="Storia, consiglio direttivo, orari e quote del Circolo Scacchi Santa Sabina di Genova, affiliato FSI e CONI. Istruttori FSI per i più giovani."
+  jsonLd={clubJsonLd}
+>
   <section class="page-header">
     <div class="page-header-bg" aria-hidden="true"></div>
     <div class="page-header-decor" aria-hidden="true">&#9822;</div>
@@ -84,18 +89,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
           <div class="card sidebar-card">
             <h3>Orari di Apertura</h3>
             <ul class="schedule">
-              <li>
-                <strong>Martedì</strong>
-                <span>21:15 – 23:30</span>
-              </li>
-              <li>
-                <strong>Venerdì</strong>
-                <span>15:00 – 17:30</span>
-              </li>
-              <li>
-                <strong>Sabato</strong><em>(giovani)</em>
-                <span>10:00 – 11:30</span>
-              </li>
+              {club.hours.map((h) => (
+                <li>
+                  <strong>{h.day}</strong>{h.note && <em>({h.note})</em>}
+                  <span>{h.opens} – {h.closes}</span>
+                </li>
+              ))}
             </ul>
             <p class="schedule-note">Il sabato mattina è dedicato ai più giovani con la presenza di istruttori FSI</p>
             <p class="schedule-note">Il venerdì pomeriggio, gioco libero per gli adulti e presenza di istruttori FSI per seguire i più giovani</p>

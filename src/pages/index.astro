@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
+import { clubJsonLd, websiteJsonLd } from '../data/club';
 
 // Flag per abilitare/disabilitare la sezione partita live Lichess
 const LIVE_ENABLED = false;
@@ -71,7 +72,12 @@ const boardPieces: Record<number, string> = {
 };
 ---
 
-<BaseLayout title="Home">
+<BaseLayout
+  title="Circolo Scacchi Santa Sabina Genova – Corsi e Tornei"
+  rawTitle
+  description="Circolo di scacchi a Genova (San Fruttuoso – Marassi), affiliato FSI. Corsi per bambini e ragazzi, gioco libero, tornei omologati. Via Donghi 8."
+  jsonLd={[websiteJsonLd, clubJsonLd]}
+>
   <!-- Hero -->
   <section class="hero">
     <!-- Atmospheric background -->
@@ -922,11 +928,15 @@ const boardPieces: Record<number, string> = {
                 <span><svg class="meta-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg> {ev.desc}</span>
               </div>
               <div class="event-buttons">
-                {ev.buttons.map(btn => (
-                  <a href={btn.link} target="_blank" rel="noopener" class="btn btn-outline btn-sm">
-                    {btn.label} &rarr;
-                  </a>
-                ))}
+                {ev.buttons.map(btn => {
+                  const isExternal = btn.link.startsWith('http');
+                  const href = isExternal ? btn.link : `/${btn.link.replace(/^\//, '')}`;
+                  return (
+                    <a href={href} class="btn btn-outline btn-sm" {...(isExternal ? { target: '_blank', rel: 'noopener' } : {})}>
+                      {btn.label} &rarr;
+                    </a>
+                  );
+                })}
               </div>
             </div>
           </article>

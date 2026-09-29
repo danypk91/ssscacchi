@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getCollection, render } from 'astro:content';
+import { SITE_URL, CLUB_ID, club, clubPlace, breadcrumbJsonLd } from '../../data/club';
 
 export async function getStaticPaths() {
   const tornei = await getCollection('tornei');
@@ -20,16 +21,48 @@ function resolveUrl(path: string | undefined) {
 }
 const bandoUrl = resolveUrl(entry.data.bando);
 const classificaUrl = resolveUrl(entry.data.classifica);
-const fotoAlbum = resolveUrl(entry.data.fotoAlbum);
+const fotoAlbum = resolveUrl(entry.data.fotoAlbum)?.replace('https://www.santasabinascacchi.it', '') ?? null;
 const isCurrent = new Date(entry.data.date) > new Date();
 const vesusLabel = isCurrent ? 'Iscriviti su VeSuS' : 'Classifica e abbinamenti';
 const documenti = (entry.data.documenti || []).map((d: {label: string; file: string}) => ({
   label: d.label,
   url: resolveUrl(d.file)!,
 }));
+
+const url = `${SITE_URL}/tornei/${entry.id}`;
+const metaDescription = `${entry.data.title}: torneo di scacchi a Genova organizzato dal Circolo Scacchi Santa Sabina. ${entry.data.excerpt}. Bando, classifica e foto.`;
+const location = entry.data.luogo
+  ? {
+      '@type': 'Place',
+      name: entry.data.luogo,
+      address: entry.data.indirizzo ?? 'Genova',
+    }
+  : clubPlace;
+const eventLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SportsEvent',
+  name: entry.data.title,
+  description: metaDescription,
+  sport: 'Scacchi',
+  startDate: entry.data.date,
+  eventStatus: 'https://schema.org/EventScheduled',
+  eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+  location,
+  image: [`${SITE_URL}${club.ogImage}`],
+  url,
+  organizer: { '@type': 'SportsClub', '@id': CLUB_ID, name: club.name, url: SITE_URL },
+  ...(entry.data.vesus && isCurrent
+    ? { offers: { '@type': 'Offer', url: entry.data.vesus, availability: 'https://schema.org/InStock' } }
+    : {}),
+};
+const crumbs = breadcrumbJsonLd([
+  { name: 'Home', path: '/' },
+  { name: 'Tornei', path: '/tornei' },
+  { name: entry.data.title, path: `/tornei/${entry.id}` },
+]);
 ---
 
-<BaseLayout title={entry.data.title} description={entry.data.excerpt}>
+<BaseLayout title={entry.data.title} description={metaDescription} jsonLd={[eventLd, crumbs]}>
   <article class="article-page">
     <div class="article-bg" aria-hidden="true"></div>
     <div class="article-texture" aria-hidden="true"></div>
@@ -37,7 +70,7 @@ const documenti = (entry.data.documenti || []).map((d: {label: string; file: str
       <a href="/tornei" class="back-link">&larr; Tutti i tornei</a>
       <div class="article-head">
         <div class="article-accent-bar" aria-hidden="true"></div>
-        <time>{new Date(entry.data.date).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })}</time>
+        <time datetime={entry.data.date}>{new Date(entry.data.date).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })}</time>
         <h1>{entry.data.title}</h1>
       </div>
 
@@ -59,7 +92,7 @@ const documenti = (entry.data.documenti || []).map((d: {label: string; file: str
             </a>
           )}
           {fotoAlbum && (
-            <a href={fotoAlbum} target="_blank" rel="noopener" class="btn btn-outline btn-sm">
+            <a href={fotoAlbum} class="btn btn-outline btn-sm" {...(fotoAlbum.startsWith('http') ? { target: '_blank', rel: 'noopener' } : {})}>
               Fotografie
             </a>
           )}
