@@ -35,6 +35,15 @@ const { set = 'merida' } = Astro.props;
   </div>
 
   <aside class="pz-side">
+    <!-- box grande di esito (risolto / soluzione mostrata) -->
+    <button class="pz-done" data-done hidden>
+      <span class="pz-done-badge" data-done-badge>✓</span>
+      <span class="pz-done-text">
+        <strong data-done-title>Esatto!</strong>
+        <small>Prossimo puzzle →</small>
+      </span>
+    </button>
+
     <div class="pz-status" data-status>
       <p class="pz-turn" data-turn>Carico il puzzle…</p>
       <p class="pz-feedback" data-feedback hidden></p>
@@ -48,7 +57,6 @@ const { set = 'merida' } = Astro.props;
     <div class="pz-actions">
       <button class="pz-btn" data-hint>Suggerimento</button>
       <button class="pz-btn" data-solution>Vedi soluzione</button>
-      <button class="pz-btn pz-btn-primary" data-next hidden>Prossimo puzzle →</button>
     </div>
 
     <p class="pz-source" data-source hidden></p>
@@ -81,21 +89,34 @@ const { set = 'merida' } = Astro.props;
     touch-action: manipulation;
   }
 
-  /* maniglia di ridimensionamento in basso a destra */
+  /* maniglia di ridimensionamento in basso a destra (trattini, stile lichess) */
   .pz-resize {
     position: absolute;
-    right: -2px; bottom: -2px;
+    right: -9px; bottom: -9px;
     width: 22px; height: 22px;
     cursor: nwse-resize;
     z-index: 4;
     touch-action: none;
-    background:
-      linear-gradient(135deg, transparent 50%, var(--accent) 50%);
-    opacity: 0.5;
-    border-bottom-right-radius: 4px;
-    transition: opacity 0.2s;
   }
-  .pz-resize:hover { opacity: 0.9; }
+  .pz-resize::before,
+  .pz-resize::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    height: 2px;
+    background: var(--accent);
+    border-radius: 1px;
+  }
+  .pz-resize::before {
+    width: 12px;
+    transform: translate(5px, 8px) rotate(-45deg);
+  }
+  .pz-resize::after {
+    width: 7px;
+    transform: translate(8px, 11px) rotate(-45deg);
+  }
+  .pz-resize:hover::before,
+  .pz-resize:hover::after { background: var(--accent-hover); }
   .pz-sq { position: relative; cursor: pointer; }
   /* case leggermente piu' chiare (meno cupe di prima) */
   .pz-sq-l {
@@ -162,6 +183,45 @@ const { set = 'merida' } = Astro.props;
   .pz-coords span { color: rgba(245,240,232,0.55); }
 
   .pz-side { display: flex; flex-direction: column; gap: 1rem; }
+
+  /* box grande di esito, stile lichess (grande, colorato, cliccabile) */
+  .pz-done {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    width: 100%;
+    text-align: left;
+    padding: 1.1rem 1.3rem;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    color: #0f2410;
+    background: #7bbf5a;
+    box-shadow: 0 8px 24px rgba(123,191,90,0.3);
+    transition: background 0.2s, transform 0.1s;
+    animation: pzDoneIn 0.3s ease-out;
+  }
+  .pz-done:hover { background: #8fcf6c; }
+  .pz-done:active { transform: translateY(1px); }
+  .pz-done.is-solution { background: #d9b45a; box-shadow: 0 8px 24px rgba(217,180,90,0.3); }
+  .pz-done.is-solution:hover { background: #e6c270; }
+  .pz-done-badge {
+    flex: 0 0 auto;
+    width: 38px; height: 38px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; font-weight: 700;
+    background: rgba(255,255,255,0.35);
+    border-radius: 50%;
+  }
+  .pz-done-text { display: flex; flex-direction: column; line-height: 1.25; }
+  .pz-done-text strong { font-size: 1.1rem; text-transform: uppercase; letter-spacing: 0.03em; }
+  .pz-done-text small { font-size: 0.9rem; opacity: 0.85; font-weight: 600; }
+
+  @keyframes pzDoneIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
   .pz-status {
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -245,8 +305,18 @@ const { set = 'merida' } = Astro.props;
     const sourceEl = root.querySelector<HTMLElement>('[data-source]')!;
     const btnHint = root.querySelector<HTMLButtonElement>('[data-hint]')!;
     const btnSolution = root.querySelector<HTMLButtonElement>('[data-solution]')!;
-    const btnNext = root.querySelector<HTMLButtonElement>('[data-next]')!;
+    const doneEl = root.querySelector<HTMLButtonElement>('[data-done]')!;
+    const doneTitleEl = root.querySelector<HTMLElement>('[data-done-title]')!;
+    const doneBadgeEl = root.querySelector<HTMLElement>('[data-done-badge]')!;
     const set = root.dataset.set || 'merida';
+
+    // mostra il box di esito, grande ed evidente
+    function showDone(kind: 'ok' | 'solution') {
+      doneEl.hidden = false;
+      doneEl.classList.toggle('is-solution', kind === 'solution');
+      doneTitleEl.textContent = kind === 'ok' ? 'Esatto!' : 'Soluzione';
+      doneBadgeEl.textContent = kind === 'ok' ? '✓' : '♟';
+    }
 
     let chess: InstanceType<typeof Chess>;
     let puzzle: Puzzle;
@@ -449,7 +519,7 @@ const { set = 'merida' } = Astro.props;
           solved = true;
           feedback('Esatto! Puzzle risolto.', 'ok');
           setTurnLabel();
-          btnNext.hidden = false;
+          showDone('ok');
           btnHint.disabled = true; btnSolution.disabled = true;
           return;
         }
@@ -464,7 +534,8 @@ const { set = 'merida' } = Astro.props;
           if (solveIndex >= solutionMoves.length) {
             solved = true;
             feedback('Esatto! Puzzle risolto.', 'ok');
-            btnNext.hidden = false;
+            showDone('ok');
+            btnHint.disabled = true; btnSolution.disabled = true;
           }
         }, 400);
       } else {
@@ -504,7 +575,8 @@ const { set = 'merida' } = Astro.props;
       if (solved) return;
       function playNext() {
         if (solveIndex >= solutionMoves.length) {
-          solved = true; setTurnLabel(); btnNext.hidden = false;
+          solved = true; setTurnLabel(); showDone('solution');
+          btnHint.disabled = true; btnSolution.disabled = true;
           feedback('Questa era la soluzione.', 'ok');
           return;
         }
@@ -517,7 +589,7 @@ const { set = 'merida' } = Astro.props;
       playNext();
     });
 
-    btnNext.addEventListener('click', () => loadNext());
+    doneEl.addEventListener('click', () => loadNext());
 
     // --- Caricamento di un puzzle ---
     function loadPuzzle(p: Puzzle) {
@@ -526,7 +598,8 @@ const { set = 'merida' } = Astro.props;
       solveIndex = 0;
       clearSel();
       fbEl.hidden = true;
-      btnNext.hidden = true;
+      doneEl.hidden = true;
+      doneEl.classList.remove('is-solution');
       btnHint.disabled = false; btnSolution.disabled = false;
 
       chess = new Chess(p.fen);
