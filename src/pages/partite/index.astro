@@ -16,9 +16,14 @@ const games = raw
     const opening = classifyPgn(d.pgn);
     const chess = new Chess();
     chess.loadPgn(d.pgn);
+    const players = `${d.white} – ${d.black}`;
     return {
       slug: entry.id,
-      title: d.nickname || `${d.white} – ${d.black}`,
+      title: d.nickname || players,
+      // Se il titolo e' gia' il nickname, sotto mostriamo i giocatori;
+      // altrimenti evitiamo di ripeterli.
+      showPlayers: Boolean(d.nickname),
+      players,
       white: d.white,
       black: d.black,
       year: d.year,
@@ -46,18 +51,20 @@ const crumbs = breadcrumbJsonLd([
   { name: 'Partite', path: '/partite' },
 ]);
 
-// Mini-scacchiera FEN -> griglia di glifi Unicode (leggera, niente immagini).
-const UNI: Record<string, string> = {
-  P: '\u2659', N: '\u2658', B: '\u2657', R: '\u2656', Q: '\u2655', K: '\u2654',
-  p: '\u265F', n: '\u265E', b: '\u265D', r: '\u265C', q: '\u265B', k: '\u265A',
-};
-function fenToRows(fen: string): string[][] {
+// Mini-scacchiera FEN -> griglia di codici pezzo (es. "wP", "bK") o '' per casa vuota.
+// Usa gli stessi SVG merida del visualizzatore di dettaglio.
+const PIECE_SET = 'merida';
+function fenToPieces(fen: string): (string | null)[][] {
   const board = fen.split(' ')[0];
   return board.split('/').map((row) => {
-    const cells: string[] = [];
+    const cells: (string | null)[] = [];
     for (const ch of row) {
-      if (/\d/.test(ch)) for (let i = 0; i < +ch; i++) cells.push('');
-      else cells.push(UNI[ch] ?? '');
+      if (/\d/.test(ch)) {
+        for (let i = 0; i < +ch; i++) cells.push(null);
+      } else {
+        const color = ch === ch.toUpperCase() ? 'w' : 'b';
+        cells.push(color + ch.toUpperCase());
+      }
     }
     return cells;
   });
@@ -105,15 +112,17 @@ function fenToRows(fen: string): string[][] {
               >
                 <a href={`/partite/${g.slug}`} class="arch-link">
                   <div class="arch-mini" aria-hidden="true">
-                    {fenToRows(g.fen).map((row, r) => (
+                    {fenToPieces(g.fen).map((row, r) => (
                       row.map((pc, c) => (
-                        <span class:list={['mini-sq', (r + c) % 2 === 0 ? 'mini-l' : 'mini-d']}>{pc}</span>
+                        <span class:list={['mini-sq', (r + c) % 2 === 0 ? 'mini-l' : 'mini-d']}>
+                          {pc && <img src={`/pieces/${PIECE_SET}/${pc}.svg`} alt="" loading="lazy" draggable="false" />}
+                        </span>
                       ))
                     ))}
                   </div>
                   <div class="arch-info">
                     <h2 class="arch-title">{g.title}</h2>
-                    <p class="arch-players">{g.white} – {g.black}</p>
+                    {g.showPlayers && <p class="arch-players">{g.players}</p>}
                     <p class="arch-sub2">
                       {[g.place, g.year].filter(Boolean).join(', ')}
                       <span class="arch-result">{g.result}</span>
@@ -202,18 +211,34 @@ function fenToRows(fen: string): string[][] {
   .arch-mini {
     display: grid;
     grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
     aspect-ratio: 1 / 1;
     width: 100%;
+    border-bottom: 1px solid var(--border);
   }
   .mini-sq {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: clamp(10px, 2.2vw, 16px);
-    line-height: 1;
+    position: relative;
   }
-  .mini-l { background: #cda162; }
-  .mini-d { background: #6e3c28; }
+  /* Stesso legno del visualizzatore di dettaglio */
+  .mini-l {
+    background:
+      linear-gradient(135deg, rgba(255,255,255,0.05), rgba(0,0,0,0.05)),
+      linear-gradient(135deg, #e3bd84, #cda162);
+  }
+  .mini-d {
+    background:
+      linear-gradient(135deg, rgba(255,255,255,0.04), rgba(0,0,0,0.08)),
+      linear-gradient(135deg, #804a34, #5c3120);
+  }
+  .mini-sq img {
+    width: 86%;
+    height: 86%;
+    object-fit: contain;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));
+  }
 
   .arch-info { padding: 1rem 1.1rem 1.2rem; }
   .arch-title {

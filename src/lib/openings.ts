@@ -7,11 +7,16 @@
 //
 // Uso solo a build-time (legge i .tsv da filesystem).
 
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { Chess } from 'chess.js';
 import { familyFromName } from '../data/opening-families';
+
+// Import dei dataset come testo (bundlati da Vite): niente accesso a filesystem,
+// cosi' funziona anche nella build di produzione.
+import tsvA from '../data/openings/a.tsv?raw';
+import tsvB from '../data/openings/b.tsv?raw';
+import tsvC from '../data/openings/c.tsv?raw';
+import tsvD from '../data/openings/d.tsv?raw';
+import tsvE from '../data/openings/e.tsv?raw';
 
 export interface OpeningInfo {
   eco: string;
@@ -20,8 +25,7 @@ export interface OpeningInfo {
   variation: string; // parte dopo i ":" del nome, se presente
 }
 
-const DIR = path.dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = path.join(DIR, '..', 'data', 'openings');
+const TSV_FILES = [tsvA, tsvB, tsvC, tsvD, tsvE];
 
 // Chiave posizione = primi 4 campi della FEN (pezzi, tratto, arrocchi, en passant).
 // Ignora i contatori di mossa, cosi' le trasposizioni combaciano.
@@ -35,9 +39,7 @@ function loadTable(): Map<string, { eco: string; name: string }> {
   if (_table) return _table;
   const table = new Map<string, { eco: string; name: string }>();
 
-  for (const vol of ['a', 'b', 'c', 'd', 'e']) {
-    const file = path.join(DATA_DIR, `${vol}.tsv`);
-    const text = fs.readFileSync(file, 'utf8');
+  for (const text of TSV_FILES) {
     const lines = text.split('\n');
     // prima riga = intestazione
     for (let i = 1; i < lines.length; i++) {
