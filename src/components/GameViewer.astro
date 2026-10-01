@@ -65,7 +65,7 @@ const commentsJson = JSON.stringify(comments);
     gap: 1.5rem;
     align-items: start;
   }
-  .gv-main { min-width: 0; }
+  .gv-main { min-width: 0; display: flex; flex-direction: column; }
 
   .gv-board-wrap {
     position: relative;
@@ -154,8 +154,13 @@ const commentsJson = JSON.stringify(comments);
   .gv-btn:active { transform: translateY(1px); }
   .gv-btn-play.playing { background: var(--accent); color: #2a1a0e; border-color: var(--accent); }
 
-  /* lista mosse */
-  .gv-side { min-width: 0; }
+  /* lista mosse: alta come la scacchiera (colonna stretch) */
+  .gv-side {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
   .gv-moves {
     list-style: none;
     margin: 0;
@@ -163,7 +168,8 @@ const commentsJson = JSON.stringify(comments);
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    max-height: 420px;
+    flex: 1 1 auto;
+    min-height: 0;
     overflow-y: auto;
     display: grid;
     grid-template-columns: 2.2rem 1fr 1fr;
@@ -209,8 +215,39 @@ const commentsJson = JSON.stringify(comments);
   }
 
   @media (max-width: 860px) {
-    .gv { grid-template-columns: 1fr; }
-    .gv-moves { max-height: 200px; }
+    .gv {
+      grid-template-columns: 1fr;
+      align-items: start;
+      gap: 1rem;
+    }
+    .gv-side { min-height: 0; }
+    /* su mobile la lista non deve essere alta come la scacchiera */
+    .gv-moves {
+      flex: none;
+      max-height: 220px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .gv-board-wrap { max-width: 100%; }
+    .gv-controls {
+      gap: 0.4rem;
+      margin-top: 0.8rem;
+    }
+    /* pulsanti piu' comodi al tocco, su una riga sola se possibile */
+    .gv-btn {
+      min-width: 0;
+      flex: 1 1 0;
+      height: 48px;
+      padding: 0 0.3rem;
+      font-size: 0.95rem;
+    }
+    .gv-coords { font-size: 0.5rem; }
+    .gv-moves {
+      grid-template-columns: 1.8rem 1fr 1fr;
+      font-size: 0.88rem;
+      max-height: 200px;
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -488,10 +525,28 @@ const commentsJson = JSON.stringify(comments);
       }
     });
 
+    // Allinea l'altezza della lista mosse a quella della scacchiera (desktop).
+    const sideEl = root.querySelector<HTMLElement>('.gv-side');
+    const boardWrap = root.querySelector<HTMLElement>('.gv-board-wrap');
+    function syncSideHeight() {
+      if (!sideEl || !boardWrap) return;
+      // solo su layout a due colonne (desktop)
+      const twoCols = window.matchMedia('(min-width: 861px)').matches;
+      if (twoCols) {
+        sideEl.style.height = boardWrap.offsetHeight + 'px';
+      } else {
+        sideEl.style.height = '';
+      }
+    }
+    const roBoard = new ResizeObserver(syncSideHeight);
+    if (boardWrap) roBoard.observe(boardWrap);
+    window.addEventListener('resize', syncSideHeight);
+
     // init
     buildMoveList();
     buildCoords();
     render(0, false);
+    syncSideHeight();
   }
 
   function boot() {
