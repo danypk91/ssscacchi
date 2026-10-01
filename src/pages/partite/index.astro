@@ -1,0 +1,294 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+import { Chess } from 'chess.js';
+import { classifyPgn } from '../../lib/openings';
+import { SITE_URL, breadcrumbJsonLd } from '../../data/club';
+
+const raw = await getCollection('partite', ({ data }) =>
+  import.meta.env.PROD ? !data.draft : true
+);
+
+// Arricchisce ogni partita con apertura (calcolata) e posizione finale (FEN).
+const games = raw
+  .map((entry) => {
+    const d = entry.data;
+    const opening = classifyPgn(d.pgn);
+    const chess = new Chess();
+    chess.loadPgn(d.pgn);
+    return {
+      slug: entry.id,
+      title: d.nickname || `${d.white} – ${d.black}`,
+      white: d.white,
+      black: d.black,
+      year: d.year,
+      place: d.place ?? '',
+      result: d.result,
+      fen: chess.fen(),
+      eco: opening?.eco ?? '',
+      family: opening?.family ?? 'Altro',
+      moves: chess.history().length,
+    };
+  })
+  .sort((a, b) => a.year - b.year || a.title.localeCompare(b.title, 'it'));
+
+// Elenco famiglie presenti, per i filtri.
+const families = Array.from(new Set(games.map((g) => g.family))).sort((a, b) =>
+  a.localeCompare(b, 'it')
+);
+
+const metaDescription =
+  'Archivio di partite di scacchi celebri commentate, con scacchiera interattiva: ' +
+  'scorri le mosse avanti e indietro. A cura del Circolo Scacchi Santa Sabina.';
+
+const crumbs = breadcrumbJsonLd([
+  { name: 'Home', path: '/' },
+  { name: 'Partite', path: '/partite' },
+]);
+
+// Mini-scacchiera FEN -> griglia di glifi Unicode (leggera, niente immagini).
+const UNI: Record<string, string> = {
+  P: '\u2659', N: '\u2658', B: '\u2657', R: '\u2656', Q: '\u2655', K: '\u2654',
+  p: '\u265F', n: '\u265E', b: '\u265D', r: '\u265C', q: '\u265B', k: '\u265A',
+};
+function fenToRows(fen: string): string[][] {
+  const board = fen.split(' ')[0];
+  return board.split('/').map((row) => {
+    const cells: string[] = [];
+    for (const ch of row) {
+      if (/\d/.test(ch)) for (let i = 0; i < +ch; i++) cells.push('');
+      else cells.push(UNI[ch] ?? '');
+    }
+    return cells;
+  });
+}
+---
+
+<BaseLayout title="Partite — Archivio didattico" description={metaDescription} jsonLd={[crumbs]}>
+  <section class="section">
+    <div class="container">
+      <header class="arch-head">
+        <h1>Partite celebri</h1>
+        <p class="arch-sub">
+          Un archivio didattico: scegli una partita e scorri le mosse sulla scacchiera,
+          avanti e indietro, con i commenti.
+        </p>
+      </header>
+
+      {games.length === 0 ? (
+        <p class="arch-empty">Nessuna partita in archivio al momento.</p>
+      ) : (
+        <>
+          <div class="arch-filters" data-filters>
+            <input
+              type="search"
+              class="arch-search"
+              data-search
+              placeholder="Cerca per giocatore, anno, luogo…"
+              aria-label="Cerca partita"
+            />
+            <div class="arch-chips" role="group" aria-label="Filtra per apertura">
+              <button class="chip chip-active" data-family="">Tutte</button>
+              {families.map((f) => (
+                <button class="chip" data-family={f}>{f}</button>
+              ))}
+            </div>
+          </div>
+
+          <ul class="arch-grid" data-grid>
+            {games.map((g) => (
+              <li
+                class="arch-card"
+                data-card
+                data-family={g.family}
+                data-search-text={`${g.white} ${g.black} ${g.place} ${g.year} ${g.eco} ${g.family}`.toLowerCase()}
+              >
+                <a href={`/partite/${g.slug}`} class="arch-link">
+                  <div class="arch-mini" aria-hidden="true">
+                    {fenToRows(g.fen).map((row, r) => (
+                      row.map((pc, c) => (
+                        <span class:list={['mini-sq', (r + c) % 2 === 0 ? 'mini-l' : 'mini-d']}>{pc}</span>
+                      ))
+                    ))}
+                  </div>
+                  <div class="arch-info">
+                    <h2 class="arch-title">{g.title}</h2>
+                    <p class="arch-players">{g.white} – {g.black}</p>
+                    <p class="arch-sub2">
+                      {[g.place, g.year].filter(Boolean).join(', ')}
+                      <span class="arch-result">{g.result}</span>
+                    </p>
+                    <p class="arch-open">
+                      {g.eco && <span class="arch-eco">{g.eco}</span>}
+                      <span>{g.family}</span>
+                    </p>
+                  </div>
+                </a>
+              </li>
+            ))}
+          </ul>
+
+          <p class="arch-noresult" data-noresult hidden>Nessuna partita corrisponde ai filtri.</p>
+        </>
+      )}
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .arch-head { text-align: center; margin-bottom: 2rem; }
+  .arch-sub { color: var(--text-secondary); max-width: 560px; margin: 0.5rem auto 0; }
+  .arch-empty { text-align: center; color: var(--text-muted); padding: 3rem 0; }
+
+  .arch-filters { margin-bottom: 2rem; }
+  .arch-search {
+    width: 100%;
+    max-width: 420px;
+    display: block;
+    margin: 0 auto 1.2rem;
+    padding: 0.7rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-primary);
+    font-size: 0.95rem;
+  }
+  .arch-search:focus { outline: none; border-color: var(--accent); }
+
+  .arch-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+  }
+  .chip {
+    padding: 0.35rem 0.8rem;
+    border: 1px solid var(--border-light);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    border-radius: 999px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .chip:hover { border-color: var(--accent); color: var(--text-primary); }
+  .chip-active { background: var(--accent); color: #2a1a0e; border-color: var(--accent); font-weight: 600; }
+
+  .arch-grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.25rem;
+  }
+  .arch-card { margin: 0; }
+  .arch-link {
+    display: block;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    height: 100%;
+    color: inherit;
+  }
+  .arch-link:hover {
+    transform: translateY(-4px);
+    border-color: rgba(212,160,84,0.3);
+    box-shadow: 0 14px 36px rgba(0,0,0,0.3);
+  }
+
+  .arch-mini {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    aspect-ratio: 1 / 1;
+    width: 100%;
+  }
+  .mini-sq {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(10px, 2.2vw, 16px);
+    line-height: 1;
+  }
+  .mini-l { background: #cda162; }
+  .mini-d { background: #6e3c28; }
+
+  .arch-info { padding: 1rem 1.1rem 1.2rem; }
+  .arch-title {
+    font-family: var(--font-heading);
+    font-size: 1.1rem;
+    margin: 0 0 0.2rem;
+    color: var(--text-primary);
+  }
+  .arch-players { font-size: 0.9rem; color: var(--text-secondary); margin: 0; }
+  .arch-sub2 { font-size: 0.85rem; color: var(--text-muted); margin: 0.3rem 0 0; }
+  .arch-result {
+    margin-left: 0.4rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-secondary);
+  }
+  .arch-open {
+    margin: 0.6rem 0 0;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+  }
+  .arch-eco {
+    background: rgba(212,160,84,0.15);
+    color: var(--accent);
+    font-weight: 700;
+    padding: 0.05rem 0.4rem;
+    border-radius: 4px;
+  }
+
+  .arch-noresult { text-align: center; color: var(--text-muted); padding: 2rem 0; }
+</style>
+
+<script>
+  function initArchive() {
+    const search = document.querySelector<HTMLInputElement>('[data-search]');
+    const chips = Array.from(document.querySelectorAll<HTMLElement>('[data-family]'))
+      .filter((el) => el.tagName === 'BUTTON');
+    const cards = Array.from(document.querySelectorAll<HTMLElement>('[data-card]'));
+    const noResult = document.querySelector<HTMLElement>('[data-noresult]');
+    if (!cards.length) return;
+
+    let activeFamily = '';
+    let query = '';
+
+    function apply() {
+      let visible = 0;
+      for (const card of cards) {
+        const fam = card.dataset.family || '';
+        const text = card.dataset.searchText || '';
+        const okFam = !activeFamily || fam === activeFamily;
+        const okText = !query || text.includes(query);
+        const show = okFam && okText;
+        card.style.display = show ? '' : 'none';
+        if (show) visible++;
+      }
+      if (noResult) noResult.hidden = visible > 0;
+    }
+
+    search?.addEventListener('input', () => {
+      query = search.value.trim().toLowerCase();
+      apply();
+    });
+
+    chips.forEach((chip) => {
+      chip.addEventListener('click', () => {
+        chips.forEach((c) => c.classList.remove('chip-active'));
+        chip.classList.add('chip-active');
+        activeFamily = chip.dataset.family || '';
+        apply();
+      });
+    });
+  }
+
+  if (document.readyState !== 'loading') initArchive();
+  else document.addEventListener('DOMContentLoaded', initArchive);
+</script>

@@ -1,0 +1,518 @@
+---
+// Visualizzatore di partita didattico: scacchiera PIATTA (senza inclinazione),
+// con coordinate, comandi avanti/indietro/play, lista mosse cliccabile,
+// evidenziazione ultima mossa, commenti per mossa, flip scacchiera.
+//
+// I pezzi scivolano anche navigando all'indietro o saltando a una mossa lontana,
+// grazie a id stabili tracciati lungo tutta la partita.
+
+interface Comment { ply: number; text: string }
+
+interface Props {
+  pgn: string;
+  comments?: Comment[];
+  set?: 'merida' | 'cburnett' | 'chessnut';
+  orientation?: 'white' | 'black';
+}
+const { pgn, comments = [], set = 'merida', orientation = 'white' } = Astro.props;
+
+const commentsJson = JSON.stringify(comments);
+---
+
+<div
+  class="gv"
+  data-game-viewer
+  data-pgn={pgn}
+  data-comments={commentsJson}
+  data-set={set}
+  data-orientation={orientation}
+>
+  <div class="gv-main">
+    <div class="gv-board-wrap">
+      <div class="gv-board" data-board>
+        {Array.from({ length: 64 }).map((_, i) => {
+          const row = Math.floor(i / 8);
+          const col = i % 8;
+          const isLight = (row + col) % 2 === 0;
+          return <div class:list={['gv-sq', isLight ? 'gv-sq-l' : 'gv-sq-d']} data-sq-index={i}></div>;
+        })}
+        <div class="gv-highlight gv-hl-from" data-hl-from hidden></div>
+        <div class="gv-highlight gv-hl-to" data-hl-to hidden></div>
+        <div class="gv-pieces" data-pieces></div>
+        <div class="gv-coords gv-files" data-files aria-hidden="true"></div>
+        <div class="gv-coords gv-ranks" data-ranks aria-hidden="true"></div>
+      </div>
+    </div>
+
+    <div class="gv-controls" role="group" aria-label="Controlli partita">
+      <button class="gv-btn" data-first aria-label="Prima mossa" title="Inizio (Home)">&#x23EE;</button>
+      <button class="gv-btn" data-prev aria-label="Mossa precedente" title="Indietro (←)">&#x25C0;</button>
+      <button class="gv-btn gv-btn-play" data-play aria-label="Play/Pausa" title="Play/Pausa (spazio)">&#x25B6;</button>
+      <button class="gv-btn" data-next aria-label="Mossa successiva" title="Avanti (→)">&#x25B6;&#x25B6;</button>
+      <button class="gv-btn" data-last aria-label="Ultima mossa" title="Fine (End)">&#x23ED;</button>
+      <button class="gv-btn gv-btn-flip" data-flip aria-label="Gira scacchiera" title="Gira scacchiera (F)">&#x21C5;</button>
+    </div>
+  </div>
+
+  <div class="gv-side">
+    <ol class="gv-moves" data-moves aria-label="Elenco mosse"></ol>
+    <div class="gv-comment" data-comment hidden></div>
+  </div>
+</div>
+
+<style>
+  .gv {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 260px;
+    gap: 1.5rem;
+    align-items: start;
+  }
+  .gv-main { min-width: 0; }
+
+  .gv-board-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 560px;
+    margin: 0 auto;
+  }
+  .gv-board {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    aspect-ratio: 1 / 1;
+    border: 3px solid var(--wood-dark);
+    border-radius: 4px;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.45), inset 0 0 24px rgba(0,0,0,0.25);
+    overflow: hidden;
+    --sq: 12.5%;
+  }
+  .gv-sq { position: relative; }
+  .gv-sq-l {
+    background:
+      linear-gradient(135deg, rgba(255,255,255,0.05), rgba(0,0,0,0.05)),
+      linear-gradient(135deg, #e3bd84, #cda162);
+  }
+  .gv-sq-d {
+    background:
+      linear-gradient(135deg, rgba(255,255,255,0.04), rgba(0,0,0,0.08)),
+      linear-gradient(135deg, #804a34, #5c3120);
+  }
+
+  .gv-highlight {
+    position: absolute;
+    width: 12.5%;
+    height: 12.5%;
+    top: 0;
+    left: 0;
+    background: rgba(212,160,84,0.42);
+    pointer-events: none;
+    transition: transform 0.25s ease;
+    z-index: 1;
+  }
+
+  .gv-pieces {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+  }
+  .gv-pieces :global(.gv-pc) {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 12.5%;
+    height: 12.5%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.35s cubic-bezier(0.33, 0.9, 0.3, 1), opacity 0.2s ease;
+    will-change: transform, opacity;
+  }
+  .gv-pieces :global(.gv-pc img) {
+    width: 86%;
+    height: 86%;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.35));
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+  .gv-pieces :global(.gv-pc.gone) { opacity: 0; }
+
+  /* coordinate */
+  .gv-coords { position: absolute; pointer-events: none; z-index: 3; font-size: 0.6rem; font-weight: 600; }
+  .gv-files { bottom: 2px; left: 0; right: 0; display: flex; justify-content: space-around; }
+  .gv-ranks { top: 0; bottom: 0; left: 2px; display: flex; flex-direction: column; justify-content: space-around; }
+  .gv-coords span { color: rgba(245,240,232,0.55); }
+
+  .gv-controls {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+  }
+  .gv-btn {
+    min-width: 46px;
+    height: 44px;
+    padding: 0 0.7rem;
+    border: 1px solid var(--border-light);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    border-radius: var(--radius);
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, transform 0.1s;
+  }
+  .gv-btn:hover { background: var(--bg-card-hover); border-color: var(--accent); }
+  .gv-btn:active { transform: translateY(1px); }
+  .gv-btn-play.playing { background: var(--accent); color: #2a1a0e; border-color: var(--accent); }
+
+  /* lista mosse */
+  .gv-side { min-width: 0; }
+  .gv-moves {
+    list-style: none;
+    margin: 0;
+    padding: 0.5rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    max-height: 420px;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: 2.2rem 1fr 1fr;
+    gap: 0.15rem 0.3rem;
+    align-content: start;
+    font-size: 0.92rem;
+    line-height: 1.5;
+  }
+  .gv-moveno { color: var(--text-muted); text-align: right; padding-right: 0.3rem; }
+  .gv-move {
+    cursor: pointer;
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s;
+  }
+  .gv-move:hover { background: var(--bg-card-hover); color: var(--text-primary); }
+  .gv-move.current { background: var(--accent); color: #2a1a0e; font-weight: 600; }
+  .gv-move.has-comment::after { content: ' \25C6'; color: var(--accent); font-size: 0.6em; vertical-align: super; }
+  .gv-move.current.has-comment::after { color: #2a1a0e; }
+
+  .gv-comment {
+    margin-top: 0.8rem;
+    padding: 0.8rem 1rem;
+    background: var(--bg-secondary);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    color: var(--text-secondary);
+    font-size: 0.92rem;
+    line-height: 1.6;
+  }
+
+  @media (max-width: 860px) {
+    .gv { grid-template-columns: 1fr; }
+    .gv-moves { max-height: 200px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .gv-pieces :global(.gv-pc), .gv-highlight { transition: none; }
+  }
+</style>
+
+<script>
+  import { Chess } from 'chess.js';
+
+  type Orientation = 'white' | 'black';
+
+  interface PieceState { id: string; square: string | null } // null = catturato
+  interface Frame {
+    // mappa pieceId -> casa (o null se gia' catturato a questo ply)
+    places: Map<string, string | null>;
+    // ultima mossa a questo ply (per highlight)
+    from: string | null;
+    to: string | null;
+    san: string;
+  }
+
+  function fileToCol(f: string) { return f.charCodeAt(0) - 97; }
+  function rankToRow(r: string) { return 8 - parseInt(r, 10); }
+
+  function initViewer(root: HTMLElement) {
+    const boardEl = root.querySelector<HTMLElement>('[data-board]')!;
+    const layer = root.querySelector<HTMLElement>('[data-pieces]')!;
+    const movesEl = root.querySelector<HTMLOListElement>('[data-moves]')!;
+    const commentEl = root.querySelector<HTMLElement>('[data-comment]')!;
+    const hlFrom = root.querySelector<HTMLElement>('[data-hl-from]')!;
+    const hlTo = root.querySelector<HTMLElement>('[data-hl-to]')!;
+    const filesEl = root.querySelector<HTMLElement>('[data-files]')!;
+    const ranksEl = root.querySelector<HTMLElement>('[data-ranks]')!;
+
+    const set = root.dataset.set || 'merida';
+    let orientation: Orientation = (root.dataset.orientation as Orientation) || 'white';
+
+    const pgn = root.dataset.pgn || '';
+    const comments: { ply: number; text: string }[] = JSON.parse(root.dataset.comments || '[]');
+    const commentByPly = new Map(comments.map((c) => [c.ply, c.text]));
+
+    // --- Costruzione dei frame tracciando l'identita' dei pezzi ---
+    const chess = new Chess();
+    chess.loadPgn(pgn);
+    const sanMoves = chess.history();
+    const verbose = chess.history({ verbose: true });
+
+    // Stato iniziale: assegna un id a ogni pezzo sulla posizione di partenza.
+    const start = new Chess();
+    const board0 = start.board();
+    const color0 = new Map<string, 'w' | 'b'>();  // id -> colore (immutabile)
+    const initialType = new Map<string, string>(); // id -> tipo iniziale
+    let occupant = new Map<string, string>();       // casa -> pieceId
+    let idSeq = 0;
+    for (let row = 0; row < 8; row++) {
+      for (let col = 0; col < 8; col++) {
+        const cell = board0[row][col];
+        if (!cell) continue;
+        const id = 'p' + (idSeq++);
+        color0.set(id, cell.color);
+        initialType.set(id, cell.type);
+        occupant.set(cell.square, id);
+      }
+    }
+
+    const allIds = Array.from(color0.keys());
+    // Per ogni ply: tipo mostrato da ciascun pezzo (cambia con la promozione).
+    const typeByPly: Map<string, string>[] = [];
+
+    function snapshot(from: string | null, to: string | null, san: string, types: Map<string, string>): Frame {
+      const places = new Map<string, string | null>();
+      for (const id of allIds) places.set(id, null);
+      for (const [sq, id] of occupant) places.set(id, sq);
+      return { places, from, to, san };
+    }
+
+    const frames: Frame[] = [];
+    let curTypes = new Map(initialType);
+    frames.push(snapshot(null, null, '', curTypes));
+    typeByPly.push(new Map(curTypes));
+
+    // Applica ogni mossa aggiornando occupant (cattura, arrocco, en passant, promozione)
+    for (const mv of verbose) {
+      const movingId = occupant.get(mv.from)!;
+      if (mv.captured) {
+        let capSq = mv.to;
+        if (mv.flags.includes('e')) {
+          const col = fileToCol(mv.to[0]);
+          const row = rankToRow(mv.to[1]) + (mv.color === 'w' ? 1 : -1);
+          capSq = String.fromCharCode(97 + col) + (8 - row);
+        }
+        occupant.delete(capSq);
+      } else if (occupant.has(mv.to)) {
+        occupant.delete(mv.to);
+      }
+      occupant.delete(mv.from);
+      occupant.set(mv.to, movingId);
+      if (mv.promotion) curTypes.set(movingId, mv.promotion);
+      if (mv.flags.includes('k') || mv.flags.includes('q')) {
+        const rank = mv.color === 'w' ? '1' : '8';
+        const rookFrom = (mv.flags.includes('k') ? 'h' : 'a') + rank;
+        const rookTo = (mv.flags.includes('k') ? 'f' : 'd') + rank;
+        const rookId = occupant.get(rookFrom)!;
+        occupant.delete(rookFrom);
+        occupant.set(rookTo, rookId);
+      }
+      frames.push(snapshot(mv.from, mv.to, mv.san, curTypes));
+      typeByPly.push(new Map(curTypes));
+    }
+
+    // --- Crea gli elementi DOM dei pezzi (uno per id), riusati sempre ---
+    const pieceEls = new Map<string, HTMLElement>();
+    const shownType = new Map<string, string>(); // tipo attualmente nell'<img>
+    for (const id of allIds) {
+      const wrap = document.createElement('div');
+      wrap.className = 'gv-pc';
+      const img = document.createElement('img');
+      img.alt = '';
+      img.draggable = false;
+      img.src = imgSrc(color0.get(id)!, initialType.get(id)!);
+      wrap.appendChild(img);
+      layer.appendChild(wrap);
+      pieceEls.set(id, wrap);
+      shownType.set(id, initialType.get(id)!);
+    }
+
+    function imgSrc(color: 'w' | 'b', type: string) {
+      return `/pieces/${set}/${color}${type.toUpperCase()}.svg`;
+    }
+
+    // Converte una casa (es "e4") in coordinate col/row secondo l'orientamento.
+    function coords(square: string): { x: number; y: number } {
+      let col = fileToCol(square[0]);
+      let row = rankToRow(square[1]);
+      if (orientation === 'black') { col = 7 - col; row = 7 - row; }
+      return { x: col, y: row };
+    }
+
+    // --- Rendering di un frame ---
+    let current = 0;
+
+    function render(plyIndex: number, animate: boolean) {
+      const frame = frames[plyIndex];
+      const types = typeByPly[plyIndex];
+
+      for (const id of allIds) {
+        const el = pieceEls.get(id)!;
+        const sq = frame.places.get(id) ?? null;
+
+        if (!animate) el.style.transition = 'none';
+
+        if (sq) {
+          const { x, y } = coords(sq);
+          el.style.transform = `translate(calc(${x} * 100%), calc(${y} * 100%))`;
+          el.classList.remove('gone');
+          const type = types.get(id)!;
+          if (shownType.get(id) !== type) {
+            el.querySelector('img')!.src = imgSrc(color0.get(id)!, type);
+            shownType.set(id, type);
+          }
+        } else {
+          el.classList.add('gone');
+        }
+
+        if (!animate) {
+          void el.offsetWidth;
+          el.style.transition = '';
+        }
+      }
+
+      // highlight ultima mossa
+      if (frame.from && frame.to) {
+        const f = coords(frame.from);
+        const t = coords(frame.to);
+        hlFrom.hidden = false; hlTo.hidden = false;
+        hlFrom.style.transform = `translate(calc(${f.x} * 100%), calc(${f.y} * 100%))`;
+        hlTo.style.transform = `translate(calc(${t.x} * 100%), calc(${t.y} * 100%))`;
+      } else {
+        hlFrom.hidden = true; hlTo.hidden = true;
+      }
+
+      // mossa corrente nella lista
+      movesEl.querySelectorAll('.gv-move').forEach((m) => m.classList.remove('current'));
+      if (plyIndex > 0) {
+        const el = movesEl.querySelector(`[data-ply="${plyIndex}"]`);
+        el?.classList.add('current');
+        (el as HTMLElement)?.scrollIntoView({ block: 'nearest' });
+      }
+
+      // commento
+      const text = commentByPly.get(plyIndex);
+      if (text) { commentEl.hidden = false; commentEl.textContent = text; }
+      else { commentEl.hidden = true; commentEl.textContent = ''; }
+
+      current = plyIndex;
+      updateButtons();
+    }
+
+    // --- Lista mosse (con figurine) ---
+    const FIG: Record<string, string> = { N: '\u2658', B: '\u2657', R: '\u2656', Q: '\u2655', K: '\u2654' };
+    function sanToFigurine(san: string): string {
+      return san.replace(/^[NBRQK]/, (c) => FIG[c]).replace(/=([NBRQ])/, (_, c) => '=' + FIG[c]);
+    }
+    function buildMoveList() {
+      movesEl.innerHTML = '';
+      for (let i = 0; i < sanMoves.length; i++) {
+        const ply = i + 1;
+        const isWhite = i % 2 === 0;
+        if (isWhite) {
+          const no = document.createElement('li');
+          no.className = 'gv-moveno';
+          no.textContent = (Math.floor(i / 2) + 1) + '.';
+          movesEl.appendChild(no);
+        }
+        const li = document.createElement('li');
+        li.className = 'gv-move';
+        if (commentByPly.has(ply)) li.classList.add('has-comment');
+        li.dataset.ply = String(ply);
+        li.textContent = sanToFigurine(sanMoves[i]);
+        li.addEventListener('click', () => { stop(); render(ply, true); });
+        movesEl.appendChild(li);
+        // se il nero apre (impossibile da start) o per allineare la griglia: niente
+      }
+    }
+
+    // --- Coordinate ---
+    function buildCoords() {
+      filesEl.innerHTML = ''; ranksEl.innerHTML = '';
+      const files = orientation === 'white' ? 'abcdefgh' : 'hgfedcba';
+      const ranks = orientation === 'white' ? '87654321' : '12345678';
+      for (const f of files) { const s = document.createElement('span'); s.textContent = f; filesEl.appendChild(s); }
+      for (const r of ranks) { const s = document.createElement('span'); s.textContent = r; ranksEl.appendChild(s); }
+    }
+
+    // --- Navigazione + play ---
+    const btnFirst = root.querySelector<HTMLElement>('[data-first]')!;
+    const btnPrev = root.querySelector<HTMLElement>('[data-prev]')!;
+    const btnNext = root.querySelector<HTMLElement>('[data-next]')!;
+    const btnLast = root.querySelector<HTMLElement>('[data-last]')!;
+    const btnPlay = root.querySelector<HTMLElement>('[data-play]')!;
+    const btnFlip = root.querySelector<HTMLElement>('[data-flip]')!;
+
+    function updateButtons() {
+      (btnFirst as HTMLButtonElement).disabled = current === 0;
+      (btnPrev as HTMLButtonElement).disabled = current === 0;
+      (btnNext as HTMLButtonElement).disabled = current === frames.length - 1;
+      (btnLast as HTMLButtonElement).disabled = current === frames.length - 1;
+    }
+
+    let playTimer: number | undefined;
+    function stop() {
+      if (playTimer) { clearInterval(playTimer); playTimer = undefined; }
+      btnPlay.classList.remove('playing');
+      btnPlay.innerHTML = '\u25B6';
+    }
+    function play() {
+      if (current >= frames.length - 1) render(0, false);
+      btnPlay.classList.add('playing');
+      btnPlay.innerHTML = '\u23F8';
+      playTimer = window.setInterval(() => {
+        if (current >= frames.length - 1) { stop(); return; }
+        render(current + 1, true);
+      }, 1100);
+    }
+
+    btnFirst.addEventListener('click', () => { stop(); render(0, true); });
+    btnPrev.addEventListener('click', () => { stop(); if (current > 0) render(current - 1, true); });
+    btnNext.addEventListener('click', () => { stop(); if (current < frames.length - 1) render(current + 1, true); });
+    btnLast.addEventListener('click', () => { stop(); render(frames.length - 1, true); });
+    btnPlay.addEventListener('click', () => { if (playTimer) stop(); else play(); });
+    btnFlip.addEventListener('click', () => {
+      orientation = orientation === 'white' ? 'black' : 'white';
+      buildCoords();
+      render(current, false);
+    });
+
+    // tastiera
+    root.setAttribute('tabindex', '0');
+    root.addEventListener('keydown', (e) => {
+      switch (e.key) {
+        case 'ArrowRight': e.preventDefault(); stop(); if (current < frames.length - 1) render(current + 1, true); break;
+        case 'ArrowLeft': e.preventDefault(); stop(); if (current > 0) render(current - 1, true); break;
+        case 'Home': e.preventDefault(); stop(); render(0, true); break;
+        case 'End': e.preventDefault(); stop(); render(frames.length - 1, true); break;
+        case 'f': case 'F': btnFlip.dispatchEvent(new Event('click')); break;
+        case ' ': e.preventDefault(); if (playTimer) stop(); else play(); break;
+      }
+    });
+
+    // init
+    buildMoveList();
+    buildCoords();
+    render(0, false);
+  }
+
+  function boot() {
+    document.querySelectorAll<HTMLElement>('[data-game-viewer]').forEach(initViewer);
+  }
+  if (document.readyState !== 'loading') boot();
+  else document.addEventListener('DOMContentLoaded', boot);
+</script>
