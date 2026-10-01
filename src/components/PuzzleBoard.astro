@@ -25,9 +25,11 @@ const { set = 'merida' } = Astro.props;
           );
         })}
         <div class="pz-sel" data-sel hidden></div>
+        <div class="pz-dots" data-dots aria-hidden="true"></div>
         <div class="pz-pieces" data-pieces></div>
         <div class="pz-coords pz-files" data-files aria-hidden="true"></div>
         <div class="pz-coords pz-ranks" data-ranks aria-hidden="true"></div>
+        <div class="pz-resize" data-resize aria-hidden="true" title="Trascina per ridimensionare"></div>
       </div>
     </div>
   </div>
@@ -60,8 +62,12 @@ const { set = 'merida' } = Astro.props;
     gap: 1.5rem;
     align-items: start;
   }
-  .pz-main { min-width: 0; }
-  .pz-board-wrap { position: relative; width: 100%; max-width: 520px; margin: 0 auto; }
+  .pz-main { min-width: 0; display: flex; justify-content: center; }
+  .pz-board-wrap {
+    position: relative;
+    width: var(--board-size, 520px);
+    max-width: 100%;
+  }
   .pz-board {
     position: relative;
     display: grid;
@@ -74,6 +80,22 @@ const { set = 'merida' } = Astro.props;
     overflow: hidden;
     touch-action: manipulation;
   }
+
+  /* maniglia di ridimensionamento in basso a destra */
+  .pz-resize {
+    position: absolute;
+    right: -2px; bottom: -2px;
+    width: 22px; height: 22px;
+    cursor: nwse-resize;
+    z-index: 4;
+    touch-action: none;
+    background:
+      linear-gradient(135deg, transparent 50%, var(--accent) 50%);
+    opacity: 0.5;
+    border-bottom-right-radius: 4px;
+    transition: opacity 0.2s;
+  }
+  .pz-resize:hover { opacity: 0.9; }
   .pz-sq { position: relative; cursor: pointer; }
   .pz-sq-l {
     background:
@@ -90,10 +112,33 @@ const { set = 'merida' } = Astro.props;
   .pz-sel {
     position: absolute;
     width: 12.5%; height: 12.5%; top: 0; left: 0;
-    box-shadow: inset 0 0 0 4px var(--accent);
+    background: rgba(212,160,84,0.35);
+    box-shadow: inset 0 0 0 3px var(--accent);
     pointer-events: none;
     z-index: 1;
     transition: transform 0.1s ease;
+  }
+
+  /* pallini sulle case legali di destinazione (stile lichess) */
+  .pz-dots { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+  .pz-dots :global(.pz-dot) {
+    position: absolute; top: 0; left: 0;
+    width: 12.5%; height: 12.5%;
+    display: flex; align-items: center; justify-content: center;
+  }
+  /* casa vuota: punto pieno al centro */
+  .pz-dots :global(.pz-dot)::after {
+    content: '';
+    width: 32%; height: 32%;
+    border-radius: 50%;
+    background: rgba(20,14,10,0.32);
+  }
+  /* casa con pezzo da catturare: anello */
+  .pz-dots :global(.pz-dot.capture)::after {
+    width: 86%; height: 86%;
+    background: transparent;
+    border: 6px solid rgba(20,14,10,0.3);
+    box-sizing: border-box;
   }
 
   .pz-pieces { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
@@ -108,6 +153,13 @@ const { set = 'merida' } = Astro.props;
     width: 86%; height: 86%; object-fit: contain;
     filter: drop-shadow(0 2px 2px rgba(0,0,0,0.35));
     user-select: none; -webkit-user-drag: none;
+    transition: transform 0.12s ease, filter 0.12s ease;
+  }
+  /* pezzo selezionato: leggermente ingrandito e sollevato */
+  .pz-pieces :global(.pz-pc.selected) { z-index: 3; }
+  .pz-pieces :global(.pz-pc.selected img) {
+    transform: scale(1.18);
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
   }
   .pz-pieces :global(.pz-pc.gone) { opacity: 0; }
 
@@ -185,8 +237,11 @@ const { set = 'merida' } = Astro.props;
 
   function initPuzzle(root: HTMLElement) {
     const boardEl = root.querySelector<HTMLElement>('[data-board]')!;
+    const boardWrap = root.querySelector<HTMLElement>('.pz-board-wrap')!;
     const layer = root.querySelector<HTMLElement>('[data-pieces]')!;
     const selEl = root.querySelector<HTMLElement>('[data-sel]')!;
+    const dotsEl = root.querySelector<HTMLElement>('[data-dots]')!;
+    const resizeEl = root.querySelector<HTMLElement>('[data-resize]')!;
     const filesEl = root.querySelector<HTMLElement>('[data-files]')!;
     const ranksEl = root.querySelector<HTMLElement>('[data-ranks]')!;
     const turnEl = root.querySelector<HTMLElement>('[data-turn]')!;
@@ -317,12 +372,38 @@ const { set = 'merida' } = Astro.props;
       for (const r of ranks) { const s = document.createElement('span'); s.textContent = r; ranksEl.appendChild(s); }
     }
 
-    function clearSel() { selected = null; selEl.hidden = true; }
+    function pieceElAt(square: string): HTMLElement | null {
+      const id = occupant.get(square);
+      return id ? pieceEls.get(id) ?? null : null;
+    }
+
+    function clearSel() {
+      // rimuovi l'ingrandimento da qualunque pezzo lo avesse
+      layer.querySelectorAll('.pz-pc.selected').forEach((el) => el.classList.remove('selected'));
+      selected = null;
+      selEl.hidden = true;
+      dotsEl.innerHTML = '';
+    }
+
     function showSel(square: string) {
+      clearSel();
       selected = square;
       const { x, y } = coords(square);
       selEl.hidden = false;
       selEl.style.transform = `translate(calc(${x} * 100%), calc(${y} * 100%))`;
+
+      // ingrandisci il pezzo selezionato
+      pieceElAt(square)?.classList.add('selected');
+
+      // disegna i pallini sulle case legali di destinazione
+      const legal = chess.moves({ square: square as any, verbose: true }) as any[];
+      for (const m of legal) {
+        const { x: dx, y: dy } = coords(m.to);
+        const dot = document.createElement('div');
+        dot.className = 'pz-dot' + (m.captured || m.flags.includes('e') ? ' capture' : '');
+        dot.style.transform = `translate(calc(${dx} * 100%), calc(${dy} * 100%))`;
+        dotsEl.appendChild(dot);
+      }
     }
 
     function setTurnLabel() {
@@ -493,6 +574,45 @@ const { set = 'merida' } = Astro.props;
       }
       return arr;
     }
+
+    // --- ridimensionamento della scacchiera dall'angolo in basso a destra ---
+    const SIZE_KEY = 'ssscacchi:puzzle-board-size';
+    function clampSize(px: number) {
+      const maxByViewport = Math.min(
+        boardWrap.parentElement!.clientWidth || 9999,
+        window.innerWidth - 32
+      );
+      return Math.max(280, Math.min(px, 720, maxByViewport));
+    }
+    function applySize(px: number) {
+      boardWrap.style.setProperty('--board-size', clampSize(px) + 'px');
+    }
+    // ripristina preferenza salvata
+    const saved = parseInt(localStorage.getItem(SIZE_KEY) || '', 10);
+    if (!Number.isNaN(saved)) applySize(saved);
+
+    let resizing = false;
+    function onResizeMove(e: PointerEvent) {
+      if (!resizing) return;
+      const rect = boardWrap.getBoundingClientRect();
+      // la dimensione = distanza dal bordo sinistro al puntatore (board quadrata)
+      const size = e.clientX - rect.left;
+      applySize(size);
+    }
+    function onResizeEnd() {
+      if (!resizing) return;
+      resizing = false;
+      document.removeEventListener('pointermove', onResizeMove);
+      document.removeEventListener('pointerup', onResizeEnd);
+      const cur = parseInt(getComputedStyle(boardWrap).getPropertyValue('--board-size'), 10);
+      if (!Number.isNaN(cur)) localStorage.setItem(SIZE_KEY, String(cur));
+    }
+    resizeEl.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      resizing = true;
+      document.addEventListener('pointermove', onResizeMove);
+      document.addEventListener('pointerup', onResizeEnd);
+    });
 
     // init
     if (!PUZZLES.length) {
