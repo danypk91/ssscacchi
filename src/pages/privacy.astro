@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { club, fullAddress } from '../data/club';
+import { club } from '../data/club';
 
 const updated = '30 settembre 2026';
 ---
@@ -34,9 +34,9 @@ const updated = '30 settembre 2026';
         <h2>1. Titolare del trattamento</h2>
         <p>
           Il titolare del trattamento è <strong>{club.legalName}</strong>, con
-          sede in {fullAddress}.<br />
-          Codice Fiscale / P.IVA: <strong>[C.F./P.IVA da inserire]</strong>.<br />
-          Legale rappresentante: <strong>[Nome legale rappresentante da inserire]</strong>.<br />
+          sede in Genova, Via Donghi 8, CAP 16132.<br />
+          Codice Fiscale: <strong>95045350105</strong> &ndash; P.IVA: <strong>01144440995</strong>.<br />
+          Legale rappresentante pro tempore: <strong>Luca Mastropietro</strong>.<br />
           Email di contatto: <a href={`mailto:${club.email}`}>{club.email}</a>.
         </p>
 
