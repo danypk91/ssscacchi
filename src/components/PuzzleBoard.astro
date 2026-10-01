@@ -97,23 +97,23 @@ const { set = 'merida' } = Astro.props;
   }
   .pz-resize:hover { opacity: 0.9; }
   .pz-sq { position: relative; cursor: pointer; }
+  /* case leggermente piu' chiare (meno cupe di prima) */
   .pz-sq-l {
     background:
-      linear-gradient(135deg, rgba(255,255,255,0.05), rgba(0,0,0,0.05)),
-      linear-gradient(135deg, #e3bd84, #cda162);
+      linear-gradient(135deg, rgba(255,255,255,0.05), rgba(0,0,0,0.04)),
+      linear-gradient(135deg, #ecc98f, #d9ac6e);
   }
   .pz-sq-d {
     background:
-      linear-gradient(135deg, rgba(255,255,255,0.04), rgba(0,0,0,0.08)),
-      linear-gradient(135deg, #804a34, #5c3120);
+      linear-gradient(135deg, rgba(255,255,255,0.05), rgba(0,0,0,0.06)),
+      linear-gradient(135deg, #9c5c40, #7a4530);
   }
 
-  /* casa selezionata */
+  /* casa selezionata (verde lichess) */
   .pz-sel {
     position: absolute;
     width: 12.5%; height: 12.5%; top: 0; left: 0;
-    background: rgba(212,160,84,0.35);
-    box-shadow: inset 0 0 0 3px var(--accent);
+    background: rgba(20,85,30,0.5);
     pointer-events: none;
     z-index: 1;
     transition: transform 0.1s ease;
@@ -124,21 +124,14 @@ const { set = 'merida' } = Astro.props;
   .pz-dots :global(.pz-dot) {
     position: absolute; top: 0; left: 0;
     width: 12.5%; height: 12.5%;
-    display: flex; align-items: center; justify-content: center;
   }
-  /* casa vuota: punto pieno al centro */
-  .pz-dots :global(.pz-dot)::after {
-    content: '';
-    width: 32%; height: 32%;
-    border-radius: 50%;
-    background: rgba(20,14,10,0.32);
+  /* casa vuota: punto piccolo e netto (radial-gradient come lichess) */
+  .pz-dots :global(.pz-dot) {
+    background: radial-gradient(rgba(20,85,30,0.5) 19%, rgba(0,0,0,0) 20%);
   }
-  /* casa con pezzo da catturare: anello */
-  .pz-dots :global(.pz-dot.capture)::after {
-    width: 86%; height: 86%;
-    background: transparent;
-    border: 6px solid rgba(20,14,10,0.3);
-    box-sizing: border-box;
+  /* casa con pezzo da catturare: anello verde al bordo */
+  .pz-dots :global(.pz-dot.capture) {
+    background: radial-gradient(transparent 0%, transparent 79%, rgba(20,85,0,0.3) 80%);
   }
 
   .pz-pieces { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
@@ -475,10 +468,16 @@ const { set = 'merida' } = Astro.props;
           }
         }, 400);
       } else {
-        // mossa sbagliata: verifica se e' almeno legale
-        const legal = chess.move({ from, to, promotion: 'q' });
-        if (legal) { chess.undo(); }
-        feedback('Non è la mossa giusta, riprova.', 'ko');
+        // mossa sbagliata. In chess.js v1 una mossa illegale lancia: la isoliamo.
+        let wasLegal = false;
+        try {
+          const legal = chess.move({ from, to, promotion: 'q' });
+          if (legal) { wasLegal = true; chess.undo(); }
+        } catch { /* mossa illegale: ignora */ }
+        feedback(
+          wasLegal ? 'Non è la mossa giusta, riprova.' : 'Mossa non valida.',
+          'ko'
+        );
         clearSel();
       }
     }
