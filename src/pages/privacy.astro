@@ -1,0 +1,197 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { club, fullAddress } from '../data/club';
+
+const updated = '30 settembre 2026';
+---
+
+<BaseLayout
+  title="Privacy Policy"
+  description="Informativa sul trattamento dei dati personali ai sensi degli artt. 13-14 del Regolamento UE 2016/679 (GDPR) per il sito del Circolo Scacchi Santa Sabina."
+  noindex={true}
+>
+  <section class="page-header">
+    <div class="page-header-bg" aria-hidden="true"></div>
+    <div class="page-header-decor" aria-hidden="true">&#9819;</div>
+    <div class="container">
+      <h1>Privacy Policy</h1>
+      <p class="page-header-sub">Informativa sul trattamento dei dati personali</p>
+    </div>
+  </section>
+
+  <section class="section section-body">
+    <div class="container">
+      <article class="legal">
+        <p class="legal-updated">Ultimo aggiornamento: {updated}</p>
+
+        <p>
+          La presente informativa è resa ai sensi degli artt. 13 e 14 del
+          Regolamento (UE) 2016/679 (di seguito &laquo;GDPR&raquo;) a chi
+          consulta il sito <strong>{club.name}</strong> e descrive come vengono
+          trattati i dati personali degli utenti.
+        </p>
+
+        <h2>1. Titolare del trattamento</h2>
+        <p>
+          Il titolare del trattamento è <strong>{club.legalName}</strong>, con
+          sede in {fullAddress}.<br />
+          Codice Fiscale / P.IVA: <strong>[C.F./P.IVA da inserire]</strong>.<br />
+          Legale rappresentante: <strong>[Nome legale rappresentante da inserire]</strong>.<br />
+          Email di contatto: <a href={`mailto:${club.email}`}>{club.email}</a>.
+        </p>
+
+        <h2>2. Tipologie di dati trattati</h2>
+        <ul>
+          <li>
+            <strong>Dati di navigazione.</strong> I sistemi informatici e le
+            procedure software preposte al funzionamento del sito acquisiscono,
+            nel corso del loro normale esercizio, alcuni dati la cui trasmissione
+            è implicita nell'uso dei protocolli di comunicazione di Internet
+            (es. indirizzi IP, tipo di browser, orari di richiesta). Questi dati
+            sono trattati dal fornitore di hosting nei propri log tecnici.
+          </li>
+          <li>
+            <strong>Dati forniti volontariamente.</strong> L'invio facoltativo
+            di email agli indirizzi indicati sul sito comporta l'acquisizione
+            dell'indirizzo del mittente e dei dati eventualmente contenuti nel
+            messaggio. Il sito non dispone di moduli di contatto: i contatti
+            avvengono tramite il vostro client di posta o i social.
+          </li>
+          <li>
+            <strong>Dati statistici aggregati.</strong> Il sito utilizza uno
+            strumento di analisi delle visite in forma anonima e aggregata, senza
+            cookie di profilazione e senza identificazione del singolo utente.
+          </li>
+        </ul>
+
+        <h2>3. Finalità e basi giuridiche</h2>
+        <ul>
+          <li>
+            Erogazione e sicurezza del sito (dati di navigazione) — base
+            giuridica: legittimo interesse del titolare al corretto
+            funzionamento e alla sicurezza (art. 6.1.f GDPR).
+          </li>
+          <li>
+            Risposta alle richieste inviate via email — base giuridica:
+            riscontro a una richiesta dell'interessato (art. 6.1.b GDPR).
+          </li>
+          <li>
+            Statistiche anonime di utilizzo — base giuridica: legittimo interesse
+            del titolare a comprendere l'uso del sito in forma aggregata
+            (art. 6.1.f GDPR).
+          </li>
+        </ul>
+
+        <h2>4. Cookie</h2>
+        <p>
+          Il sito utilizza cookie tecnici e, previo consenso, contenuti di terze
+          parti che possono installare cookie (in particolare la mappa di Google
+          Maps nella pagina Contatti). Per i dettagli e per gestire le
+          preferenze consulta la <a href="/cookie-policy">Cookie Policy</a>.
+        </p>
+
+        <h2>5. Destinatari e responsabili del trattamento</h2>
+        <p>I dati possono essere trattati da fornitori che agiscono come responsabili del trattamento:</p>
+        <ul>
+          <li>
+            <strong>Vercel Inc.</strong> — hosting del sito e statistiche di
+            visita in forma anonima (Vercel Analytics).
+          </li>
+          <li>
+            <strong>Google Ireland Ltd.</strong> — servizio di mappe (Google
+            Maps), caricato solo previo consenso.
+          </li>
+          <li>
+            <strong>Cloudflare, Inc.</strong> — distribuzione di immagini e
+            documenti (galleria fotografica e bandi tornei).
+          </li>
+        </ul>
+
+        <h2>6. Trasferimento dei dati extra UE</h2>
+        <p>
+          Alcuni dei fornitori sopra indicati hanno sede negli Stati Uniti. Gli
+          eventuali trasferimenti avvengono nel rispetto del GDPR, sulla base di
+          decisioni di adeguatezza (EU-US Data Privacy Framework) e/o di clausole
+          contrattuali standard adottate dai rispettivi fornitori.
+        </p>
+
+        <h2>7. Periodo di conservazione</h2>
+        <p>
+          I dati di navigazione sono conservati per il tempo tecnico necessario e
+          secondo le policy del fornitore di hosting. Le email ricevute sono
+          conservate per il tempo necessario a gestire la richiesta e adempiere a
+          eventuali obblighi. I dati statistici sono aggregati e anonimi.
+        </p>
+
+        <h2>8. Diritti dell'interessato</h2>
+        <p>
+          Ai sensi degli artt. 15-22 del GDPR hai diritto di ottenere l'accesso
+          ai tuoi dati, la rettifica, la cancellazione, la limitazione del
+          trattamento, la portabilità e di opporti al trattamento. Puoi
+          esercitare tali diritti scrivendo a
+          <a href={`mailto:${club.email}`}>{club.email}</a>.
+        </p>
+        <p>
+          Hai inoltre il diritto di proporre reclamo all'Autorità Garante per la
+          protezione dei dati personali
+          (<a href="https://www.garanteprivacy.it" target="_blank" rel="noopener">www.garanteprivacy.it</a>).
+        </p>
+
+        <p class="legal-disclaimer">
+          La presente informativa può essere aggiornata; le eventuali modifiche
+          saranno pubblicate su questa pagina.
+        </p>
+      </article>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .legal {
+    max-width: 780px;
+    margin: 0 auto;
+    color: var(--text-secondary);
+    line-height: 1.7;
+  }
+
+  .legal-updated {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+  }
+
+  .legal h2 {
+    font-family: var(--font-heading);
+    color: var(--accent);
+    font-size: 1.3rem;
+    margin: 2.5rem 0 0.75rem;
+  }
+
+  .legal p {
+    margin-bottom: 1rem;
+  }
+
+  .legal ul {
+    margin: 0 0 1.25rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .legal a {
+    color: var(--accent);
+    text-decoration: underline;
+  }
+
+  .legal strong {
+    color: var(--text-primary);
+  }
+
+  .legal-disclaimer {
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+</style>

@@ -35,3 +35,4 @@ update-tornei.mjs
 
 # jetbrains setting folder
 .idea/
+.playwright-mcp/

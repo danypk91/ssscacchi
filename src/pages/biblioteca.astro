@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { club } from '../data/club';
 
 const categorie = [
   { name: 'Aperture', icon: '&#9816;', desc: 'Trattati e repertori sulle aperture' },
@@ -69,8 +70,8 @@ const categorie = [
       <div class="contact-cta card">
         <h2>Vuoi prenotare un libro?</h2>
         <p>Contattaci via email indicando il titolo che ti interessa e ti confermeremo la disponibilità.</p>
-        <a href="mailto:santasabinascacchi@gmail.com" class="btn btn-primary">
-          Scrivi a santasabinascacchi@gmail.com
+        <a href={`mailto:${club.email}`} class="btn btn-primary">
+          Scrivi a {club.email}
         </a>
       </div>
     </div>

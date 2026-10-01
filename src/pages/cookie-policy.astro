@@ -1,0 +1,207 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { club } from '../data/club';
+
+const updated = '30 settembre 2026';
+---
+
+<BaseLayout
+  title="Cookie Policy"
+  description="Informativa estesa sull'uso dei cookie e dei contenuti di terze parti nel sito del Circolo Scacchi Santa Sabina, con istruzioni per gestire il consenso."
+  noindex={true}
+>
+  <section class="page-header">
+    <div class="page-header-bg" aria-hidden="true"></div>
+    <div class="page-header-decor" aria-hidden="true">&#9820;</div>
+    <div class="container">
+      <h1>Cookie Policy</h1>
+      <p class="page-header-sub">Come usiamo cookie e contenuti di terze parti</p>
+    </div>
+  </section>
+
+  <section class="section section-body">
+    <div class="container">
+      <article class="legal">
+        <p class="legal-updated">Ultimo aggiornamento: {updated}</p>
+
+        <p>
+          Questa pagina descrive i cookie e le tecnologie analoghe utilizzati dal
+          sito <strong>{club.name}</strong>, in conformità alle Linee guida del
+          Garante per la protezione dei dati personali. Per l'informativa
+          generale consulta la <a href="/privacy">Privacy Policy</a>.
+        </p>
+
+        <h2>Cosa sono i cookie</h2>
+        <p>
+          I cookie sono piccoli file di testo che i siti visitati inviano al
+          dispositivo dell'utente, dove vengono memorizzati per essere ritrasmessi
+          agli stessi siti alla visita successiva. I cookie tecnici sono
+          necessari al funzionamento del sito e non richiedono consenso; i cookie
+          di terze parti non tecnici richiedono invece il consenso preventivo.
+        </p>
+
+        <h2>Cookie e strumenti utilizzati</h2>
+
+        <div class="table-wrap">
+          <table class="legal-table">
+            <thead>
+              <tr>
+                <th>Strumento</th>
+                <th>Tipo</th>
+                <th>Finalità</th>
+                <th>Consenso</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Preferenza cookie</td>
+                <td>Tecnico (localStorage)</td>
+                <td>Memorizza la scelta espressa sul banner cookie.</td>
+                <td>Non richiesto</td>
+              </tr>
+              <tr>
+                <td>Vercel Analytics</td>
+                <td>Statistico anonimo (senza cookie)</td>
+                <td>Conteggio aggregato delle visite senza identificare l'utente.</td>
+                <td>Non richiesto</td>
+              </tr>
+              <tr>
+                <td>Google Maps</td>
+                <td>Terza parte (Google Ireland Ltd.)</td>
+                <td>Visualizzazione della mappa interattiva nella pagina Contatti. Può installare cookie di Google.</td>
+                <td><strong>Richiesto</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>
+          I caratteri tipografici (font) del sito sono ospitati direttamente sul
+          nostro dominio: <strong>non</strong> vengono effettuate richieste ai
+          server di Google per il loro caricamento e non sono trasmessi dati a
+          terzi per questa finalità.
+        </p>
+
+        <h2>Gestione del consenso</h2>
+        <p>
+          Al primo accesso viene mostrato un banner che consente di accettare o
+          rifiutare i contenuti di terze parti non tecnici. La mappa di Google
+          Maps viene caricata solo dopo aver prestato il consenso. Puoi
+          modificare la tua scelta in qualsiasi momento:
+        </p>
+        <p>
+          <button type="button" id="open-cookie-settings" class="btn btn-primary">
+            Gestisci le preferenze cookie
+          </button>
+        </p>
+        <p>
+          In alternativa puoi gestire o eliminare i cookie direttamente dalle
+          impostazioni del tuo browser. La disattivazione di alcuni cookie
+          potrebbe limitare la fruizione di alcune funzionalità del sito.
+        </p>
+
+        <h2>Cookie di terze parti</h2>
+        <p>
+          Per informazioni sul trattamento effettuato dai fornitori terzi
+          consulta le rispettive informative:
+        </p>
+        <ul>
+          <li>
+            Google —
+            <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">policies.google.com/privacy</a>
+          </li>
+          <li>
+            Vercel —
+            <a href="https://vercel.com/legal/privacy-policy" target="_blank" rel="noopener">vercel.com/legal/privacy-policy</a>
+          </li>
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <script is:inline>
+    (function () {
+      var btn = document.getElementById('open-cookie-settings');
+      if (btn) {
+        btn.addEventListener('click', function () {
+          if (window.SSSConsent) window.SSSConsent.open();
+        });
+      }
+    })();
+  </script>
+</BaseLayout>
+
+<style>
+  .legal {
+    max-width: 780px;
+    margin: 0 auto;
+    color: var(--text-secondary);
+    line-height: 1.7;
+  }
+
+  .legal-updated {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+  }
+
+  .legal h2 {
+    font-family: var(--font-heading);
+    color: var(--accent);
+    font-size: 1.3rem;
+    margin: 2.5rem 0 0.75rem;
+  }
+
+  .legal p {
+    margin-bottom: 1rem;
+  }
+
+  .legal ul {
+    margin: 0 0 1.25rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .legal a {
+    color: var(--accent);
+    text-decoration: underline;
+  }
+
+  .legal strong {
+    color: var(--text-primary);
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+    margin: 1rem 0 1.5rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+
+  .legal-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+    min-width: 560px;
+  }
+
+  .legal-table th,
+  .legal-table td {
+    text-align: left;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  .legal-table thead th {
+    background: var(--bg-secondary);
+    color: var(--accent);
+    font-family: var(--font-heading);
+    font-weight: 600;
+  }
+
+  .legal-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+</style>

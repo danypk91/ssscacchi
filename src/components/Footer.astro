@@ -58,10 +58,30 @@ const year = new Date().getFullYear();
     </div>
 
     <div class="footer-bottom">
+      <nav class="footer-legal" aria-label="Note legali">
+        <a href="/privacy">Privacy Policy</a>
+        <span class="sep" aria-hidden="true">&middot;</span>
+        <a href="/cookie-policy">Cookie Policy</a>
+        <span class="sep" aria-hidden="true">&middot;</span>
+        <button type="button" id="footer-cookie-settings" class="footer-legal-btn">
+          Gestisci cookie
+        </button>
+      </nav>
       <p>&copy; {year} ASD U.S. ACLI Santa Sabina</p>
     </div>
   </div>
 </footer>
+
+<script is:inline>
+  (function () {
+    var btn = document.getElementById('footer-cookie-settings');
+    if (btn) {
+      btn.addEventListener('click', function () {
+        if (window.SSSConsent) window.SSSConsent.open();
+      });
+    }
+  })();
+</script>
 
 <style>
   .footer {
@@ -146,6 +166,39 @@ const year = new Date().getFullYear();
     text-align: center;
     color: var(--text-muted);
     font-size: 0.85rem;
+  }
+
+  .footer-legal {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .footer-legal a,
+  .footer-legal-btn {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+  }
+
+  .footer-legal a:hover,
+  .footer-legal-btn:hover {
+    color: var(--accent);
+  }
+
+  .footer-legal .sep {
+    color: var(--border-light);
+  }
+
+  .footer-legal-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: inherit;
+    cursor: pointer;
+    text-decoration: underline;
   }
 
   @media (max-width: 900px) {

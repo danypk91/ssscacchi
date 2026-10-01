@@ -99,17 +99,19 @@ import { club, clubJsonLd, fullAddress, mapsUrl, mapsEmbedUrl } from '../data/cl
         </div>
 
         <div class="map-wrapper">
-          <div class="map-container">
-            <iframe
-              src={mapsEmbedUrl}
-              width="100%"
-              height="100%"
-              style="border:0;"
-              allowfullscreen=""
-              loading="lazy"
-              referrerpolicy="no-referrer-when-downgrade"
-              title="Mappa sede Circolo Scacchi Santa Sabina">
-            </iframe>
+          <div class="map-container" id="map-container" data-map-src={mapsEmbedUrl}>
+            <div class="map-consent" id="map-consent">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                <circle cx="12" cy="10" r="3"/>
+              </svg>
+              <p>La mappa è fornita da <strong>Google Maps</strong> e installa cookie di terze parti. Attivala per visualizzarla.</p>
+              <button type="button" id="map-load-btn" class="btn btn-primary">Attiva la mappa</button>
+              <p class="map-consent-note">
+                Attivando la mappa accetti la <a href="/cookie-policy">Cookie Policy</a>.
+                Puoi comunque <a href={mapsUrl} target="_blank" rel="noopener">aprirla su Google Maps</a>.
+              </p>
+            </div>
           </div>
           <div class="map-caption">
             <a href={mapsUrl} target="_blank" rel="noopener">
@@ -120,6 +122,59 @@ import { club, clubJsonLd, fullAddress, mapsUrl, mapsEmbedUrl } from '../data/cl
       </div>
     </div>
   </section>
+
+  <script is:inline>
+    (function () {
+      var container = document.getElementById('map-container');
+      var consent = document.getElementById('map-consent');
+      var btn = document.getElementById('map-load-btn');
+      if (!container) return;
+
+      var loaded = false;
+      function loadMap() {
+        if (loaded) return;
+        var src = container.getAttribute('data-map-src');
+        if (!src) return;
+        var iframe = document.createElement('iframe');
+        iframe.src = src;
+        iframe.width = '100%';
+        iframe.height = '100%';
+        iframe.style.border = '0';
+        iframe.setAttribute('allowfullscreen', '');
+        iframe.setAttribute('loading', 'lazy');
+        iframe.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
+        iframe.title = 'Mappa sede Circolo Scacchi Santa Sabina';
+        if (consent) consent.remove();
+        container.appendChild(iframe);
+        loaded = true;
+      }
+
+      // Se l'utente ha già dato il consenso globale, carica subito.
+      // L'API SSSConsent potrebbe non essere ancora pronta (lo script del
+      // banner è in fondo alla pagina): riprova appena il DOM è pronto.
+      function checkExistingConsent() {
+        if (window.SSSConsent && window.SSSConsent.hasAccepted()) loadMap();
+      }
+      checkExistingConsent();
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', checkExistingConsent);
+      }
+      window.addEventListener('load', checkExistingConsent);
+
+      // Click sul pulsante: registra il consenso globale e carica.
+      if (btn) {
+        btn.addEventListener('click', function () {
+          if (window.SSSConsent) window.SSSConsent.set('accepted');
+          loadMap();
+        });
+      }
+
+      // Reagisce al consenso dato altrove (banner globale).
+      window.addEventListener('sss-consent-changed', function (e) {
+        if (e.detail && e.detail.consent === 'accepted') loadMap();
+      });
+    })();
+  </script>
 </BaseLayout>
 
 <style>
@@ -342,6 +397,45 @@ import { club, clubJsonLd, fullAddress, mapsUrl, mapsEmbedUrl } from '../data/cl
     box-shadow:
       0 8px 30px rgba(0,0,0,0.3),
       0 0 0 1px rgba(212,160,84,0.05);
+  }
+
+  .map-consent {
+    width: 100%;
+    height: 100%;
+    min-height: inherit;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 1rem;
+    padding: 2rem;
+    background:
+      radial-gradient(ellipse at 50% 40%, rgba(212,160,84,0.08) 0%, transparent 60%),
+      var(--bg-card);
+    color: var(--text-secondary);
+  }
+
+  .map-consent svg {
+    color: var(--accent);
+    opacity: 0.8;
+  }
+
+  .map-consent p {
+    max-width: 380px;
+    font-size: 0.92rem;
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  .map-consent-note {
+    font-size: 0.8rem !important;
+    color: var(--text-muted);
+  }
+
+  .map-consent a {
+    color: var(--accent);
+    text-decoration: underline;
   }
 
   .map-caption {

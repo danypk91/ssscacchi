@@ -6,7 +6,7 @@ export const club = {
   legalName: 'ASD U.S. ACLI Santa Sabina',
   description:
     'Circolo di scacchi a Genova (San Fruttuoso – Marassi), affiliato FSI e CONI. Corsi per bambini e ragazzi con istruttori FSI, gioco libero, tornei amatoriali e omologati.',
-  email: 'santasabinascacchi@gmail.com',
+  email: 'info@santasabinascacchi.it',
   foundingYear: 2010,
   address: {
     street: 'Via Donghi 8',
