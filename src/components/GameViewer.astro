@@ -36,8 +36,6 @@ const commentsJson = JSON.stringify(comments);
           const isLight = (row + col) % 2 === 0;
           return <div class:list={['gv-sq', isLight ? 'gv-sq-l' : 'gv-sq-d']} data-sq-index={i}></div>;
         })}
-        <div class="gv-highlight gv-hl-from" data-hl-from hidden></div>
-        <div class="gv-highlight gv-hl-to" data-hl-to hidden></div>
         <div class="gv-pieces" data-pieces></div>
         <div class="gv-coords gv-files" data-files aria-hidden="true"></div>
         <div class="gv-coords gv-ranks" data-ranks aria-hidden="true"></div>
@@ -97,18 +95,6 @@ const commentsJson = JSON.stringify(comments);
     background:
       linear-gradient(135deg, rgba(255,255,255,0.04), rgba(0,0,0,0.08)),
       linear-gradient(135deg, #804a34, #5c3120);
-  }
-
-  .gv-highlight {
-    position: absolute;
-    width: 12.5%;
-    height: 12.5%;
-    top: 0;
-    left: 0;
-    background: rgba(212,160,84,0.42);
-    pointer-events: none;
-    transition: transform 0.25s ease;
-    z-index: 1;
   }
 
   .gv-pieces {
@@ -186,19 +172,30 @@ const commentsJson = JSON.stringify(comments);
     font-size: 0.92rem;
     line-height: 1.5;
   }
-  .gv-moveno { color: var(--text-muted); text-align: right; padding-right: 0.3rem; }
-  .gv-move {
+  /* Le righe mosse sono create via JS: servono selettori globali. */
+  .gv-moves :global(.gv-moveno) {
+    color: var(--text-muted);
+    text-align: right;
+    padding-right: 0.3rem;
+    align-self: center;
+  }
+  .gv-moves :global(.gv-move) {
     cursor: pointer;
-    padding: 0.1rem 0.4rem;
-    border-radius: 4px;
+    padding: 0.2rem 0.45rem;
+    border-radius: 5px;
     color: var(--text-secondary);
     white-space: nowrap;
-    transition: background 0.15s, color 0.15s;
+    transition: background 0.15s, color 0.15s, box-shadow 0.15s;
   }
-  .gv-move:hover { background: var(--bg-card-hover); color: var(--text-primary); }
-  .gv-move.current { background: var(--accent); color: #2a1a0e; font-weight: 600; }
-  .gv-move.has-comment::after { content: ' \25C6'; color: var(--accent); font-size: 0.6em; vertical-align: super; }
-  .gv-move.current.has-comment::after { color: #2a1a0e; }
+  .gv-moves :global(.gv-move:hover) { background: var(--bg-card-hover); color: var(--text-primary); }
+  .gv-moves :global(.gv-move.current) {
+    background: var(--accent);
+    color: #2a1a0e;
+    font-weight: 700;
+    box-shadow: 0 0 0 2px var(--accent), 0 2px 10px rgba(212,160,84,0.45);
+  }
+  .gv-moves :global(.gv-move.has-comment)::after { content: ' \25C6'; color: var(--accent); font-size: 0.6em; vertical-align: super; }
+  .gv-moves :global(.gv-move.current.has-comment)::after { color: #2a1a0e; }
 
   .gv-comment {
     margin-top: 0.8rem;
@@ -217,7 +214,7 @@ const commentsJson = JSON.stringify(comments);
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .gv-pieces :global(.gv-pc), .gv-highlight { transition: none; }
+    .gv-pieces :global(.gv-pc) { transition: none; }
   }
 </style>
 
@@ -244,8 +241,6 @@ const commentsJson = JSON.stringify(comments);
     const layer = root.querySelector<HTMLElement>('[data-pieces]')!;
     const movesEl = root.querySelector<HTMLOListElement>('[data-moves]')!;
     const commentEl = root.querySelector<HTMLElement>('[data-comment]')!;
-    const hlFrom = root.querySelector<HTMLElement>('[data-hl-from]')!;
-    const hlTo = root.querySelector<HTMLElement>('[data-hl-to]')!;
     const filesEl = root.querySelector<HTMLElement>('[data-files]')!;
     const ranksEl = root.querySelector<HTMLElement>('[data-ranks]')!;
 
@@ -383,17 +378,6 @@ const commentsJson = JSON.stringify(comments);
           void el.offsetWidth;
           el.style.transition = '';
         }
-      }
-
-      // highlight ultima mossa
-      if (frame.from && frame.to) {
-        const f = coords(frame.from);
-        const t = coords(frame.to);
-        hlFrom.hidden = false; hlTo.hidden = false;
-        hlFrom.style.transform = `translate(calc(${f.x} * 100%), calc(${f.y} * 100%))`;
-        hlTo.style.transform = `translate(calc(${t.x} * 100%), calc(${t.y} * 100%))`;
-      } else {
-        hlFrom.hidden = true; hlTo.hidden = true;
       }
 
       // mossa corrente nella lista
