@@ -1,0 +1,49 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PuzzleBoard from '../components/PuzzleBoard.astro';
+import { SITE_URL, breadcrumbJsonLd } from '../data/club';
+
+const metaDescription =
+  'Palestra tattica: risolvi i puzzle di scacchi direttamente sulla scacchiera. ' +
+  'Posizioni reali da partite, dai temi come forchetta, inchiodatura e matto. ' +
+  'A cura del Circolo Scacchi Santa Sabina.';
+
+const crumbs = breadcrumbJsonLd([
+  { name: 'Home', path: '/' },
+  { name: 'Puzzle', path: '/puzzle' },
+]);
+---
+
+<BaseLayout title="Puzzle — Palestra tattica" description={metaDescription} jsonLd={[crumbs]}>
+  <section class="section">
+    <div class="container">
+      <header class="pz-head">
+        <h1>Palestra tattica</h1>
+        <p class="pz-sub">
+          Trova la mossa migliore nella posizione. Clicca il pezzo da muovere e poi
+          la casa di destinazione. Puoi chiedere un suggerimento o vedere la soluzione.
+        </p>
+      </header>
+
+      <PuzzleBoard set="merida" />
+
+      <p class="pz-credit">
+        I puzzle provengono dal database pubblico di
+        <a href="https://database.lichess.org/#puzzles" target="_blank" rel="noopener">lichess</a>
+        (licenza CC0).
+      </p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .pz-head { text-align: center; margin-bottom: 2rem; }
+  .pz-sub { color: var(--text-secondary); max-width: 560px; margin: 0.5rem auto 0; }
+  .pz-credit {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    margin-top: 2.5rem;
+  }
+  .pz-credit a { color: var(--accent); }
+</style>
