@@ -1,0 +1,461 @@
+---
+// Scacchiera decorativa dell'hero con partita animata.
+// - Case: griglia statica 8x8 (legno).
+// - Pezzi: layer in posizione assoluta, mossi via transform -> scivolano.
+// Logica di gioco con chess.js (gia' dipendenza del progetto).
+// Rispetta prefers-reduced-motion (mostra la posizione iniziale, statica).
+
+interface Props {
+  set?: 'merida' | 'cburnett' | 'chessnut';
+}
+const { set = 'merida' } = Astro.props;
+---
+
+<div class="hero-visual">
+  <div class="hero-knight" aria-hidden="true">&#9822;</div>
+  <div class="hero-board-showcase">
+    <div
+      class="board-3d"
+      data-hero-board
+      data-piece-set={set}
+    >
+      {Array.from({ length: 64 }).map((_, i) => {
+        const row = Math.floor(i / 8);
+        const col = i % 8;
+        const isLight = (row + col) % 2 === 0;
+        return <div class:list={['sq', isLight ? 'sq-l' : 'sq-d']} aria-hidden="true"></div>;
+      })}
+      <div class="pieces-layer" data-pieces aria-hidden="true"></div>
+    </div>
+  </div>
+  <p class="board-caption" data-caption aria-live="polite"></p>
+  <div class="hero-visual-glow" aria-hidden="true"></div>
+</div>
+
+<style>
+  .hero-visual {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    animation: fadeUp 0.8s ease-out 0.3s both;
+  }
+
+  .board-caption {
+    position: relative;
+    z-index: 2;
+    margin-top: 1.4rem;
+    font-size: 0.82rem;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    text-align: center;
+    max-width: 90%;
+    min-height: 1.2em;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+  .board-caption.show { opacity: 1; }
+  .board-caption .cap-game { color: var(--text-secondary); }
+  .board-caption .cap-sep { color: var(--accent); margin: 0 0.6em; }
+  .board-caption .cap-year { font-style: italic; }
+
+  .hero-knight {
+    position: absolute;
+    z-index: 0;
+    font-size: clamp(240px, 28vw, 400px);
+    line-height: 1;
+    color: rgba(212,160,84,0.10);
+    text-shadow:
+      0 0 80px rgba(212,160,84,0.08),
+      0 0 160px rgba(212,160,84,0.04);
+    pointer-events: none;
+    user-select: none;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -55%);
+    animation: knightFloat 8s ease-in-out infinite;
+  }
+
+  @keyframes knightFloat {
+    0%, 100% { transform: translate(-50%, -55%); }
+    50% { transform: translate(-50%, calc(-55% - 12px)); }
+  }
+
+  .hero-board-showcase {
+    position: relative;
+    z-index: 1;
+    transform: perspective(900px) rotateX(18deg) rotateY(-22deg) rotateZ(2deg);
+    animation: boardFloat 8s ease-in-out infinite;
+  }
+
+  @keyframes boardFloat {
+    0%, 100% { transform: perspective(900px) rotateX(18deg) rotateY(-22deg) rotateZ(2deg); }
+    50% { transform: perspective(900px) rotateX(20deg) rotateY(-20deg) rotateZ(1deg) translateY(-10px); }
+  }
+
+  .hero-visual-glow {
+    position: absolute;
+    width: 120%;
+    height: 120%;
+    top: -10%;
+    left: -10%;
+    z-index: -1;
+    border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(212,160,84,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .board-3d {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(8, var(--sq, 56px));
+    grid-template-rows: repeat(8, var(--sq, 56px));
+    border: 3px solid var(--wood-dark);
+    border-radius: 4px;
+    box-shadow:
+      0 25px 70px rgba(0,0,0,0.6),
+      0 0 100px rgba(212,160,84,0.1),
+      inset 0 0 30px rgba(0,0,0,0.3);
+    --sq: clamp(36px, 5.5vw, 60px);
+  }
+
+  .sq {
+    position: relative;
+  }
+
+  /* Legno con venatura leggera */
+  .sq-l {
+    background:
+      linear-gradient(135deg, rgba(255,255,255,0.05), rgba(0,0,0,0.05)),
+      linear-gradient(135deg, #e3bd84, #cda162);
+  }
+  .sq-d {
+    background:
+      linear-gradient(135deg, rgba(255,255,255,0.04), rgba(0,0,0,0.08)),
+      linear-gradient(135deg, #804a34, #5c3120);
+  }
+
+  /* Layer dei pezzi sopra la griglia */
+  .pieces-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .pieces-layer :global(.pc) {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: var(--sq, 56px);
+    height: var(--sq, 56px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* posizione iniziale impostata via inline transform */
+    transition:
+      transform 0.55s cubic-bezier(0.33, 0.9, 0.3, 1),
+      opacity 0.35s ease;
+    will-change: transform, opacity;
+  }
+
+  .pieces-layer :global(.pc img) {
+    width: 84%;
+    height: 84%;
+    object-fit: contain;
+    filter: drop-shadow(1px 3px 3px rgba(0,0,0,0.45));
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+
+  /* pezzo catturato: svanisce e si rimpicciolisce leggermente */
+  .pieces-layer :global(.pc.captured) {
+    opacity: 0;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 1100px) {
+    .board-3d { --sq: clamp(32px, 5vw, 52px); }
+  }
+
+  @media (max-width: 900px) {
+    .hero-board-showcase {
+      transform: perspective(900px) rotateX(25deg) rotateY(0deg) rotateZ(0deg);
+    }
+    @keyframes boardFloat {
+      0%, 100% { transform: perspective(900px) rotateX(25deg) rotateY(0deg) rotateZ(0deg); }
+      50% { transform: perspective(900px) rotateX(27deg) rotateY(0deg) rotateZ(0deg) translateY(-8px); }
+    }
+    .hero-knight { font-size: 200px; }
+  }
+
+  @media (max-width: 768px) {
+    .hero-board-showcase {
+      transform: perspective(900px) rotateX(30deg) rotateY(0deg) rotateZ(0deg);
+    }
+    @keyframes boardFloat {
+      0%, 100% { transform: perspective(900px) rotateX(30deg) rotateY(0deg) rotateZ(0deg); }
+      50% { transform: perspective(900px) rotateX(32deg) rotateY(0deg) rotateZ(0deg) translateY(-6px); }
+    }
+    .board-3d { --sq: 36px; }
+    .hero-knight { font-size: 160px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-knight, .hero-board-showcase { animation: none; }
+    .pieces-layer :global(.pc) { transition: none; }
+  }
+</style>
+
+<script>
+  import { Chess } from 'chess.js';
+
+  // Partite famose brevi e spettacolari.
+  const GAMES: { game: string; year: string; pgn: string }[] = [
+    {
+      game: 'Morphy vs Allies — "Opera Game"',
+      year: 'Parigi, 1858',
+      pgn: '1.e4 e5 2.Nf3 d6 3.d4 Bg4 4.dxe5 Bxf3 5.Qxf3 dxe5 6.Bc4 Nf6 7.Qb3 Qe7 8.Nc3 c6 9.Bg5 b5 10.Nxb5 cxb5 11.Bxb5+ Nbd7 12.O-O-O Rd8 13.Rxd7 Rxd7 14.Rd1 Qe6 15.Bxd7+ Nxd7 16.Qb8+ Nxb8 17.Rd8#',
+    },
+    {
+      game: 'Anderssen vs Kieseritzky — "Immortal Game"',
+      year: 'Londra, 1851',
+      pgn: '1.e4 e5 2.f4 exf4 3.Bc4 Qh4+ 4.Kf1 b5 5.Bxb5 Nf6 6.Nf3 Qh6 7.d3 Nh5 8.Nh4 Qg5 9.Nf5 c6 10.g4 Nf6 11.Rg1 cxb5 12.h4 Qg6 13.h5 Qg5 14.Qf3 Ng8 15.Bxf4 Qf6 16.Nc3 Bc5 17.Nd5 Qxb2 18.Bd6 Bxg1 19.e5 Qxa1+ 20.Ke2 Na6 21.Nxg7+ Kd8 22.Qf6+ Nxf6 23.Be7#',
+    },
+    {
+      game: 'Réti vs Tartakower',
+      year: 'Vienna, 1910',
+      pgn: '1.e4 c6 2.d4 d5 3.Nc3 dxe4 4.Nxe4 Nf6 5.Qd3 e5 6.dxe5 Qa5+ 7.Bd2 Qxe5 8.O-O-O Nxe4 9.Qd8+ Kxd8 10.Bg5+ Kc7 11.Bd8#',
+    },
+    {
+      game: 'De Légal vs Saint Brie — "Mazza di Légal"',
+      year: 'Parigi, 1750',
+      pgn: '1.e4 e5 2.Bc4 d6 3.Nf3 Bg4 4.Nc3 g6 5.Nxe5 Bxd1 6.Bxf7+ Ke7 7.Nd5#',
+    },
+    {
+      game: 'Adams vs Torre',
+      year: 'New Orleans, 1920',
+      pgn: '1.e4 e5 2.Nf3 d6 3.d4 exd4 4.Qxd4 Nc6 5.Bb5 Bd7 6.Bxc6 Bxc6 7.Nc3 Nf6 8.O-O Be7 9.Nd5 Bxd5 10.exd5 O-O 11.Bg5 c6 12.c4 cxd5 13.cxd5 Re8 14.Rfe1 a5 15.Re2 Rc8 16.Rae1 Qd7 17.Bxf6 Bxf6 18.Qg4 Qb5 19.Qc4 Qd7 20.Qc7 Qb5 21.a4 Qxa4 22.Re4 Qb5 23.Qxb7 Qxb7 24.Rxe8+ Rxe8 25.Rxe8#',
+    },
+    {
+      game: 'Rotlewi vs Rubinstein — "Immortale di Rubinstein"',
+      year: 'Łódź, 1907',
+      pgn: '1.d4 d5 2.Nf3 e6 3.e3 c5 4.c4 Nc6 5.Nc3 Nf6 6.dxc5 Bxc5 7.a3 a6 8.b4 Bd6 9.Bb2 O-O 10.Qd2 Qe7 11.Bd3 dxc4 12.Bxc4 b5 13.Bd3 Rd8 14.Qe2 Bb7 15.O-O Ne5 16.Nxe5 Bxe5 17.f4 Bc7 18.e4 Rac8 19.e5 Bb6+ 20.Kh1 Ng4 21.Be4 Qh4 22.g3 Rxc3 23.gxh4 Rd2 24.Qxd2 Bxe4+ 25.Qg2 Rh3#',
+    },
+  ];
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function initHeroBoard(board: HTMLElement) {
+    const layer = board.querySelector<HTMLElement>('[data-pieces]');
+    const set = board.dataset.pieceSet || 'merida';
+    const visual = board.closest<HTMLElement>('.hero-visual');
+    const caption = visual?.querySelector<HTMLElement>('[data-caption]') ?? null;
+    if (!layer) return;
+
+    function setCaption(g: { game: string; year: string }) {
+      if (!caption) return;
+      caption.classList.remove('show');
+      window.setTimeout(() => {
+        caption.innerHTML =
+          `<span class="cap-game">${g.game}</span>` +
+          `<span class="cap-sep">·</span>` +
+          `<span class="cap-year">${g.year}</span>`;
+        caption.classList.add('show');
+      }, 260);
+    }
+
+    // codice casa -> indice colonna/riga (vista bianco in basso)
+    const fileToCol = (f: string) => f.charCodeAt(0) - 97; // a->0
+    const rankToRow = (r: string) => 8 - parseInt(r, 10);   // 8->0
+
+    type PieceEl = { el: HTMLImageElement & HTMLElement; wrap: HTMLElement };
+    // mappa casa (es. "e4") -> elemento pezzo attualmente su quella casa
+    let pieces = new Map<string, HTMLElement>();
+
+    function squareName(col: number, row: number) {
+      return String.fromCharCode(97 + col) + (8 - row);
+    }
+
+    function place(wrap: HTMLElement, square: string, animate: boolean) {
+      const col = fileToCol(square[0]);
+      const row = rankToRow(square[1]);
+      const prev = wrap.style.transition;
+      if (!animate) wrap.style.transition = 'none';
+      wrap.style.transform = `translate(calc(${col} * var(--sq)), calc(${row} * var(--sq)))`;
+      if (!animate) {
+        // forza reflow poi ripristina la transizione
+        void wrap.offsetWidth;
+        wrap.style.transition = prev;
+      }
+    }
+
+    function pieceImg(type: string, color: 'w' | 'b') {
+      const code = color + type.toUpperCase();
+      const wrap = document.createElement('div');
+      wrap.className = 'pc';
+      const img = document.createElement('img');
+      img.src = `/pieces/${set}/${code}.svg`;
+      img.alt = '';
+      img.loading = 'lazy';
+      img.draggable = false;
+      wrap.appendChild(img);
+      return wrap;
+    }
+
+    function buildFromPosition(game: InstanceType<typeof Chess>) {
+      layer.innerHTML = '';
+      pieces = new Map();
+      const b = game.board(); // 8x8 dall'alto (row0 = rank8)
+      for (let row = 0; row < 8; row++) {
+        for (let col = 0; col < 8; col++) {
+          const cell = b[row][col];
+          if (!cell) continue;
+          const wrap = pieceImg(cell.type, cell.color);
+          layer.appendChild(wrap);
+          const sq = squareName(col, row);
+          place(wrap, sq, false);
+          pieces.set(sq, wrap);
+        }
+      }
+    }
+
+    // Applica una mossa SAN muovendo gli elementi (slide) invece di ricostruire.
+    function applyMove(game: InstanceType<typeof Chess>, san: string, onDone: () => void) {
+      const move = game.move(san);
+      if (!move) { onDone(); return; }
+
+      const fromEl = pieces.get(move.from);
+
+      // cattura normale o en passant
+      if (move.captured) {
+        let capSq = move.to;
+        if (move.flags.includes('e')) {
+          // en passant: il pedone catturato e' dietro la casa di arrivo
+          const col = fileToCol(move.to[0]);
+          const row = rankToRow(move.to[1]) + (move.color === 'w' ? 1 : -1);
+          capSq = squareName(col, row);
+        }
+        const capEl = pieces.get(capSq);
+        if (capEl) {
+          capEl.classList.add('captured');
+          const toRemove = capEl;
+          setTimeout(() => toRemove.remove(), 400);
+          pieces.delete(capSq);
+        }
+      }
+
+      if (fromEl) {
+        pieces.delete(move.from);
+        // eventuale pezzo gia' presente sulla casa d'arrivo (cattura diretta)
+        const existing = pieces.get(move.to);
+        if (existing && existing !== fromEl) {
+          existing.classList.add('captured');
+          setTimeout(() => existing.remove(), 400);
+        }
+        place(fromEl, move.to, true);
+        pieces.set(move.to, fromEl);
+
+        // promozione: sostituisce l'immagine a fine slide
+        if (move.promotion) {
+          const img = fromEl.querySelector('img');
+          if (img) {
+            setTimeout(() => {
+              img.src = `/pieces/${set}/${move.color}${move.promotion!.toUpperCase()}.svg`;
+            }, 300);
+          }
+        }
+      }
+
+      // arrocco: muove anche la torre
+      if (move.flags.includes('k') || move.flags.includes('q')) {
+        const rank = move.color === 'w' ? '1' : '8';
+        const rookFrom = (move.flags.includes('k') ? 'h' : 'a') + rank;
+        const rookTo = (move.flags.includes('k') ? 'f' : 'd') + rank;
+        const rookEl = pieces.get(rookFrom);
+        if (rookEl) {
+          pieces.delete(rookFrom);
+          place(rookEl, rookTo, true);
+          pieces.set(rookTo, rookEl);
+        }
+      }
+
+      onDone();
+    }
+
+    // Ciclo: sceglie una partita, la riproduce mossa dopo mossa, poi ricomincia.
+    let running = false;
+    let timer: number | undefined;
+    let gameIndex = Math.floor(Math.random() * GAMES.length);
+
+    function playGame() {
+      const chess = new Chess();
+      const history = new Chess();
+      history.loadPgn(GAMES[gameIndex].pgn);
+      const moves = history.history(); // SAN in ordine
+
+      buildFromPosition(chess);
+      setCaption(GAMES[gameIndex]);
+
+      let i = 0;
+      const MOVE_MS = 1300;   // tempo tra una mossa e l'altra
+      const END_PAUSE = 3500; // pausa sulla posizione finale
+
+      function step() {
+        if (!running) return;
+        if (i >= moves.length) {
+          // fine partita: pausa, poi prossima partita
+          timer = window.setTimeout(() => {
+            gameIndex = (gameIndex + 1) % GAMES.length;
+            playGame();
+          }, END_PAUSE);
+          return;
+        }
+        applyMove(chess, moves[i], () => {
+          i++;
+          timer = window.setTimeout(step, MOVE_MS);
+        });
+      }
+      // breve attesa prima di iniziare le mosse
+      timer = window.setTimeout(step, 900);
+    }
+
+    // Reduced motion: posizione iniziale statica, nessuna animazione.
+    if (reduceMotion) {
+      buildFromPosition(new Chess());
+      if (caption) {
+        caption.innerHTML =
+          `<span class="cap-game">${GAMES[gameIndex].game}</span>` +
+          `<span class="cap-sep">·</span>` +
+          `<span class="cap-year">${GAMES[gameIndex].year}</span>`;
+        caption.classList.add('show');
+      }
+      return;
+    }
+
+    // Avvio solo quando la scacchiera entra nel viewport; pausa quando esce.
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (e.isIntersecting && !running) {
+          running = true;
+          playGame();
+        } else if (!e.isIntersecting && running) {
+          running = false;
+          if (timer) clearTimeout(timer);
+        }
+      }
+    }, { threshold: 0.2 });
+    io.observe(board);
+  }
+
+  function boot() {
+    document.querySelectorAll<HTMLElement>('[data-hero-board]').forEach(initHeroBoard);
+  }
+  if (document.readyState !== 'loading') boot();
+  else document.addEventListener('DOMContentLoaded', boot);
+</script>

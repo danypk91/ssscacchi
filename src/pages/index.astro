@@ -2,6 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
 import { clubJsonLd, websiteJsonLd } from '../data/club';
+import HeroBoard from '../components/HeroBoard.astro';
 
 // Flag per abilitare/disabilitare la sezione partita live Lichess
 const LIVE_ENABLED = false;
@@ -62,14 +63,6 @@ const prossimieventi = [
 //    ],
 //  },
 ];
-/* 8x8 board with a starting position (simplified).
-   We place unicode pieces on certain squares. */
-const boardPieces: Record<number, string> = {
-  0: '\u265C', 1: '\u265E', 2: '\u265D', 3: '\u265B', 4: '\u265A', 5: '\u265D', 6: '\u265E', 7: '\u265C',
-  8: '\u265F', 9: '\u265F', 10: '\u265F', 11: '\u265F', 12: '\u265F', 13: '\u265F', 14: '\u265F', 15: '\u265F',
-  48: '\u2659', 49: '\u2659', 50: '\u2659', 51: '\u2659', 52: '\u2659', 53: '\u2659', 54: '\u2659', 55: '\u2659',
-  56: '\u2656', 57: '\u2658', 58: '\u2657', 59: '\u2655', 60: '\u2654', 61: '\u2657', 62: '\u2658', 63: '\u2656',
-};
 ---
 
 <BaseLayout
@@ -124,26 +117,8 @@ const boardPieces: Record<number, string> = {
         </div> -->
       </div>
 
-      <!-- Right: board with knight watermark behind -->
-      <div class="hero-visual">
-        <div class="hero-knight" aria-hidden="true">&#9822;</div>
-        <div class="hero-board-showcase">
-          <div class="board-3d">
-            {Array.from({ length: 64 }).map((_, i) => {
-              const row = Math.floor(i / 8);
-              const col = i % 8;
-              const isLight = (row + col) % 2 === 0;
-              const piece = boardPieces[i];
-              return (
-                <div class:list={['sq', isLight ? 'sq-l' : 'sq-d']}>
-                  {piece && <span class:list={['pc', i < 16 ? 'pc-b' : 'pc-w']}>{piece}</span>}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-        <div class="hero-visual-glow" aria-hidden="true"></div>
-      </div>
+      <!-- Right: board (set merida) con partita animata -->
+      <HeroBoard set="merida" />
     </div>
   </section>
 
@@ -1158,104 +1133,6 @@ const boardPieces: Record<number, string> = {
     background: rgba(212,160,84,0.2);
   }
 
-  /* --- hero visual (right) --- */
-  .hero-visual {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    animation: fadeUp 0.8s ease-out 0.3s both;
-  }
-
-  .hero-knight {
-    position: absolute;
-    z-index: 0;
-    font-size: clamp(240px, 28vw, 400px);
-    line-height: 1;
-    color: rgba(212,160,84,0.10);
-    text-shadow:
-      0 0 80px rgba(212,160,84,0.08),
-      0 0 160px rgba(212,160,84,0.04);
-    pointer-events: none;
-    user-select: none;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -55%);
-    animation: knightFloat 8s ease-in-out infinite;
-  }
-
-  @keyframes knightFloat {
-    0%, 100% { transform: translate(-50%, -55%); }
-    50% { transform: translate(-50%, calc(-55% - 12px)); }
-  }
-
-  .hero-board-showcase {
-    position: relative;
-    z-index: 1;
-    transform: perspective(900px) rotateX(18deg) rotateY(-22deg) rotateZ(2deg);
-    animation: boardFloat 8s ease-in-out infinite;
-  }
-
-  @keyframes boardFloat {
-    0%, 100% { transform: perspective(900px) rotateX(18deg) rotateY(-22deg) rotateZ(2deg); }
-    50% { transform: perspective(900px) rotateX(20deg) rotateY(-20deg) rotateZ(1deg) translateY(-10px); }
-  }
-
-  .hero-visual-glow {
-    position: absolute;
-    width: 120%;
-    height: 120%;
-    top: -10%;
-    left: -10%;
-    z-index: -1;
-    border-radius: 50%;
-    background: radial-gradient(ellipse, rgba(212,160,84,0.08) 0%, transparent 70%);
-    pointer-events: none;
-  }
-
-  .board-3d {
-    display: grid;
-    grid-template-columns: repeat(8, clamp(36px, 5.5vw, 60px));
-    grid-template-rows: repeat(8, clamp(36px, 5.5vw, 60px));
-    border: 3px solid var(--wood-dark);
-    border-radius: 4px;
-    box-shadow:
-      0 25px 70px rgba(0,0,0,0.6),
-      0 0 100px rgba(212,160,84,0.1),
-      inset 0 0 30px rgba(0,0,0,0.3);
-  }
-
-  .sq {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-  }
-
-  .sq-l {
-    background: linear-gradient(135deg, #d9b176, #c89b5e);
-  }
-
-  .sq-d {
-    background: linear-gradient(135deg, #7a4430, #5c3120);
-  }
-
-  .pc {
-    font-size: clamp(20px, 3.2vw, 36px);
-    line-height: 1;
-    filter: drop-shadow(1px 2px 2px rgba(0,0,0,0.4));
-    user-select: none;
-  }
-
-  .pc-w {
-    color: #f5eed6;
-    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
-  }
-
-  .pc-b {
-    color: #2a1a0e;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
-  }
 
   /* =============================================
      SHARED SECTION STYLES
@@ -1860,11 +1737,6 @@ const boardPieces: Record<number, string> = {
     .hero-grid {
       gap: 2rem;
     }
-
-    .board-3d {
-      grid-template-columns: repeat(8, clamp(32px, 5vw, 52px));
-      grid-template-rows: repeat(8, clamp(32px, 5vw, 52px));
-    }
   }
 
   @media (max-width: 900px) {
@@ -1881,19 +1753,6 @@ const boardPieces: Record<number, string> = {
     .hero-visual {
       order: 0;
       margin-bottom: -1rem;
-    }
-
-    .hero-board-showcase {
-      transform: perspective(900px) rotateX(25deg) rotateY(0deg) rotateZ(0deg);
-    }
-
-    @keyframes boardFloat {
-      0%, 100% { transform: perspective(900px) rotateX(25deg) rotateY(0deg) rotateZ(0deg); }
-      50% { transform: perspective(900px) rotateX(27deg) rotateY(0deg) rotateZ(0deg) translateY(-8px); }
-    }
-
-    .hero-knight {
-      font-size: 200px;
     }
 
     .hero-actions {
@@ -1918,24 +1777,6 @@ const boardPieces: Record<number, string> = {
 
     .hero-visual {
       margin-bottom: 0;
-    }
-
-    .hero-board-showcase {
-      transform: perspective(900px) rotateX(30deg) rotateY(0deg) rotateZ(0deg);
-    }
-
-    @keyframes boardFloat {
-      0%, 100% { transform: perspective(900px) rotateX(30deg) rotateY(0deg) rotateZ(0deg); }
-      50% { transform: perspective(900px) rotateX(32deg) rotateY(0deg) rotateZ(0deg) translateY(-6px); }
-    }
-
-    .board-3d {
-      grid-template-columns: repeat(8, 36px);
-      grid-template-rows: repeat(8, 36px);
-    }
-
-    .hero-knight {
-      font-size: 160px;
     }
 
     .hero-grid {
