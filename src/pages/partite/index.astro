@@ -185,7 +185,7 @@ function fenToPieces(fen: string): (string | null)[][] {
                     {fenToPieces(g.fen).map((row, r) => (
                       row.map((pc, c) => (
                         <span class:list={['mini-sq', (r + c) % 2 === 0 ? 'mini-l' : 'mini-d']}>
-                          {pc && <img src={`/pieces/${PIECE_SET}/${pc}.svg`} alt="" loading="lazy" draggable="false" />}
+                          {pc && <img src={`/pieces/${PIECE_SET}/${pc}.svg`} alt="" decoding="async" draggable="false" />}
                         </span>
                       ))
                     ))}
@@ -389,30 +389,25 @@ function fenToPieces(fen: string): (string | null)[][] {
 
   .arch-noresult { text-align: center; color: var(--text-muted); padding: 2rem 0; }
 
-  /* comparsa a cascata delle schede caricate */
-  .arch-card.is-entering {
-    animation: archCardIn 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) both;
-    animation-delay: calc(var(--i, 0) * 60ms);
+  /* Rivelazione allo scroll: la scheda compare quando entra nello schermo.
+     Solo opacity + transform (animati dal compositor, niente ridisegno). */
+  .arch-card.reveal {
+    opacity: 0;
+    transform: translate3d(0, 28px, 0);
   }
-  .arch-card.is-entering .arch-mini {
-    animation: archMiniIn 0.7s ease-out both;
-    animation-delay: calc(var(--i, 0) * 60ms + 120ms);
-  }
-  @keyframes archCardIn {
-    from { opacity: 0; transform: translateY(22px) scale(0.97); }
-    to   { opacity: 1; transform: none; }
-  }
-  /* la mini-scacchiera "si accende" leggermente dopo la scheda */
-  @keyframes archMiniIn {
-    from { filter: brightness(0.55) saturate(0.6); }
-    to   { filter: none; }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .arch-card.is-entering, .arch-card.is-entering .arch-mini { animation: none; }
+  .arch-card.reveal.is-in {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity 0.6s ease-out,
+      transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+    transition-delay: var(--d, 0ms);
   }
 
   /* fine lista: carica altre schede (scroll automatico o click) */
   .arch-more { display: flex; justify-content: center; padding: 2rem 0 0.5rem; }
+  /* display:flex annullerebbe l'attributo hidden */
+  .arch-more[hidden] { display: none; }
   .arch-more-btn {
     padding: 0.65rem 1.4rem;
     border: 1px solid var(--border-light);
@@ -467,8 +462,8 @@ function fenToPieces(fen: string): (string | null)[][] {
     }
 
     // --- Scroll infinito: mostriamo le schede a blocchi di PAGE ---
-    // Le schede nascoste (display:none) non scaricano le immagini dei pezzi
-    // (loading="lazy"), quindi la pagina parte leggera anche con molte partite.
+    // Le schede nascoste (display:none) non vengono impaginate ne' disegnate.
+    // I pezzi sono sempre gli stessi 12 SVG, scaricati una volta e poi in cache.
     const PAGE = 12;
     let shown = PAGE;           // quante schede (tra quelle filtrate) sono visibili
     let matching: HTMLElement[] = [];
@@ -476,6 +471,51 @@ function fenToPieces(fen: string): (string | null)[][] {
     const moreBtn = document.querySelector<HTMLButtonElement>('[data-more-btn]');
 
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // --- Rivelazione allo scroll ---
+    // Ogni scheda si anima quando entra davvero nello schermo (non quando viene
+    // caricata, che avviene molto prima): cosi' l'effetto si vede sempre.
+    function clearReveal(card: HTMLElement) {
+      card.classList.remove('reveal', 'is-in');
+      card.style.removeProperty('--d');
+    }
+    const revealIO =
+      !reduceMotion && 'IntersectionObserver' in window
+        ? new IntersectionObserver(
+            (entries) => {
+              // le schede che entrano insieme (stessa riga) vanno in cascata
+              const ins = entries
+                .filter((e) => e.isIntersecting)
+                .sort(
+                  (a, b) =>
+                    a.boundingClientRect.top - b.boundingClientRect.top ||
+                    a.boundingClientRect.left - b.boundingClientRect.left
+                );
+              ins.forEach((e, k) => {
+                const card = e.target as HTMLElement;
+                revealIO!.unobserve(card);
+                card.style.setProperty('--d', `${Math.min(k, 6) * 80}ms`);
+                card.classList.add('is-in');
+                const done = (ev: TransitionEvent) => {
+                  if (ev.propertyName !== 'transform') return;
+                  card.removeEventListener('transitionend', done);
+                  clearReveal(card);
+                };
+                card.addEventListener('transitionend', done);
+              });
+            },
+            { rootMargin: '0px 0px -6% 0px', threshold: 0.12 }
+          )
+        : null;
+
+    function armReveal(card: HTMLElement) {
+      if (!revealIO) return;
+      card.classList.remove('is-in');
+      card.classList.add('reveal');
+      revealIO.observe(card);
+    }
+
+    let firstRender = true;
 
     function render() {
       const matchSet = new Set(matching);
@@ -486,23 +526,26 @@ function fenToPieces(fen: string): (string | null)[][] {
         if (matchSet.has(card)) i++;
         const wasHidden = card.style.display === 'none';
         card.style.display = visible ? '' : 'none';
-        if (visible && wasHidden) entering.push(card);
+        if (!visible) {
+          revealIO?.unobserve(card);
+          clearReveal(card);
+        } else if (wasHidden || firstRender) {
+          entering.push(card);
+        }
       }
 
-      // Comparsa a cascata delle schede appena mostrate.
-      if (!reduceMotion) {
-        entering.forEach((card, k) => {
-          card.classList.remove('is-entering');
-          card.style.setProperty('--i', String(k));
-          void card.offsetWidth; // riavvia l'animazione
-          card.classList.add('is-entering');
-          card.addEventListener(
-            'animationend',
-            () => card.classList.remove('is-entering'),
-            { once: true }
-          );
-        });
+      if (firstRender) {
+        // al primo caricamento: le schede gia' nello schermo compaiono subito,
+        // quelle sotto la piega si riveleranno scorrendo
+        const fold = window.innerHeight;
+        for (const card of entering) {
+          if (card.getBoundingClientRect().top > fold) armReveal(card);
+        }
+        firstRender = false;
+      } else {
+        entering.forEach(armReveal);
       }
+
       const remaining = matching.length - Math.min(shown, matching.length);
       if (moreEl) moreEl.hidden = remaining <= 0;
       if (moreBtn) moreBtn.textContent = `Mostra altre partite (${remaining})`;
@@ -520,7 +563,7 @@ function fenToPieces(fen: string): (string | null)[][] {
       loadMore();
       requestAnimationFrame(() => {
         if (!moreEl || moreEl.hidden) return;
-        if (moreEl.getBoundingClientRect().top < window.innerHeight + 400) fill();
+        if (moreEl.getBoundingClientRect().top < window.innerHeight + 1200) fill();
       });
     }
 
@@ -567,7 +610,8 @@ function fenToPieces(fen: string): (string | null)[][] {
         (entries) => {
           if (entries.some((e) => e.isIntersecting)) fill();
         },
-        { rootMargin: '0px 0px 400px 0px' }
+        // i blocchi arrivano ben prima della fine: lo scroll non si "ferma" mai
+        { rootMargin: '0px 0px 1200px 0px' }
       );
       io.observe(moreEl);
     }
