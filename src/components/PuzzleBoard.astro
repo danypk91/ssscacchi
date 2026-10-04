@@ -11,6 +11,7 @@ const { set = 'merida' } = Astro.props;
 
 <div class="pz" data-puzzle-root data-set={set}>
   <div class="pz-main">
+   <div class="pz-stage" data-stage>
     <div class="pz-board-wrap">
       <div class="pz-board" data-board>
         {Array.from({ length: 64 }).map((_, i) => {
@@ -32,6 +33,15 @@ const { set = 'merida' } = Astro.props;
         <div class="pz-resize" data-resize aria-hidden="true" title="Trascina per ridimensionare"></div>
       </div>
     </div>
+
+    <!-- navigazione tra le mosse giocate (come lichess) -->
+    <div class="pz-nav" role="group" aria-label="Rivedi le mosse">
+      <button type="button" class="pz-nav-btn" data-nav="first" aria-label="Posizione iniziale" title="Inizio (↑ / Home)">&#x23EE;&#xFE0E;</button>
+      <button type="button" class="pz-nav-btn" data-nav="prev" aria-label="Mossa precedente" title="Indietro (←)">&#x25C0;&#xFE0E;</button>
+      <button type="button" class="pz-nav-btn" data-nav="next" aria-label="Mossa successiva" title="Avanti (→)">&#x25B6;&#xFE0E;</button>
+      <button type="button" class="pz-nav-btn" data-nav="last" aria-label="Ultima mossa" title="Ultima mossa (↓ / End)">&#x23ED;&#xFE0E;</button>
+    </div>
+   </div>
   </div>
 
   <aside class="pz-side">
@@ -76,12 +86,52 @@ const { set = 'merida' } = Astro.props;
     align-items: start;
   }
   .pz-main { min-width: 0; display: flex; justify-content: center; }
+  /* scacchiera + tasti: la colonna e' larga quanto la scacchiera */
+  .pz-stage { display: inline-flex; flex-direction: column; max-width: 100%; }
   .pz-board-wrap {
     position: relative;
-    /* di default la scacchiera sta tutta nello schermo, sotto l'header */
-    width: var(--board-size, min(560px, calc(100vh - 7.5rem)));
-    width: var(--board-size, min(560px, calc(100dvh - 7.5rem)));
+    /* di default scacchiera + tasti stanno nello schermo, sotto l'header */
+    width: var(--board-size, min(560px, calc(100vh - 11rem)));
+    width: var(--board-size, min(560px, calc(100dvh - 11rem)));
     max-width: 100%;
+  }
+
+  /* tasti avanti/indietro sotto la scacchiera */
+  .pz-nav {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.4rem;
+    margin-top: 0.6rem;
+  }
+  .pz-nav-btn {
+    height: 40px;
+    border: 1px solid var(--border-light);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    border-radius: var(--radius);
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+  }
+  .pz-nav-btn:hover:not(:disabled) { background: var(--bg-card-hover); border-color: var(--accent); }
+  .pz-nav-btn:disabled { opacity: 0.35; cursor: default; }
+  /* quando si rivedono mosse passate, il tasto "ultima mossa" invita a tornare */
+  .is-reviewing .pz-nav-btn[data-nav="last"] {
+    border-color: var(--accent);
+    color: var(--accent);
+    animation: pzGlow 1.6s ease-in-out infinite;
+  }
+  .is-reviewing .pz-board { cursor: pointer; }
+  .is-reviewing .pz-board::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: rgba(26, 20, 16, 0.12);
+    pointer-events: none;
+    z-index: 4;
+  }
+  @keyframes pzGlow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(212,160,84,0); }
+    50% { box-shadow: 0 0 0 4px rgba(212,160,84,0.25); }
   }
   .pz-board {
     position: relative;
@@ -178,6 +228,8 @@ const { set = 'merida' } = Astro.props;
   }
   /* pezzo selezionato: leggermente ingrandito e sollevato */
   .pz-pieces :global(.pz-pc.selected) { z-index: 3; }
+  /* il pezzo che scivola passa sopra quello che sta catturando */
+  .pz-pieces :global(.pz-pc.moving) { z-index: 4; }
   .pz-pieces :global(.pz-pc.selected img) {
     transform: scale(1.18);
     filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
@@ -387,50 +439,126 @@ const { set = 'merida' } = Astro.props;
       }
     }
 
-    // Esegue una mossa (oggetto chess.js) animando gli elementi.
-    function animateMove(mv: any) {
-      const movingId = occupant.get(mv.from)!;
-      // cattura
-      if (mv.captured) {
-        let capSq = mv.to;
-        if (mv.flags.includes('e')) {
-          const col = fileToCol(mv.to[0]);
-          const row = rankToRow(mv.to[1]) + (mv.color === 'w' ? 1 : -1);
-          capSq = squareName(col, row);
-        }
-        const capId = occupant.get(capSq);
-        if (capId) {
-          pieceEls.get(capId)!.classList.add('gone');
-          const toRemove = pieceEls.get(capId)!;
-          setTimeout(() => toRemove.remove(), 250);
-          occupant.delete(capSq);
-          pieceEls.delete(capId);
-        }
-      } else if (occupant.has(mv.to)) {
-        const capId = occupant.get(mv.to)!;
-        pieceEls.get(capId)!.classList.add('gone');
-        const toRemove = pieceEls.get(capId)!;
-        setTimeout(() => toRemove.remove(), 250);
-        pieceEls.delete(capId);
+    // Porta la scacchiera disegnata alla posizione `fen`, facendo scivolare i
+    // pezzi che si spostano. Funziona in avanti, all'indietro e per i salti:
+    // abbina ogni pezzo della posizione di arrivo al pezzo uguale piu' vicino.
+    function syncToFen(fen: string, animate = true) {
+      const target = new Map<string, { c: 'w' | 'b'; t: string }>();
+      const b = new Chess(fen).board();
+      for (const row of b) for (const cell of row) {
+        if (cell) target.set(cell.square, { c: cell.color, t: cell.type });
       }
-      occupant.delete(mv.from);
-      occupant.set(mv.to, movingId);
-      placeEl(pieceEls.get(movingId)!, mv.to, true);
+      const free = new Map(occupant); // casa -> id dei pezzi ancora da abbinare
+      const next = new Map<string, string>();
+      const sameKind = (id: string, p: { c: string; t: string }) => {
+        const q = pieceColorType.get(id)!;
+        return q.c === p.c && q.t === p.t;
+      };
+      const dist = (a: string, z: string) =>
+        Math.max(
+          Math.abs(fileToCol(a[0]) - fileToCol(z[0])),
+          Math.abs(rankToRow(a[1]) - rankToRow(z[1]))
+        );
 
-      // promozione
-      if (mv.promotion) {
-        const img = pieceEls.get(movingId)!.querySelector('img')!;
-        setTimeout(() => { img.src = imgSrc(mv.color, mv.promotion); }, 200);
+      // 1) pezzi rimasti fermi sulla stessa casa
+      for (const [sq, p] of target) {
+        const id = free.get(sq);
+        if (id && sameKind(id, p)) { next.set(sq, id); free.delete(sq); }
       }
-      // arrocco
-      if (mv.flags.includes('k') || mv.flags.includes('q')) {
-        const rank = mv.color === 'w' ? '1' : '8';
-        const rf = (mv.flags.includes('k') ? 'h' : 'a') + rank;
-        const rt = (mv.flags.includes('k') ? 'f' : 'd') + rank;
-        const rid = occupant.get(rf)!;
-        occupant.delete(rf); occupant.set(rt, rid);
-        placeEl(pieceEls.get(rid)!, rt, true);
+      // 2) pezzi che si spostano: pezzo uguale piu' vicino
+      // 3) promozione (o il suo annullamento): pezzo dello stesso colore vicino
+      for (const strict of [true, false]) {
+        for (const [sq, p] of target) {
+          if (next.has(sq)) continue;
+          let best: string | null = null, bestD = 99;
+          for (const [from, id] of free) {
+            const q = pieceColorType.get(id)!;
+            if (q.c !== p.c) continue;
+            if (strict ? q.t !== p.t : dist(from, sq) > 1) continue;
+            const d = dist(from, sq);
+            if (d < bestD) { bestD = d; best = from; }
+          }
+          if (best) {
+            const id = free.get(best)!;
+            free.delete(best);
+            next.set(sq, id);
+            const el = pieceEls.get(id)!;
+            if (animate) {
+              el.classList.add('moving');
+              setTimeout(() => el.classList.remove('moving'), 320);
+            }
+            placeEl(el, sq, animate);
+            if (!sameKind(id, p)) {
+              pieceColorType.set(id, p);
+              const img = el.querySelector('img')!;
+              const swap = () => { img.src = imgSrc(p.c, p.t); };
+              animate ? setTimeout(swap, 180) : swap();
+            }
+          }
+        }
       }
+      // 4) pezzi non piu' presenti (catture): dissolvenza
+      for (const [, id] of free) {
+        const el = pieceEls.get(id)!;
+        pieceEls.delete(id);
+        pieceColorType.delete(id);
+        if (animate) {
+          el.classList.add('gone');
+          setTimeout(() => el.remove(), 250);
+        } else el.remove();
+      }
+      // 5) pezzi che ricompaiono (es. tornando indietro dopo una cattura)
+      for (const [sq, p] of target) {
+        if (next.has(sq)) continue;
+        const id = 'p' + (idSeq++);
+        const wrap = document.createElement('div');
+        wrap.className = 'pz-pc' + (animate ? ' gone' : '');
+        const img = document.createElement('img');
+        img.alt = ''; img.draggable = false;
+        img.src = imgSrc(p.c, p.t);
+        wrap.appendChild(img);
+        layer.appendChild(wrap);
+        pieceEls.set(id, wrap);
+        pieceColorType.set(id, p);
+        placeEl(wrap, sq, false);
+        if (animate) requestAnimationFrame(() => wrap.classList.remove('gone'));
+        next.set(sq, id);
+      }
+      occupant = next;
+    }
+
+    // --- Cronologia delle posizioni (per i tasti avanti/indietro) ---
+    let history: string[] = [];   // FEN di ogni posizione giocata
+    let viewIdx = 0;              // posizione mostrata
+    let busy = false;             // animazione in corso (risposta, errore, soluzione)
+    const navBtns = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-nav]'));
+    const atTip = () => viewIdx === history.length - 1;
+
+    function updateNav() {
+      for (const b of navBtns) {
+        const a = b.dataset.nav;
+        b.disabled = a === 'first' || a === 'prev' ? viewIdx <= 0 : atTip();
+      }
+      root.classList.toggle('is-reviewing', !atTip());
+    }
+
+    // Gioca una mossa sulla posizione corrente e la aggiunge alla cronologia.
+    function play(uci: string) {
+      chess.move(uciToMove(uci));
+      history.push(chess.fen());
+      viewIdx = history.length - 1;
+      syncToFen(chess.fen());
+      updateNav();
+    }
+
+    function goTo(i: number) {
+      if (busy) return;
+      i = Math.max(0, Math.min(i, history.length - 1));
+      if (i === viewIdx) return;
+      clearSel();
+      viewIdx = i;
+      syncToFen(history[i]);
+      updateNav();
     }
 
     function uciToMove(uci: string) {
@@ -494,73 +622,79 @@ const { set = 'merida' } = Astro.props;
     // Gestione click sulle case
     boardEl.querySelectorAll<HTMLElement>('[data-sq-index]').forEach((sqEl) => {
       sqEl.addEventListener('click', () => {
+        if (busy) return;
+        // se si stanno rivedendo mosse passate, un tocco riporta alla posizione attuale
+        if (!atTip()) { goTo(history.length - 1); return; }
         if (solved) return;
         const idx = parseInt(sqEl.dataset.sqIndex!, 10);
         let col = idx % 8, row = Math.floor(idx / 8);
         if (orientation === 'black') { col = 7 - col; row = 7 - row; }
         const square = squareName(col, row);
+        const piece = chess.get(square as any);
+        const ownPiece = piece && piece.color === chess.turn();
 
         if (!selected) {
-          // seleziona solo se c'e' un pezzo del colore al tratto
-          const piece = chess.get(square as any);
-          if (piece && piece.color === chess.turn()) showSel(square);
+          if (ownPiece) showSel(square);
           return;
         }
         if (square === selected) { clearSel(); return; }
 
-        // prova la mossa utente
+        const isLegal = (chess.moves({ square: selected as any, verbose: true }) as any[])
+          .some((m) => m.to === square);
+        if (!isLegal) {
+          // come su lichess: toccare un altro proprio pezzo cambia la selezione,
+          // una casa non raggiungibile deseleziona
+          if (ownPiece) showSel(square); else clearSel();
+          return;
+        }
         tryUserMove(selected, square);
       });
     });
+
+    function finish(kind: 'ok' | 'solution') {
+      solved = true;
+      setTurnLabel();
+      showDone(kind);
+      btnHint.disabled = true; btnSolution.disabled = true;
+      feedback(kind === 'ok' ? 'Esatto! Puzzle risolto.' : 'Questa era la soluzione.', 'ok');
+    }
 
     function tryUserMove(from: string, to: string) {
       // promozione: assumiamo donna (i puzzle lichess promuovono a donna salvo sottopromozione)
       const expected = solutionMoves[solveIndex];
       const promo = expected && expected.length > 4 ? expected.slice(4) : 'q';
       const uci = from + to + (needsPromotion(from, to) ? promo : '');
+      clearSel();
 
       if (uci === expected || (uci + 'q') === expected || stripPromoEq(uci, expected)) {
         // mossa corretta
-        const mv = chess.move(uciToMove(expected));
-        animateMove(mv);
-        clearSel();
+        play(expected);
         solveIndex++;
-        if (solveIndex >= solutionMoves.length) {
-          solved = true;
-          feedback('Esatto! Puzzle risolto.', 'ok');
-          setTurnLabel();
-          showDone('ok');
-          btnHint.disabled = true; btnSolution.disabled = true;
-          return;
-        }
+        if (solveIndex >= solutionMoves.length) { finish('ok'); return; }
         feedback('Bene! Continua.', 'ok');
         // risposta automatica dell'avversario
+        busy = true;
         setTimeout(() => {
-          const reply = solutionMoves[solveIndex];
-          const rmv = chess.move(uciToMove(reply));
-          animateMove(rmv);
+          play(solutionMoves[solveIndex]);
           solveIndex++;
+          busy = false;
           setTurnLabel();
-          if (solveIndex >= solutionMoves.length) {
-            solved = true;
-            feedback('Esatto! Puzzle risolto.', 'ok');
-            showDone('ok');
-            btnHint.disabled = true; btnSolution.disabled = true;
-          }
-        }, 400);
-      } else {
-        // mossa sbagliata. In chess.js v1 una mossa illegale lancia: la isoliamo.
-        let wasLegal = false;
-        try {
-          const legal = chess.move({ from, to, promotion: 'q' });
-          if (legal) { wasLegal = true; chess.undo(); }
-        } catch { /* mossa illegale: ignora */ }
-        feedback(
-          wasLegal ? 'Non è la mossa giusta, riprova.' : 'Mossa non valida.',
-          'ko'
-        );
-        clearSel();
+          if (solveIndex >= solutionMoves.length) finish('ok');
+        }, 450);
+        return;
       }
+
+      // Mossa legale ma sbagliata: come su lichess la si vede giocata,
+      // poi i pezzi tornano dov'erano.
+      busy = true;
+      feedback('Non è la mossa giusta, riprova.', 'ko');
+      chess.move({ from, to, promotion: needsPromotion(from, to) ? 'q' : undefined });
+      syncToFen(chess.fen());
+      setTimeout(() => {
+        chess.undo();
+        syncToFen(chess.fen());
+        busy = false;
+      }, 650);
     }
 
     function needsPromotion(from: string, to: string): boolean {
@@ -575,28 +709,50 @@ const { set = 'merida' } = Astro.props;
 
     // Suggerimento: evidenzia la casa di partenza della prossima mossa
     btnHint.addEventListener('click', () => {
-      if (solved) return;
+      if (solved || busy) return;
+      if (!atTip()) goTo(history.length - 1);
       const next = solutionMoves[solveIndex];
       if (next) { showSel(next.slice(0, 2)); feedback('Muovi questo pezzo.', 'ok'); }
     });
 
     // Soluzione: gioca il resto automaticamente
     btnSolution.addEventListener('click', () => {
-      if (solved) return;
-      function playNext() {
-        if (solveIndex >= solutionMoves.length) {
-          solved = true; setTurnLabel(); showDone('solution');
-          btnHint.disabled = true; btnSolution.disabled = true;
-          feedback('Questa era la soluzione.', 'ok');
-          return;
-        }
-        const mv = chess.move(uciToMove(solutionMoves[solveIndex]));
-        animateMove(mv);
-        solveIndex++;
-        setTimeout(playNext, 600);
-      }
+      if (solved || busy) return;
+      if (!atTip()) goTo(history.length - 1);
       clearSel();
+      busy = true;
+      function playNext() {
+        if (solveIndex >= solutionMoves.length) { busy = false; finish('solution'); return; }
+        play(solutionMoves[solveIndex]);
+        solveIndex++;
+        setTimeout(playNext, 650);
+      }
       playNext();
+    });
+
+    // Tasti avanti / indietro (e frecce della tastiera, come su lichess)
+    for (const b of navBtns) {
+      b.addEventListener('click', () => {
+        const a = b.dataset.nav;
+        if (a === 'first') goTo(0);
+        else if (a === 'prev') goTo(viewIdx - 1);
+        else if (a === 'next') goTo(viewIdx + 1);
+        else goTo(history.length - 1);
+      });
+    }
+    document.addEventListener('keydown', (e) => {
+      const t = e.target as HTMLElement;
+      if (t && (t.isContentEditable || /INPUT|SELECT|TEXTAREA/.test(t.tagName))) return;
+      const map: Record<string, () => void> = {
+        ArrowLeft: () => goTo(viewIdx - 1),
+        ArrowRight: () => goTo(viewIdx + 1),
+        ArrowUp: () => goTo(0),
+        Home: () => goTo(0),
+        ArrowDown: () => goTo(history.length - 1),
+        End: () => goTo(history.length - 1),
+      };
+      const fn = map[e.key];
+      if (fn) { e.preventDefault(); fn(); }
     });
 
     doneEl.addEventListener('click', () => loadNext());
@@ -606,6 +762,7 @@ const { set = 'merida' } = Astro.props;
       puzzle = p;
       solved = false;
       solveIndex = 0;
+      busy = true;
       clearSel();
       fbEl.hidden = true;
       doneEl.hidden = true;
@@ -621,6 +778,9 @@ const { set = 'merida' } = Astro.props;
 
       buildCoords();
       buildFromBoard();
+      history = [chess.fen()];
+      viewIdx = 0;
+      updateNav();
 
       // meta
       metaEl.hidden = false;
@@ -633,9 +793,9 @@ const { set = 'merida' } = Astro.props;
 
       // gioca la prima mossa (avversario) dopo un attimo
       setTimeout(() => {
-        const first = chess.move(uciToMove(p.moves[0]));
-        animateMove(first);
+        play(p.moves[0]);
         solutionMoves = p.moves.slice(1);
+        busy = false;
         setTurnLabel();
       }, 500);
     }
