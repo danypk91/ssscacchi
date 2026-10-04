@@ -54,6 +54,31 @@ const families = Array.from(new Set(games.map((g) => g.family))).sort((a, b) =>
 // Epoche presenti, nell'ordine cronologico definito.
 const eras = ERAS.filter((e) => games.some((g) => g.era === e));
 
+// Elenco scacchisti presenti (bianco o nero), con conteggio partite.
+// Escludiamo i "non giocatori" (Il Mondo, computer) dai filtri nominali.
+const EXCLUDE_PLAYERS = new Set(['Il Mondo', 'Deep Blue']);
+const playerCount = new Map<string, number>();
+for (const g of games) {
+  for (const name of [g.white, g.black]) {
+    if (EXCLUDE_PLAYERS.has(name)) continue;
+    playerCount.set(name, (playerCount.get(name) ?? 0) + 1);
+  }
+}
+// Conteggi per le voci dei menu (es. "Difesa Siciliana (3)").
+const countBy = (key: 'family' | 'era') => {
+  const m = new Map<string, number>();
+  for (const g of games) m.set(g[key], (m.get(g[key]) ?? 0) + 1);
+  return m;
+};
+const familyCount = countBy('family');
+const eraCount = countBy('era');
+
+// Ordina per cognome (ultima parola del nome), poi per nome completo.
+const surname = (n: string) => n.trim().split(/\s+/).slice(-1)[0];
+const players = Array.from(playerCount.keys()).sort((a, b) =>
+  surname(a).localeCompare(surname(b), 'it') || a.localeCompare(b, 'it')
+);
+
 const metaDescription =
   'Archivio di partite di scacchi celebri commentate, con scacchiera interattiva: ' +
   'scorri le mosse avanti e indietro. A cura del Circolo Scacchi Santa Sabina.';
@@ -99,32 +124,49 @@ function fenToPieces(fen: string): (string | null)[][] {
       ) : (
         <>
           <div class="arch-filters" data-filters>
-            <input
-              type="search"
-              class="arch-search"
-              data-search
-              placeholder="Cerca per giocatore, anno, luogo…"
-              aria-label="Cerca partita"
-            />
+            <div class="arch-bar">
+              <input
+                type="search"
+                class="arch-field arch-search"
+                data-search
+                placeholder="Cerca giocatore, anno, luogo…"
+                aria-label="Cerca partita"
+              />
 
-            <div class="arch-filter-group">
-              <span class="arch-filter-label">Epoca</span>
-              <div class="arch-chips" role="group" aria-label="Filtra per epoca">
-                <button class="chip chip-active" data-era="">Tutte</button>
-                {eras.map((e) => (
-                  <button class="chip" data-era={e}>{e}</button>
-                ))}
-              </div>
+              <label class="arch-select">
+                <span class="arch-select-label">Epoca</span>
+                <select class="arch-field" data-filter="era" aria-label="Filtra per epoca">
+                  <option value="">Tutte le epoche</option>
+                  {eras.map((e) => (
+                    <option value={e}>{e} ({eraCount.get(e)})</option>
+                  ))}
+                </select>
+              </label>
+
+              <label class="arch-select">
+                <span class="arch-select-label">Apertura</span>
+                <select class="arch-field" data-filter="family" aria-label="Filtra per apertura">
+                  <option value="">Tutte le aperture</option>
+                  {families.map((f) => (
+                    <option value={f}>{f} ({familyCount.get(f)})</option>
+                  ))}
+                </select>
+              </label>
+
+              <label class="arch-select">
+                <span class="arch-select-label">Scacchista</span>
+                <select class="arch-field" data-filter="player" aria-label="Filtra per scacchista">
+                  <option value="">Tutti gli scacchisti</option>
+                  {players.map((p) => (
+                    <option value={p}>{p} ({playerCount.get(p)})</option>
+                  ))}
+                </select>
+              </label>
             </div>
 
-            <div class="arch-filter-group">
-              <span class="arch-filter-label">Apertura</span>
-              <div class="arch-chips" role="group" aria-label="Filtra per apertura">
-                <button class="chip chip-active" data-family="">Tutte</button>
-                {families.map((f) => (
-                  <button class="chip" data-family={f}>{f}</button>
-                ))}
-              </div>
+            <div class="arch-status">
+              <span data-count>{games.length} partite</span>
+              <button type="button" class="arch-reset" data-reset hidden>Azzera filtri</button>
             </div>
           </div>
 
@@ -135,6 +177,7 @@ function fenToPieces(fen: string): (string | null)[][] {
                 data-card
                 data-family={g.family}
                 data-era={g.era}
+                data-players={`|${g.white}|${g.black}|`}
                 data-search-text={`${g.white} ${g.black} ${g.place} ${g.year} ${g.eco} ${g.family} ${g.era}`.toLowerCase()}
               >
                 <a href={`/partite/${g.slug}`} class="arch-link">
@@ -176,55 +219,82 @@ function fenToPieces(fen: string): (string | null)[][] {
   .arch-sub { color: var(--text-secondary); max-width: 560px; margin: 0.5rem auto 0; }
   .arch-empty { text-align: center; color: var(--text-muted); padding: 3rem 0; }
 
+  /* Barra filtri compatta: una riga, scala con qualsiasi numero di voci */
   .arch-filters { margin-bottom: 2rem; }
-  .arch-search {
+  .arch-bar {
+    display: grid;
+    grid-template-columns: minmax(200px, 1.4fr) repeat(3, minmax(150px, 1fr));
+    gap: 0.75rem;
+    align-items: end;
+  }
+  .arch-select { display: flex; flex-direction: column; gap: 0.3rem; min-width: 0; }
+  .arch-select-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+  }
+  .arch-field {
     width: 100%;
-    max-width: 420px;
-    display: block;
-    margin: 0 auto 1.2rem;
-    padding: 0.7rem 1rem;
+    height: 42px;
+    padding: 0 0.9rem;
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius);
     color: var(--text-primary);
-    font-size: 0.95rem;
+    font: inherit;
+    font-size: 0.9rem;
+    transition: border-color 0.2s;
   }
-  .arch-search:focus { outline: none; border-color: var(--accent); }
-
-  .arch-filter-group {
-    display: flex;
-    align-items: baseline;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 0.5rem 0.7rem;
-    margin-bottom: 0.9rem;
-  }
-  .arch-filter-label {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text-muted);
-    min-width: 64px;
-    text-align: right;
-  }
-  .arch-chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    justify-content: center;
-  }
-  .chip {
-    padding: 0.35rem 0.8rem;
-    border: 1px solid var(--border-light);
-    background: var(--bg-card);
-    color: var(--text-secondary);
-    border-radius: 999px;
-    font-size: 0.85rem;
+  .arch-field:focus { outline: none; border-color: var(--accent); }
+  select.arch-field {
+    appearance: none;
     cursor: pointer;
-    transition: all 0.2s;
+    padding-right: 2.2rem;
+    text-overflow: ellipsis;
+    background-image:
+      linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
+      linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
+    background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%;
+    background-size: 5px 5px;
+    background-repeat: no-repeat;
   }
-  .chip:hover { border-color: var(--accent); color: var(--text-primary); }
-  .chip-active { background: var(--accent); color: #2a1a0e; border-color: var(--accent); font-weight: 600; }
+  /* menu con un filtro attivo: evidenziato */
+  select.arch-field.is-active { border-color: var(--accent); color: var(--accent); }
+  select.arch-field option { background: var(--bg-card); color: var(--text-primary); }
+
+  .arch-status {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 0.8rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+  .arch-reset {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--accent);
+    font: inherit;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .arch-reset:hover { color: var(--accent-hover); }
+
+  @media (max-width: 860px) {
+    .arch-bar { grid-template-columns: 1fr 1fr; }
+    .arch-search { grid-column: 1 / -1; }
+  }
+  @media (max-width: 480px) {
+    .arch-bar { grid-template-columns: 1fr; gap: 0.5rem; }
+    /* le voci "Tutte le epoche" ecc. sono autoesplicative: niente etichette */
+    .arch-select-label {
+      position: absolute; width: 1px; height: 1px;
+      overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+    }
+  }
 
   .arch-grid {
     list-style: none;
@@ -317,55 +387,82 @@ function fenToPieces(fen: string): (string | null)[][] {
 </style>
 
 <script>
+  // Nome del parametro URL per ciascun filtro (link condivisibili).
+  const URL_KEYS = { era: 'epoca', family: 'apertura', player: 'scacchista', q: 'q' } as const;
+  type FilterKey = 'era' | 'family' | 'player';
+
   function initArchive() {
     const search = document.querySelector<HTMLInputElement>('[data-search]');
-    const familyChips = Array.from(
-      document.querySelectorAll<HTMLElement>('button[data-family]')
-    );
-    const eraChips = Array.from(
-      document.querySelectorAll<HTMLElement>('button[data-era]')
+    const selects = Array.from(
+      document.querySelectorAll<HTMLSelectElement>('select[data-filter]')
     );
     const cards = Array.from(document.querySelectorAll<HTMLElement>('[data-card]'));
     const noResult = document.querySelector<HTMLElement>('[data-noresult]');
+    const countEl = document.querySelector<HTMLElement>('[data-count]');
+    const resetBtn = document.querySelector<HTMLButtonElement>('[data-reset]');
     if (!cards.length) return;
 
-    let activeFamily = '';
-    let activeEra = '';
-    let query = '';
+    const selectOf = (k: FilterKey) =>
+      selects.find((s) => s.dataset.filter === k) ?? null;
+
+    // Ripristina lo stato dai parametri URL (se validi).
+    const params = new URLSearchParams(location.search);
+    for (const s of selects) {
+      const k = s.dataset.filter as FilterKey;
+      const v = params.get(URL_KEYS[k]);
+      if (v && Array.from(s.options).some((o) => o.value === v)) s.value = v;
+    }
+    if (search) search.value = params.get(URL_KEYS.q) ?? '';
+
+    function syncUrl() {
+      const p = new URLSearchParams();
+      for (const s of selects) {
+        if (s.value) p.set(URL_KEYS[s.dataset.filter as FilterKey], s.value);
+      }
+      const q = search?.value.trim();
+      if (q) p.set(URL_KEYS.q, q);
+      const qs = p.toString();
+      history.replaceState(null, '', qs ? `?${qs}` : location.pathname);
+    }
 
     function apply() {
+      const fam = selectOf('family')?.value ?? '';
+      const era = selectOf('era')?.value ?? '';
+      const player = selectOf('player')?.value ?? '';
+      const query = (search?.value ?? '').trim().toLowerCase();
+
       let visible = 0;
       for (const card of cards) {
-        const fam = card.dataset.family || '';
-        const era = card.dataset.era || '';
-        const text = card.dataset.searchText || '';
-        const okFam = !activeFamily || fam === activeFamily;
-        const okEra = !activeEra || era === activeEra;
-        const okText = !query || text.includes(query);
-        const show = okFam && okEra && okText;
+        const show =
+          (!fam || card.dataset.family === fam) &&
+          (!era || card.dataset.era === era) &&
+          (!player || (card.dataset.players ?? '').includes(`|${player}|`)) &&
+          (!query || (card.dataset.searchText ?? '').includes(query));
         card.style.display = show ? '' : 'none';
         if (show) visible++;
       }
+
+      for (const s of selects) s.classList.toggle('is-active', Boolean(s.value));
+      const anyActive = selects.some((s) => s.value) || Boolean(query);
+      if (resetBtn) resetBtn.hidden = !anyActive;
+      if (countEl) {
+        countEl.textContent = anyActive
+          ? `${visible} di ${cards.length} partite`
+          : `${cards.length} partite`;
+      }
       if (noResult) noResult.hidden = visible > 0;
+      syncUrl();
     }
 
-    search?.addEventListener('input', () => {
-      query = search.value.trim().toLowerCase();
+    selects.forEach((s) => s.addEventListener('change', apply));
+    search?.addEventListener('input', apply);
+    resetBtn?.addEventListener('click', () => {
+      selects.forEach((s) => (s.value = ''));
+      if (search) search.value = '';
       apply();
     });
 
-    // Gruppo di chip mutuamente esclusivo: imposta la classe attiva e aggiorna il valore.
-    function wireGroup(chips: HTMLElement[], onChange: (val: string) => void) {
-      chips.forEach((chip) => {
-        chip.addEventListener('click', () => {
-          chips.forEach((c) => c.classList.remove('chip-active'));
-          chip.classList.add('chip-active');
-          onChange(chip.dataset.family ?? chip.dataset.era ?? '');
-        });
-      });
-    }
-    wireGroup(familyChips, (v) => { activeFamily = v; apply(); });
-    wireGroup(eraChips, (v) => { activeEra = v; apply(); });
+    apply();
   }
 
   if (document.readyState !== 'loading') initArchive();
