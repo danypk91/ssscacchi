@@ -30,8 +30,9 @@ const { set = 'merida' } = Astro.props;
         <div class="pz-pieces" data-pieces></div>
         <div class="pz-coords pz-files" data-files aria-hidden="true"></div>
         <div class="pz-coords pz-ranks" data-ranks aria-hidden="true"></div>
-        <div class="pz-resize" data-resize aria-hidden="true" title="Trascina per ridimensionare"></div>
       </div>
+      <!-- fuori dalla scacchiera (che ha overflow:hidden), cosi' non viene tagliata -->
+      <div class="pz-resize" data-resize aria-hidden="true" title="Trascina per ridimensionare · doppio clic per ripristinare"></div>
     </div>
 
     <!-- navigazione tra le mosse giocate (come lichess) -->
@@ -79,13 +80,16 @@ const { set = 'merida' } = Astro.props;
 </div>
 
 <style>
+  /* scacchiera ancorata a sinistra (sotto il titolo) e pannello subito accanto:
+     ridimensionando, l'angolo in basso a destra segue il cursore in diagonale */
   .pz {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 260px;
+    grid-template-columns: auto 260px;
+    justify-content: start;
     gap: 1.5rem;
     align-items: start;
   }
-  .pz-main { min-width: 0; display: flex; justify-content: center; }
+  .pz-main { min-width: 0; display: flex; justify-content: flex-start; }
   /* scacchiera + tasti: la colonna e' larga quanto la scacchiera */
   .pz-stage { display: inline-flex; flex-direction: column; max-width: 100%; }
   .pz-board-wrap {
@@ -147,13 +151,26 @@ const { set = 'merida' } = Astro.props;
   }
 
   /* maniglia di ridimensionamento in basso a destra (trattini, stile lichess) */
+  /* stessa geometria di lichess: 22px, a cavallo dell'angolo (13px - 22px) */
   .pz-resize {
     position: absolute;
     right: -9px; bottom: -9px;
     width: 22px; height: 22px;
     cursor: nwse-resize;
-    z-index: 4;
+    z-index: 6;
     touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    border-radius: 50%;
+    transition: background 0.15s;
+  }
+  .pz-resize:hover,
+  .pz-resize.is-dragging { background: rgba(212,160,84,0.22); }
+  :global(body.pz-resizing) { cursor: nwse-resize; user-select: none; -webkit-user-select: none; }
+  :global(body.pz-resizing) * { cursor: nwse-resize !important; }
+  @media (hover: none) {
+    /* sul telefono la maniglia e' poco utile e intralcia: la nascondiamo */
+    .pz-resize { display: none; }
   }
   .pz-resize::before,
   .pz-resize::after {
@@ -319,7 +336,8 @@ const { set = 'merida' } = Astro.props;
   .pz-source a { color: var(--accent); }
 
   @media (max-width: 860px) {
-    .pz { grid-template-columns: 1fr; gap: 1rem; }
+    .pz { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+    .pz-main { justify-content: center; }
     .pz-board-wrap { max-width: 100%; }
   }
 
@@ -818,43 +836,87 @@ const { set = 'merida' } = Astro.props;
     }
 
     // --- ridimensionamento della scacchiera dall'angolo in basso a destra ---
+    // Come lichess: si memorizza punto di partenza e dimensione iniziale, e la
+    // nuova dimensione dipende solo da quanto si e' spostato il puntatore
+    // (niente ricalcolo sul bordo della scacchiera, che si muove mentre cambia).
     const SIZE_KEY = 'ssscacchi:puzzle-board-size';
-    function clampSize(px: number) {
-      const maxByViewport = Math.min(
-        boardWrap.parentElement!.clientWidth || 9999,
-        window.innerWidth - 32
-      );
-      return Math.max(280, Math.min(px, 720, maxByViewport));
+    const mainEl = root.querySelector<HTMLElement>('.pz-main')!;
+    const sideEl = root.querySelector<HTMLElement>('.pz-side')!;
+    const MIN_SIZE = 240;
+    const MAX_SIZE = 760;
+    const twoColumns = () => sideEl.getBoundingClientRect().top < mainEl.getBoundingClientRect().bottom - 1
+      && sideEl.getBoundingClientRect().left > mainEl.getBoundingClientRect().left;
+    function maxSize() {
+      // spazio realmente libero: tutta la riga, meno il pannello laterale se e' accanto
+      const gap = parseFloat(getComputedStyle(root).columnGap) || 0;
+      const avail = twoColumns()
+        ? root.clientWidth - sideEl.offsetWidth - gap
+        : root.clientWidth;
+      return Math.min(MAX_SIZE, avail);
     }
+    const clampSize = (px: number) => Math.round(Math.max(MIN_SIZE, Math.min(px, maxSize())));
+    const currentSize = () => boardWrap.getBoundingClientRect().width;
     function applySize(px: number) {
       boardWrap.style.setProperty('--board-size', clampSize(px) + 'px');
     }
-    // ripristina preferenza salvata
+    // ripristina la preferenza salvata (riadattata alla larghezza disponibile)
     const saved = parseInt(localStorage.getItem(SIZE_KEY) || '', 10);
     if (!Number.isNaN(saved)) applySize(saved);
-
-    let resizing = false;
-    function onResizeMove(e: PointerEvent) {
-      if (!resizing) return;
-      const rect = boardWrap.getBoundingClientRect();
-      // la dimensione = distanza dal bordo sinistro al puntatore (board quadrata)
-      const size = e.clientX - rect.left;
-      applySize(size);
-    }
-    function onResizeEnd() {
-      if (!resizing) return;
-      resizing = false;
-      document.removeEventListener('pointermove', onResizeMove);
-      document.removeEventListener('pointerup', onResizeEnd);
-      const cur = parseInt(getComputedStyle(boardWrap).getPropertyValue('--board-size'), 10);
-      if (!Number.isNaN(cur)) localStorage.setItem(SIZE_KEY, String(cur));
-    }
-    resizeEl.addEventListener('pointerdown', (e) => {
-      e.preventDefault();
-      resizing = true;
-      document.addEventListener('pointermove', onResizeMove);
-      document.addEventListener('pointerup', onResizeEnd);
+    let resizeRaf = 0;
+    window.addEventListener('resize', () => {
+      cancelAnimationFrame(resizeRaf);
+      resizeRaf = requestAnimationFrame(() => {
+        const v = boardWrap.style.getPropertyValue('--board-size');
+        if (v) applySize(parseInt(v, 10));
+      });
     });
+
+    function resetSize() {
+      boardWrap.style.removeProperty('--board-size');
+      localStorage.removeItem(SIZE_KEY);
+    }
+    let lastDown = 0;
+
+    resizeEl.addEventListener('pointerdown', (start) => {
+      if (start.button !== 0) return;
+      start.preventDefault();
+      // doppio clic sulla maniglia: dimensione predefinita
+      if (start.timeStamp - lastDown < 350) { lastDown = 0; resetSize(); return; }
+      lastDown = start.timeStamp;
+
+      resizeEl.setPointerCapture(start.pointerId);
+      const x0 = start.clientX, y0 = start.clientY;
+      const s0 = currentSize();
+      // Di quanto si sposta l'angolo per ogni px di lato in piu':
+      // ancorata a sinistra (desktop) -> (1, 1); centrata (colonna unica) -> (1/2, 1).
+      const ax = getComputedStyle(mainEl).justifyContent === 'center' ? 0.5 : 1;
+      const norm = ax * ax + 1;
+      let pending = s0, raf = 0;
+      resizeEl.classList.add('is-dragging');
+      document.body.classList.add('pz-resizing');
+
+      const move = (e: PointerEvent) => {
+        // proiezione dello spostamento sulla direzione in cui si muove l'angolo:
+        // l'angolo resta il piu' vicino possibile al cursore
+        const dx = e.clientX - x0, dy = e.clientY - y0;
+        pending = s0 + (ax * dx + dy) / norm;
+        if (!raf) raf = requestAnimationFrame(() => { raf = 0; applySize(pending); });
+      };
+      const end = () => {
+        resizeEl.removeEventListener('pointermove', move);
+        resizeEl.removeEventListener('pointerup', end);
+        resizeEl.removeEventListener('pointercancel', end);
+        cancelAnimationFrame(raf);
+        applySize(pending);
+        resizeEl.classList.remove('is-dragging');
+        document.body.classList.remove('pz-resizing');
+        localStorage.setItem(SIZE_KEY, String(clampSize(pending)));
+      };
+      resizeEl.addEventListener('pointermove', move);
+      resizeEl.addEventListener('pointerup', end);
+      resizeEl.addEventListener('pointercancel', end);
+    });
+
 
     // init
     if (!PUZZLES.length) {
