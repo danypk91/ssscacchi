@@ -15,15 +15,10 @@ const crumbs = breadcrumbJsonLd([
 ---
 
 <BaseLayout title="Puzzle — Palestra tattica" description={metaDescription} jsonLd={[crumbs]}>
-  <section class="section">
+  <section class="section pz-page">
     <div class="container">
-      <header class="pz-head">
-        <h1>Palestra tattica</h1>
-        <p class="pz-sub">
-          Trova la mossa migliore nella posizione. Clicca il pezzo da muovere e poi
-          la casa di destinazione. Puoi chiedere un suggerimento o vedere la soluzione.
-        </p>
-      </header>
+      <!-- titolo compatto: la scacchiera deve stare subito nello schermo -->
+      <h1 class="pz-title">Palestra tattica</h1>
 
       <PuzzleBoard set="merida" />
 
@@ -37,8 +32,21 @@ const crumbs = breadcrumbJsonLd([
 </BaseLayout>
 
 <style>
-  .pz-head { text-align: center; margin-bottom: 2rem; }
-  .pz-sub { color: var(--text-secondary); max-width: 560px; margin: 0.5rem auto 0; }
+  /* pagina "board-first": poco spazio sopra la scacchiera */
+  .pz-page { padding-top: 1rem; padding-bottom: 3rem; }
+  .pz-title {
+    font-size: 1.3rem;
+    line-height: 1.2;
+    margin: 0 0 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+  }
+
+  @media (max-width: 860px) {
+    .pz-page { padding-top: 0.6rem; padding-bottom: 2rem; }
+    .pz-page :global(.container) { padding-left: 0.75rem; padding-right: 0.75rem; }
+    .pz-title { font-size: 1.05rem; margin-bottom: 0.5rem; }
+  }
   .pz-credit {
     text-align: center;
     color: var(--text-muted);

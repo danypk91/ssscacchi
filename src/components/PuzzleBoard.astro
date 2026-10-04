@@ -59,6 +59,11 @@ const { set = 'merida' } = Astro.props;
       <button class="pz-btn" data-solution>Vedi soluzione</button>
     </div>
 
+    <p class="pz-help">
+      Tocca il pezzo da muovere, poi la casa di destinazione. Se ti blocchi,
+      chiedi un suggerimento o guarda la soluzione.
+    </p>
+
     <p class="pz-source" data-source hidden></p>
   </aside>
 </div>
@@ -73,7 +78,9 @@ const { set = 'merida' } = Astro.props;
   .pz-main { min-width: 0; display: flex; justify-content: center; }
   .pz-board-wrap {
     position: relative;
-    width: var(--board-size, 520px);
+    /* di default la scacchiera sta tutta nello schermo, sotto l'header */
+    width: var(--board-size, min(560px, calc(100vh - 7.5rem)));
+    width: var(--board-size, min(560px, calc(100dvh - 7.5rem)));
     max-width: 100%;
   }
   .pz-board {
@@ -201,6 +208,8 @@ const { set = 'merida' } = Astro.props;
     transition: background 0.2s, transform 0.1s;
     animation: pzDoneIn 0.3s ease-out;
   }
+  /* display:flex annullerebbe l'attributo hidden: il box comparirebbe subito */
+  .pz-done[hidden] { display: none; }
   .pz-done:hover { background: #8fcf6c; }
   .pz-done:active { transform: translateY(1px); }
   .pz-done.is-solution { background: #d9b45a; box-shadow: 0 8px 24px rgba(217,180,90,0.3); }
@@ -253,6 +262,7 @@ const { set = 'merida' } = Astro.props;
   .pz-btn-primary { background: var(--accent); color: #2a1a0e; border-color: var(--accent); font-weight: 600; }
   .pz-btn-primary:hover { background: var(--accent-hover); }
 
+  .pz-help { font-size: 0.82rem; line-height: 1.5; color: var(--text-muted); margin: 0; }
   .pz-source { font-size: 0.75rem; color: var(--text-muted); margin: 0; }
   .pz-source a { color: var(--accent); }
 
