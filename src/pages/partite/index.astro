@@ -389,6 +389,28 @@ function fenToPieces(fen: string): (string | null)[][] {
 
   .arch-noresult { text-align: center; color: var(--text-muted); padding: 2rem 0; }
 
+  /* comparsa a cascata delle schede caricate */
+  .arch-card.is-entering {
+    animation: archCardIn 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    animation-delay: calc(var(--i, 0) * 60ms);
+  }
+  .arch-card.is-entering .arch-mini {
+    animation: archMiniIn 0.7s ease-out both;
+    animation-delay: calc(var(--i, 0) * 60ms + 120ms);
+  }
+  @keyframes archCardIn {
+    from { opacity: 0; transform: translateY(22px) scale(0.97); }
+    to   { opacity: 1; transform: none; }
+  }
+  /* la mini-scacchiera "si accende" leggermente dopo la scheda */
+  @keyframes archMiniIn {
+    from { filter: brightness(0.55) saturate(0.6); }
+    to   { filter: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .arch-card.is-entering, .arch-card.is-entering .arch-mini { animation: none; }
+  }
+
   /* fine lista: carica altre schede (scroll automatico o click) */
   .arch-more { display: flex; justify-content: center; padding: 2rem 0 0.5rem; }
   .arch-more-btn {
@@ -453,13 +475,33 @@ function fenToPieces(fen: string): (string | null)[][] {
     const moreEl = document.querySelector<HTMLElement>('[data-more]');
     const moreBtn = document.querySelector<HTMLButtonElement>('[data-more-btn]');
 
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
     function render() {
       const matchSet = new Set(matching);
+      const entering: HTMLElement[] = [];
       let i = 0;
       for (const card of cards) {
         const visible = matchSet.has(card) && i < shown;
         if (matchSet.has(card)) i++;
+        const wasHidden = card.style.display === 'none';
         card.style.display = visible ? '' : 'none';
+        if (visible && wasHidden) entering.push(card);
+      }
+
+      // Comparsa a cascata delle schede appena mostrate.
+      if (!reduceMotion) {
+        entering.forEach((card, k) => {
+          card.classList.remove('is-entering');
+          card.style.setProperty('--i', String(k));
+          void card.offsetWidth; // riavvia l'animazione
+          card.classList.add('is-entering');
+          card.addEventListener(
+            'animationend',
+            () => card.classList.remove('is-entering'),
+            { once: true }
+          );
+        });
       }
       const remaining = matching.length - Math.min(shown, matching.length);
       if (moreEl) moreEl.hidden = remaining <= 0;
