@@ -65,6 +65,8 @@ const FAMILY_IT: Record<string, string> = {
   'Bird Opening': 'Apertura Bird',
   'Nimzo-Larsen Attack': 'Attacco Nimzo-Larsen',
   'Zukertort Opening': 'Apertura Zukertort',
+  'Hungarian Opening': 'Apertura Ungherese',
+  'Old Indian Defense': 'Difesa Antica Indiana',
 };
 
 /** Estrae la famiglia (prima dei due punti) e la traduce se nota. */

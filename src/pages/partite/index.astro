@@ -9,7 +9,16 @@ const raw = await getCollection('partite', ({ data }) =>
   import.meta.env.PROD ? !data.draft : true
 );
 
-// Arricchisce ogni partita con apertura (calcolata) e posizione finale (FEN).
+// Epoca storica in base all'anno (per i filtri).
+const ERAS = ['Romantica', 'Classica', 'Era sovietica', 'Contemporanea'] as const;
+function eraOf(year: number): string {
+  if (year < 1900) return 'Romantica';
+  if (year < 1946) return 'Classica';
+  if (year < 1990) return 'Era sovietica';
+  return 'Contemporanea';
+}
+
+// Arricchisce ogni partita con apertura (calcolata), epoca e posizione finale (FEN).
 const games = raw
   .map((entry) => {
     const d = entry.data;
@@ -32,6 +41,7 @@ const games = raw
       fen: chess.fen(),
       eco: opening?.eco ?? '',
       family: opening?.family ?? 'Altro',
+      era: eraOf(d.year),
       moves: chess.history().length,
     };
   })
@@ -41,6 +51,8 @@ const games = raw
 const families = Array.from(new Set(games.map((g) => g.family))).sort((a, b) =>
   a.localeCompare(b, 'it')
 );
+// Epoche presenti, nell'ordine cronologico definito.
+const eras = ERAS.filter((e) => games.some((g) => g.era === e));
 
 const metaDescription =
   'Archivio di partite di scacchi celebri commentate, con scacchiera interattiva: ' +
@@ -94,11 +106,25 @@ function fenToPieces(fen: string): (string | null)[][] {
               placeholder="Cerca per giocatore, anno, luogo…"
               aria-label="Cerca partita"
             />
-            <div class="arch-chips" role="group" aria-label="Filtra per apertura">
-              <button class="chip chip-active" data-family="">Tutte</button>
-              {families.map((f) => (
-                <button class="chip" data-family={f}>{f}</button>
-              ))}
+
+            <div class="arch-filter-group">
+              <span class="arch-filter-label">Epoca</span>
+              <div class="arch-chips" role="group" aria-label="Filtra per epoca">
+                <button class="chip chip-active" data-era="">Tutte</button>
+                {eras.map((e) => (
+                  <button class="chip" data-era={e}>{e}</button>
+                ))}
+              </div>
+            </div>
+
+            <div class="arch-filter-group">
+              <span class="arch-filter-label">Apertura</span>
+              <div class="arch-chips" role="group" aria-label="Filtra per apertura">
+                <button class="chip chip-active" data-family="">Tutte</button>
+                {families.map((f) => (
+                  <button class="chip" data-family={f}>{f}</button>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -108,7 +134,8 @@ function fenToPieces(fen: string): (string | null)[][] {
                 class="arch-card"
                 data-card
                 data-family={g.family}
-                data-search-text={`${g.white} ${g.black} ${g.place} ${g.year} ${g.eco} ${g.family}`.toLowerCase()}
+                data-era={g.era}
+                data-search-text={`${g.white} ${g.black} ${g.place} ${g.year} ${g.eco} ${g.family} ${g.era}`.toLowerCase()}
               >
                 <a href={`/partite/${g.slug}`} class="arch-link">
                   <div class="arch-mini" aria-hidden="true">
@@ -164,6 +191,22 @@ function fenToPieces(fen: string): (string | null)[][] {
   }
   .arch-search:focus { outline: none; border-color: var(--accent); }
 
+  .arch-filter-group {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.7rem;
+    margin-bottom: 0.9rem;
+  }
+  .arch-filter-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    min-width: 64px;
+    text-align: right;
+  }
   .arch-chips {
     display: flex;
     flex-wrap: wrap;
@@ -276,23 +319,30 @@ function fenToPieces(fen: string): (string | null)[][] {
 <script>
   function initArchive() {
     const search = document.querySelector<HTMLInputElement>('[data-search]');
-    const chips = Array.from(document.querySelectorAll<HTMLElement>('[data-family]'))
-      .filter((el) => el.tagName === 'BUTTON');
+    const familyChips = Array.from(
+      document.querySelectorAll<HTMLElement>('button[data-family]')
+    );
+    const eraChips = Array.from(
+      document.querySelectorAll<HTMLElement>('button[data-era]')
+    );
     const cards = Array.from(document.querySelectorAll<HTMLElement>('[data-card]'));
     const noResult = document.querySelector<HTMLElement>('[data-noresult]');
     if (!cards.length) return;
 
     let activeFamily = '';
+    let activeEra = '';
     let query = '';
 
     function apply() {
       let visible = 0;
       for (const card of cards) {
         const fam = card.dataset.family || '';
+        const era = card.dataset.era || '';
         const text = card.dataset.searchText || '';
         const okFam = !activeFamily || fam === activeFamily;
+        const okEra = !activeEra || era === activeEra;
         const okText = !query || text.includes(query);
-        const show = okFam && okText;
+        const show = okFam && okEra && okText;
         card.style.display = show ? '' : 'none';
         if (show) visible++;
       }
@@ -304,14 +354,18 @@ function fenToPieces(fen: string): (string | null)[][] {
       apply();
     });
 
-    chips.forEach((chip) => {
-      chip.addEventListener('click', () => {
-        chips.forEach((c) => c.classList.remove('chip-active'));
-        chip.classList.add('chip-active');
-        activeFamily = chip.dataset.family || '';
-        apply();
+    // Gruppo di chip mutuamente esclusivo: imposta la classe attiva e aggiorna il valore.
+    function wireGroup(chips: HTMLElement[], onChange: (val: string) => void) {
+      chips.forEach((chip) => {
+        chip.addEventListener('click', () => {
+          chips.forEach((c) => c.classList.remove('chip-active'));
+          chip.classList.add('chip-active');
+          onChange(chip.dataset.family ?? chip.dataset.era ?? '');
+        });
       });
-    });
+    }
+    wireGroup(familyChips, (v) => { activeFamily = v; apply(); });
+    wireGroup(eraChips, (v) => { activeEra = v; apply(); });
   }
 
   if (document.readyState !== 'loading') initArchive();
