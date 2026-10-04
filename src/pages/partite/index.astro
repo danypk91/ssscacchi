@@ -207,6 +207,10 @@ function fenToPieces(fen: string): (string | null)[][] {
             ))}
           </ul>
 
+          <div class="arch-more" data-more hidden>
+            <button type="button" class="arch-more-btn" data-more-btn>Mostra altre partite</button>
+          </div>
+
           <p class="arch-noresult" data-noresult hidden>Nessuna partita corrisponde ai filtri.</p>
         </>
       )}
@@ -384,6 +388,21 @@ function fenToPieces(fen: string): (string | null)[][] {
   }
 
   .arch-noresult { text-align: center; color: var(--text-muted); padding: 2rem 0; }
+
+  /* fine lista: carica altre schede (scroll automatico o click) */
+  .arch-more { display: flex; justify-content: center; padding: 2rem 0 0.5rem; }
+  .arch-more-btn {
+    padding: 0.65rem 1.4rem;
+    border: 1px solid var(--border-light);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    border-radius: 999px;
+    font: inherit;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .arch-more-btn:hover { border-color: var(--accent); color: var(--text-primary); }
 </style>
 
 <script>
@@ -425,32 +444,69 @@ function fenToPieces(fen: string): (string | null)[][] {
       history.replaceState(null, '', qs ? `?${qs}` : location.pathname);
     }
 
+    // --- Scroll infinito: mostriamo le schede a blocchi di PAGE ---
+    // Le schede nascoste (display:none) non scaricano le immagini dei pezzi
+    // (loading="lazy"), quindi la pagina parte leggera anche con molte partite.
+    const PAGE = 12;
+    let shown = PAGE;           // quante schede (tra quelle filtrate) sono visibili
+    let matching: HTMLElement[] = [];
+    const moreEl = document.querySelector<HTMLElement>('[data-more]');
+    const moreBtn = document.querySelector<HTMLButtonElement>('[data-more-btn]');
+
+    function render() {
+      const matchSet = new Set(matching);
+      let i = 0;
+      for (const card of cards) {
+        const visible = matchSet.has(card) && i < shown;
+        if (matchSet.has(card)) i++;
+        card.style.display = visible ? '' : 'none';
+      }
+      const remaining = matching.length - Math.min(shown, matching.length);
+      if (moreEl) moreEl.hidden = remaining <= 0;
+      if (moreBtn) moreBtn.textContent = `Mostra altre partite (${remaining})`;
+    }
+
+    function loadMore() {
+      if (shown >= matching.length) return;
+      shown += PAGE;
+      render();
+    }
+
+    // Carica blocchi finche' la fine lista e' vicina allo schermo (l'observer
+    // non riscatta se il sensore resta visibile dopo un caricamento).
+    function fill() {
+      loadMore();
+      requestAnimationFrame(() => {
+        if (!moreEl || moreEl.hidden) return;
+        if (moreEl.getBoundingClientRect().top < window.innerHeight + 400) fill();
+      });
+    }
+
     function apply() {
       const fam = selectOf('family')?.value ?? '';
       const era = selectOf('era')?.value ?? '';
       const player = selectOf('player')?.value ?? '';
       const query = (search?.value ?? '').trim().toLowerCase();
 
-      let visible = 0;
-      for (const card of cards) {
-        const show =
+      matching = cards.filter(
+        (card) =>
           (!fam || card.dataset.family === fam) &&
           (!era || card.dataset.era === era) &&
           (!player || (card.dataset.players ?? '').includes(`|${player}|`)) &&
-          (!query || (card.dataset.searchText ?? '').includes(query));
-        card.style.display = show ? '' : 'none';
-        if (show) visible++;
-      }
+          (!query || (card.dataset.searchText ?? '').includes(query))
+      );
+      shown = PAGE; // a ogni cambio filtro si riparte dalle prime schede
+      render();
 
       for (const s of selects) s.classList.toggle('is-active', Boolean(s.value));
       const anyActive = selects.some((s) => s.value) || Boolean(query);
       if (resetBtn) resetBtn.hidden = !anyActive;
       if (countEl) {
         countEl.textContent = anyActive
-          ? `${visible} di ${cards.length} partite`
+          ? `${matching.length} di ${cards.length} partite`
           : `${cards.length} partite`;
       }
-      if (noResult) noResult.hidden = visible > 0;
+      if (noResult) noResult.hidden = matching.length > 0;
       syncUrl();
     }
 
@@ -461,6 +517,18 @@ function fenToPieces(fen: string): (string | null)[][] {
       if (search) search.value = '';
       apply();
     });
+
+    // Carica il blocco successivo quando la fine lista si avvicina al viewport.
+    moreBtn?.addEventListener('click', loadMore);
+    if (moreEl && 'IntersectionObserver' in window) {
+      const io = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((e) => e.isIntersecting)) fill();
+        },
+        { rootMargin: '0px 0px 400px 0px' }
+      );
+      io.observe(moreEl);
+    }
 
     apply();
   }
