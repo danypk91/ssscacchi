@@ -17,6 +17,36 @@ interface Props {
 const { pgn, comments = [], set = 'merida', orientation = 'white' } = Astro.props;
 
 const commentsJson = JSON.stringify(comments);
+
+// --- Valutazioni del motore (precalcolate da scripts/eval-partite.mjs) ---
+// Si passano alla pagina solo quelle delle posizioni di QUESTA partita.
+import { Chess } from 'chess.js';
+import evalsData from '../data/evals.json';
+type Ev = { c?: number; m?: number; w?: 'w' | 'b' };
+const table = (evalsData as { depth: number; engine: string; positions: Record<string, Ev> }).positions;
+const posKey = (fen: string) => fen.split(' ').slice(0, 4).join(' ');
+const plyEvals: (Ev | null)[] = [];
+{
+  const src = new Chess();
+  src.loadPgn(pgn);
+  const r = new Chess();
+  plyEvals.push(table[posKey(r.fen())] ?? null);
+  for (const mv of src.history()) {
+    r.move(mv);
+    plyEvals.push(table[posKey(r.fen())] ?? null);
+  }
+}
+const missing = plyEvals.filter((e) => !e).length;
+// La barra compare solo se la partita e' valutata per intero.
+const hasEvals = missing === 0;
+if (!hasEvals) {
+  console.warn(
+    `[GameViewer] ${missing}/${plyEvals.length} posizioni senza valutazione: ` +
+      `lancia 'node scripts/eval-partite.mjs'. Barra e grafico nascosti.`
+  );
+}
+const evalsJson = hasEvals ? JSON.stringify(plyEvals) : '';
+const engineInfo = `${(evalsData as any).engine}, profondità ${(evalsData as any).depth}`;
 ---
 
 <div
@@ -26,8 +56,17 @@ const commentsJson = JSON.stringify(comments);
   data-comments={commentsJson}
   data-set={set}
   data-orientation={orientation}
+  data-evals={evalsJson}
 >
   <div class="gv-main">
+   <div class="gv-board-row">
+    {hasEvals && (
+      <div class="gv-evalbar" data-evalbar role="img" aria-label="Valutazione della posizione" title={`Valutazione: ${engineInfo}`}>
+        <div class="gv-evalbar-fill" data-evalbar-fill></div>
+        <div class="gv-evalbar-mid" aria-hidden="true"></div>
+        <span class="gv-evalbar-label" data-evalbar-label></span>
+      </div>
+    )}
     <div class="gv-board-wrap">
       <div class="gv-board" data-board>
         {Array.from({ length: 64 }).map((_, i) => {
@@ -41,6 +80,7 @@ const commentsJson = JSON.stringify(comments);
         <div class="gv-coords gv-ranks" data-ranks aria-hidden="true"></div>
       </div>
     </div>
+   </div>
 
     <div class="gv-controls" role="group" aria-label="Controlli partita">
       <button class="gv-btn" data-first aria-label="Prima mossa" title="Inizio (Home)">&#x23EE;</button>
@@ -54,6 +94,17 @@ const commentsJson = JSON.stringify(comments);
 
   <div class="gv-side">
     <ol class="gv-moves" data-moves aria-label="Elenco mosse"></ol>
+    {hasEvals && (
+      <figure class="gv-chart" data-chart>
+        <svg viewBox="0 0 100 40" preserveAspectRatio="none" aria-label="Andamento del vantaggio: tocca per andare a quella mossa" role="img">
+          <rect x="0" y="0" width="100" height="40" class="gv-chart-bg" />
+          <path class="gv-chart-area" data-chart-area d="" />
+          <line x1="0" y1="20" x2="100" y2="20" class="gv-chart-mid" />
+          <line x1="0" y1="0" x2="0" y2="40" class="gv-chart-cursor" data-chart-cursor />
+        </svg>
+        <figcaption>Vantaggio · {engineInfo}</figcaption>
+      </figure>
+    )}
     <div class="gv-comment" data-comment hidden></div>
   </div>
 </div>
@@ -67,11 +118,86 @@ const commentsJson = JSON.stringify(comments);
   }
   .gv-main { min-width: 0; display: flex; flex-direction: column; }
 
+  /* barra di valutazione + scacchiera, affiancate */
+  .gv-board-row {
+    display: flex;
+    gap: 6px;
+    align-items: stretch;
+    width: 100%;
+    max-width: 584px;
+    margin: 0 auto;
+  }
   .gv-board-wrap {
     position: relative;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  /* --- barra di valutazione (stile lichess) --- */
+  .gv-evalbar {
+    position: relative;
+    flex: 0 0 18px;
+    border-radius: 3px;
+    overflow: hidden;
+    background: #403d39;           /* parte del Nero */
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.35);
+  }
+  .gv-evalbar-fill {               /* parte del Bianco */
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 50%;
+    background: #f2ede2;
+    transition: height 0.45s cubic-bezier(0.25, 0.8, 0.25, 1);
+  }
+  .gv-evalbar.is-flipped .gv-evalbar-fill { bottom: auto; top: 0; }
+  .gv-evalbar-mid {
+    position: absolute;
+    left: 0; right: 0; top: 50%;
+    height: 2px; margin-top: -1px;
+    background: rgba(212,160,84,0.65);
+    pointer-events: none;
+  }
+  .gv-evalbar-label {
+    position: absolute;
+    left: 0; right: 0;
+    text-align: center;
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+  }
+  /* etichetta all'estremita' di chi e' in vantaggio */
+  .gv-evalbar-label.at-bottom { bottom: 4px; }
+  .gv-evalbar-label.at-top { top: 4px; }
+  .gv-evalbar-label.on-white { color: #2a1a0e; }
+  .gv-evalbar-label.on-black { color: #f2ede2; }
+
+  /* --- grafico del vantaggio --- */
+  .gv-chart { margin: 0.6rem 0 0; flex: none; }
+  .gv-chart svg {
+    display: block;
     width: 100%;
-    max-width: 560px;
-    margin: 0 auto;
+    height: 72px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  .gv-chart-bg { fill: #403d39; }
+  .gv-chart-area { fill: #f2ede2; }
+  .gv-chart-mid { stroke: rgba(212,160,84,0.6); stroke-width: 1; vector-effect: non-scaling-stroke; }
+  .gv-chart-cursor {
+    stroke: var(--accent);
+    stroke-width: 2;
+    vector-effect: non-scaling-stroke;
+    transition: transform 0.25s ease;
+  }
+  .gv-chart figcaption {
+    margin-top: 0.3rem;
+    font-size: 0.7rem;
+    color: var(--text-muted);
   }
   .gv-board {
     position: relative;
@@ -230,6 +356,11 @@ const commentsJson = JSON.stringify(comments);
 
   @media (max-width: 480px) {
     .gv-board-wrap { max-width: 100%; }
+    /* su telefono: barra sottile, il valore e' nel tooltip / aria-label */
+    .gv-board-row { gap: 4px; }
+    .gv-evalbar { flex-basis: 10px; }
+    .gv-evalbar-label { display: none; }
+    .gv-chart svg { height: 56px; }
     .gv-controls {
       gap: 0.4rem;
       margin-top: 0.8rem;
@@ -252,6 +383,7 @@ const commentsJson = JSON.stringify(comments);
 
   @media (prefers-reduced-motion: reduce) {
     .gv-pieces :global(.gv-pc) { transition: none; }
+    .gv-evalbar-fill, .gv-chart-cursor { transition: none; }
   }
 </style>
 
@@ -420,9 +552,18 @@ const commentsJson = JSON.stringify(comments);
       // mossa corrente nella lista
       movesEl.querySelectorAll('.gv-move').forEach((m) => m.classList.remove('current'));
       if (plyIndex > 0) {
-        const el = movesEl.querySelector(`[data-ply="${plyIndex}"]`);
+        const el = movesEl.querySelector<HTMLElement>(`[data-ply="${plyIndex}"]`);
         el?.classList.add('current');
-        (el as HTMLElement)?.scrollIntoView({ block: 'nearest' });
+        // scorre solo l'elenco delle mosse, non la pagina (scrollIntoView
+        // spostava anche la finestra)
+        if (el) {
+          const top = el.offsetTop - movesEl.offsetTop;
+          const bottom = top + el.offsetHeight;
+          if (top < movesEl.scrollTop) movesEl.scrollTop = top - 8;
+          else if (bottom > movesEl.scrollTop + movesEl.clientHeight) {
+            movesEl.scrollTop = bottom - movesEl.clientHeight + 8;
+          }
+        }
       }
 
       // commento
@@ -432,6 +573,84 @@ const commentsJson = JSON.stringify(comments);
 
       current = plyIndex;
       updateButtons();
+      updateEval();
+    }
+
+    // --- Valutazione: barra + grafico ---
+    type Ev = { c?: number; m?: number; w?: 'w' | 'b' };
+    const evals: Ev[] | null = root.dataset.evals ? JSON.parse(root.dataset.evals) : null;
+    const barEl = root.querySelector<HTMLElement>('[data-evalbar]');
+    const barFill = root.querySelector<HTMLElement>('[data-evalbar-fill]');
+    const barLabel = root.querySelector<HTMLElement>('[data-evalbar-label]');
+    const chartEl = root.querySelector<SVGSVGElement>('[data-chart] svg');
+    const chartCursor = root.querySelector<SVGLineElement>('[data-chart-cursor]');
+
+    // Probabilita' di vittoria del Bianco in [-1, 1], stessa formula di lichess.
+    function winChance(e: Ev): number {
+      if (e.m !== undefined) {
+        if (e.m === 0) return e.w === 'w' ? 1 : -1;
+        return e.m > 0 ? 1 : -1;
+      }
+      const cp = Math.max(-1000, Math.min(1000, e.c ?? 0));
+      return 2 / (1 + Math.exp(-0.00368208 * cp)) - 1;
+    }
+    function evalText(e: Ev): string {
+      if (e.m !== undefined) {
+        if (e.m === 0) return e.w === 'w' ? '1-0' : '0-1';
+        return 'M' + Math.abs(e.m);
+      }
+      const v = (e.c ?? 0) / 100;
+      if (Math.abs(v) < 0.05) return '0.0';
+      return (v > 0 ? '+' : '−') + Math.abs(v).toFixed(1);
+    }
+    function evalDescr(e: Ev): string {
+      if (e.m !== undefined) {
+        if (e.m === 0) return `scacco matto, vince il ${e.w === 'w' ? 'Bianco' : 'Nero'}`;
+        return `il ${e.m > 0 ? 'Bianco' : 'Nero'} dà matto in ${Math.abs(e.m)}`;
+      }
+      const v = (e.c ?? 0) / 100;
+      if (Math.abs(v) < 0.3) return 'posizione equilibrata';
+      return `${v > 0 ? 'Bianco' : 'Nero'} in vantaggio di ${Math.abs(v).toFixed(1)} pedoni`;
+    }
+
+    function updateEval() {
+      if (!evals) return;
+      const e = evals[current];
+      const wc = winChance(e);
+      const flipped = orientation === 'black';
+      if (barEl && barFill && barLabel) {
+        barEl.classList.toggle('is-flipped', flipped);
+        barFill.style.height = `${((1 + wc) / 2) * 100}%`;
+        const whiteAhead = wc >= 0;
+        barLabel.textContent = evalText(e);
+        // l'etichetta sta dalla parte di chi e' in vantaggio
+        const atBottom = whiteAhead !== flipped;
+        barLabel.classList.toggle('at-bottom', atBottom);
+        barLabel.classList.toggle('at-top', !atBottom);
+        barLabel.classList.toggle('on-white', whiteAhead);
+        barLabel.classList.toggle('on-black', !whiteAhead);
+        barEl.setAttribute('aria-label', `Valutazione: ${evalDescr(e)} (${evalText(e)})`);
+        barEl.title = `${evalText(e)} — ${evalDescr(e)}`;
+      }
+      if (chartCursor) {
+        const n = Math.max(1, evals.length - 1);
+        chartCursor.style.transform = `translateX(${(current / n) * 100}px)`;
+      }
+    }
+
+    function buildChart() {
+      if (!evals || !chartEl) return;
+      const area = chartEl.querySelector<SVGPathElement>('[data-chart-area]')!;
+      const n = Math.max(1, evals.length - 1);
+      const pts = evals.map((e, i) => `${((i / n) * 100).toFixed(2)},${(20 - winChance(e) * 19).toFixed(2)}`);
+      // area del Bianco: dal fondo fino alla curva
+      area.setAttribute('d', `M0,40 L${pts.join(' L')} L100,40 Z`);
+      chartEl.addEventListener('click', (ev) => {
+        const r = chartEl.getBoundingClientRect();
+        const ply = Math.round(((ev.clientX - r.left) / r.width) * n);
+        stop();
+        render(Math.max(0, Math.min(n, ply)), true);
+      });
     }
 
     // --- Lista mosse (con figurine) ---
@@ -545,6 +764,7 @@ const commentsJson = JSON.stringify(comments);
     // init
     buildMoveList();
     buildCoords();
+    buildChart();
     render(0, false);
     syncSideHeight();
   }
