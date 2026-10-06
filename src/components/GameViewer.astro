@@ -96,6 +96,11 @@ const engineInfo = `${(evalsData as any).engine}, profondità ${(evalsData as an
     <ol class="gv-moves" data-moves aria-label="Elenco mosse"></ol>
     {hasEvals && (
       <figure class="gv-chart" data-chart>
+        <!-- valore completo, come il pannello di analisi di lichess -->
+        <div class="gv-evalread" aria-live="polite">
+          <span class="gv-evalread-num" data-evalread-num></span>
+          <span class="gv-evalread-txt" data-evalread-txt></span>
+        </div>
         <svg viewBox="0 0 100 40" preserveAspectRatio="none" aria-label="Andamento del vantaggio: tocca per andare a quella mossa" role="img">
           <rect x="0" y="0" width="100" height="40" class="gv-chart-bg" />
           <path class="gv-chart-area" data-chart-area d="" />
@@ -157,15 +162,18 @@ const engineInfo = `${(evalsData as any).engine}, profondità ${(evalsData as an
     background: rgba(212,160,84,0.65);
     pointer-events: none;
   }
+  /* etichetta corta (max 3 caratteri: 1.4 · 12 · #3 · 1-0), sempre dentro la barra */
   .gv-evalbar-label {
     position: absolute;
     left: 0; right: 0;
     text-align: center;
-    font-size: 9px;
+    font-size: 8.5px;
     font-weight: 700;
     line-height: 1;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.04em;
     font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    overflow: hidden;
     pointer-events: none;
   }
   /* etichetta all'estremita' di chi e' in vantaggio */
@@ -176,6 +184,28 @@ const engineInfo = `${(evalsData as any).engine}, profondità ${(evalsData as an
 
   /* --- grafico del vantaggio --- */
   .gv-chart { margin: 0.6rem 0 0; flex: none; }
+  /* valore completo (come il numero grande del pannello di lichess) */
+  .gv-evalread {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    margin-bottom: 0.4rem;
+    min-width: 0;
+  }
+  .gv-evalread-num {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+    flex: none;
+  }
+  .gv-evalread-txt {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
   .gv-chart svg {
     display: block;
     width: 100%;
@@ -584,6 +614,8 @@ const engineInfo = `${(evalsData as any).engine}, profondità ${(evalsData as an
     const barLabel = root.querySelector<HTMLElement>('[data-evalbar-label]');
     const chartEl = root.querySelector<SVGSVGElement>('[data-chart] svg');
     const chartCursor = root.querySelector<SVGLineElement>('[data-chart-cursor]');
+    const readNum = root.querySelector<HTMLElement>('[data-evalread-num]');
+    const readTxt = root.querySelector<HTMLElement>('[data-evalread-txt]');
 
     // Probabilita' di vittoria del Bianco in [-1, 1], stessa formula di lichess.
     function winChance(e: Ev): number {
@@ -594,14 +626,27 @@ const engineInfo = `${(evalsData as any).engine}, profondità ${(evalsData as an
       const cp = Math.max(-1000, Math.min(1000, e.c ?? 0));
       return 2 / (1 + Math.exp(-0.00368208 * cp)) - 1;
     }
+    // Valore completo (notazione lichess): +1.4, −0.6, #3, #-2, 1-0
     function evalText(e: Ev): string {
       if (e.m !== undefined) {
         if (e.m === 0) return e.w === 'w' ? '1-0' : '0-1';
-        return 'M' + Math.abs(e.m);
+        return '#' + e.m; // #3 matto del Bianco, #-3 matto del Nero
       }
       const v = (e.c ?? 0) / 100;
       if (Math.abs(v) < 0.05) return '0.0';
       return (v > 0 ? '+' : '−') + Math.abs(v).toFixed(1);
+    }
+    // Valore corto per dentro la barra: niente segno (la posizione dice chi e'
+    // avanti), massimo 3 caratteri: 1.4 · 9.9 · 12 · #3 · #12 · 1-0
+    function evalShort(e: Ev): string {
+      if (e.m !== undefined) {
+        if (e.m === 0) return e.w === 'w' ? '1-0' : '0-1';
+        return '#' + Math.abs(e.m);
+      }
+      const v = Math.abs((e.c ?? 0) / 100);
+      if (v < 0.05) return '0.0';
+      if (v < 9.95) return v.toFixed(1);
+      return String(Math.min(99, Math.round(v)));
     }
     function evalDescr(e: Ev): string {
       if (e.m !== undefined) {
@@ -622,7 +667,7 @@ const engineInfo = `${(evalsData as any).engine}, profondità ${(evalsData as an
         barEl.classList.toggle('is-flipped', flipped);
         barFill.style.height = `${((1 + wc) / 2) * 100}%`;
         const whiteAhead = wc >= 0;
-        barLabel.textContent = evalText(e);
+        barLabel.textContent = evalShort(e);
         // l'etichetta sta dalla parte di chi e' in vantaggio
         const atBottom = whiteAhead !== flipped;
         barLabel.classList.toggle('at-bottom', atBottom);
@@ -631,6 +676,10 @@ const engineInfo = `${(evalsData as any).engine}, profondità ${(evalsData as an
         barLabel.classList.toggle('on-black', !whiteAhead);
         barEl.setAttribute('aria-label', `Valutazione: ${evalDescr(e)} (${evalText(e)})`);
         barEl.title = `${evalText(e)} — ${evalDescr(e)}`;
+      }
+      if (readNum && readTxt) {
+        readNum.textContent = evalText(e);
+        readTxt.textContent = evalDescr(e);
       }
       if (chartCursor) {
         const n = Math.max(1, evals.length - 1);
