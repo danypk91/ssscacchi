@@ -5,7 +5,8 @@ excerpt: "Il Circolo Scacchistico Santa Sabina, organizza il consueto Torneo soc
 ---
 
 Il Circolo Scacchistico Santa Sabina, organizza il consueto **Torneo sociale Grand Prix lampo** aperto a soci e invitati.
-Il torneo si svolgerà su **10 tappe** (di norma il primo venerdì di ogni mese con qualche eccezione - vedi [bando](https://santasabina.altervista.org/images/tornei/2026/2026_gp_lampo/2026_gp_lampo_bando_01.pdf)) e **7 turni** per ciascuna giornata.
+Il torneo si svolgerà su **10 tappe** (di norma il primo venerdì di ogni mese con qualche eccezione - vedi [bando](https://santasabina.altervista.org/images/tornei/2026/2026_gp_lampo/2026_gp_lampo_bando_01.pdf)) e **7 turni** per ciascuna giornata.<br>
+Al termine delle dieci tappe verranno premiati i primi quattro classificati ([classifica](https://santasabina.altervista.org/images/tornei/2026/2026_gp_lampo/classifica/2026_gp_lampo_classifica.pdf)).<br>
 La settima tappa si svolgerà **venerdì 9 ottobre 2026** con inizio alle ore 21,15.
-Il tempo di riflessione sarà di **5 minuti con incremento di 3 secondi a mossa** per ciascun giocatore.
+Il tempo di riflessione sarà di **5 minuti con incremento di 3 secondi a mossa** per ciascun giocatore 
 preiscrizioni su *[Vesus.org](https://vesus.org/tournament/LrQelBIH)*
