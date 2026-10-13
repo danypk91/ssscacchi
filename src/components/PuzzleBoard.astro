@@ -405,8 +405,6 @@ const { set = 'merida' } = Astro.props;
     let solveIndex = 0;               // quante mosse soluzione gia' risolte
     let selected: string | null = null;
     let solved = false;
-    let order: number[] = [];
-    let orderPos = 0;
 
     // --- gestione pezzi come nel viewer: id stabili + slide ---
     const pieceEls = new Map<string, HTMLElement>();
@@ -783,6 +781,7 @@ const { set = 'merida' } = Astro.props;
       busy = true;
       clearSel();
       fbEl.hidden = true;
+      turnEl.textContent = 'Nuovo puzzle…'; // finche' l'avversario non ha mosso
       doneEl.hidden = true;
       doneEl.classList.remove('is-solution');
       btnHint.disabled = false; btnSolution.disabled = false;
@@ -818,22 +817,34 @@ const { set = 'merida' } = Astro.props;
       }, 500);
     }
 
+    // Scelta del prossimo puzzle: a caso tra quelli non ancora visti in questo
+    // browser (memoria in localStorage). Quando sono stati visti tutti si ricomincia.
+    const SEEN_KEY = 'ssscacchi:puzzle-seen';
+    function readSeen(): Set<string> {
+      try { return new Set(JSON.parse(localStorage.getItem(SEEN_KEY) || '[]')); }
+      catch { return new Set(); }
+    }
+    function markSeen(id: string) {
+      const s = readSeen();
+      s.add(id);
+      try { localStorage.setItem(SEEN_KEY, JSON.stringify([...s])); } catch { /* privato/pieno */ }
+    }
+    let lastId = '';
     function loadNext() {
-      if (orderPos >= order.length) {
-        // rimescola
-        order = shuffle([...Array(PUZZLES.length).keys()]);
-        orderPos = 0;
+      let seen = readSeen();
+      let pool = PUZZLES.filter((p) => !seen.has(p.id) && p.id !== lastId);
+      if (!pool.length) {
+        // visti tutti: si azzera la memoria (evitando di ripetere l'ultimo)
+        try { localStorage.removeItem(SEEN_KEY); } catch {}
+        pool = PUZZLES.filter((p) => p.id !== lastId);
+        if (!pool.length) pool = PUZZLES;
       }
-      loadPuzzle(PUZZLES[order[orderPos++]]);
+      const p = pool[Math.floor(Math.random() * pool.length)];
+      lastId = p.id;
+      markSeen(p.id);
+      loadPuzzle(p);
     }
 
-    function shuffle<T>(arr: T[]): T[] {
-      for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-      }
-      return arr;
-    }
 
     // --- ridimensionamento della scacchiera dall'angolo in basso a destra ---
     // Come lichess: si memorizza punto di partenza e dimensione iniziale, e la
@@ -923,8 +934,6 @@ const { set = 'merida' } = Astro.props;
       turnEl.textContent = 'Nessun puzzle disponibile.';
       return;
     }
-    order = shuffle([...Array(PUZZLES.length).keys()]);
-    orderPos = 0;
     loadNext();
   }
 
