@@ -7,6 +7,21 @@ interface Props {
   set?: 'merida' | 'cburnett' | 'chessnut';
 }
 const { set = 'merida' } = Astro.props;
+
+// Menu "Argomento": temi raggruppati, con il numero di puzzle disponibili.
+import puzzlesData from '../data/puzzles.json';
+import { THEME_GROUPS, MIN_PUZZLES_PER_THEME, themeIt, difficultyOf } from '../data/puzzle-themes';
+const all = puzzlesData as { themes: string[]; rating: number }[];
+const themeCount = new Map<string, number>();
+for (const p of all) for (const t of p.themes) themeCount.set(t, (themeCount.get(t) ?? 0) + 1);
+const groups = THEME_GROUPS.map((g) => ({
+  label: g.label,
+  themes: g.themes
+    .filter((t) => (themeCount.get(t) ?? 0) >= MIN_PUZZLES_PER_THEME)
+    .map((t) => ({ code: t, label: themeIt(t), n: themeCount.get(t)! })),
+})).filter((g) => g.themes.length);
+const diffCount = { facile: 0, medio: 0, difficile: 0 };
+for (const p of all) diffCount[difficultyOf(p.rating)]++;
 ---
 
 <div class="pz" data-puzzle-root data-set={set}>
@@ -46,6 +61,31 @@ const { set = 'merida' } = Astro.props;
   </div>
 
   <aside class="pz-side">
+    <!-- scelta dell'argomento (come i "temi" dei puzzle di lichess) -->
+    <div class="pz-filters">
+      <label class="pz-filter">
+        <span>Argomento</span>
+        <select data-filter-theme autocomplete="off" aria-label="Argomento dei puzzle">
+          <option value="">Tutti gli argomenti ({all.length})</option>
+          {groups.map((g) => (
+            <optgroup label={g.label}>
+              {g.themes.map((t) => <option value={t.code}>{t.label} ({t.n})</option>)}
+            </optgroup>
+          ))}
+        </select>
+      </label>
+      <label class="pz-filter">
+        <span>Difficoltà</span>
+        <select data-filter-level autocomplete="off" aria-label="Difficoltà dei puzzle">
+          <option value="">Tutte</option>
+          <option value="facile">Facile ({diffCount.facile})</option>
+          <option value="medio">Media ({diffCount.medio})</option>
+          <option value="difficile">Difficile ({diffCount.difficile})</option>
+        </select>
+      </label>
+      <p class="pz-filter-info" data-filter-info></p>
+    </div>
+
     <!-- box grande di esito (risolto / soluzione mostrata) -->
     <button class="pz-done" data-done hidden>
       <span class="pz-done-badge" data-done-badge>✓</span>
@@ -311,6 +351,48 @@ const { set = 'merida' } = Astro.props;
   .pz-feedback.ok { color: #7bbf6a; }
   .pz-feedback.ko { color: #d98a6a; }
 
+  .pz-filters {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+  .pz-filter { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
+  /* su telefono i due menu stanno affiancati per risparmiare altezza */
+  @media (max-width: 860px) {
+    .pz-filters { grid-template-columns: 3fr 2fr; }
+  }
+  .pz-filter span {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+  }
+  .pz-filter select {
+    width: 100%;
+    height: 38px;
+    padding: 0 2rem 0 0.7rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-primary);
+    font: inherit;
+    font-size: 0.88rem;
+    appearance: none;
+    cursor: pointer;
+    text-overflow: ellipsis;
+    background-image:
+      linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
+      linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
+    background-position: calc(100% - 16px) 50%, calc(100% - 11px) 50%;
+    background-size: 5px 5px;
+    background-repeat: no-repeat;
+  }
+  .pz-filter select:focus { outline: none; border-color: var(--accent); }
+  .pz-filter select.is-active { border-color: var(--accent); color: var(--accent); }
+  .pz-filter select option, .pz-filter select optgroup { background: var(--bg-card); color: var(--text-primary); }
+  .pz-filter-info { grid-column: 1 / -1; margin: 0; font-size: 0.75rem; color: var(--text-muted); min-height: 1em; }
+  .pz-filter-info.warn { color: #d98a6a; }
+
   .pz-meta { margin: 0; font-size: 0.85rem; }
   .pz-meta div { display: flex; gap: 0.5rem; margin-bottom: 0.3rem; }
   .pz-meta dt { color: var(--text-muted); min-width: 72px; }
@@ -348,7 +430,8 @@ const { set = 'merida' } = Astro.props;
 
 <script>
   import { Chess } from 'chess.js';
-  import { themeIt, difficultyOf } from '../data/puzzle-themes';
+  import { themeIt, difficultyOf, THEME_GROUPS } from '../data/puzzle-themes';
+  const TOPIC_THEMES = new Set(THEME_GROUPS.flatMap((g) => g.themes));
   import puzzlesData from '../data/puzzles.json';
 
   interface Puzzle {
@@ -559,6 +642,14 @@ const { set = 'merida' } = Astro.props;
     }
 
     // Gioca una mossa sulla posizione corrente e la aggiunge alla cronologia.
+    // Timer legati al puzzle corrente: se nel frattempo si carica un altro
+    // puzzle (es. cambiando argomento), non devono agire sul nuovo.
+    let gen = 0;
+    function later(fn: () => void, ms: number) {
+      const g = gen;
+      return window.setTimeout(() => { if (g === gen) fn(); }, ms);
+    }
+
     function play(uci: string) {
       chess.move(uciToMove(uci));
       history.push(chess.fen());
@@ -690,7 +781,7 @@ const { set = 'merida' } = Astro.props;
         feedback('Bene! Continua.', 'ok');
         // risposta automatica dell'avversario
         busy = true;
-        setTimeout(() => {
+        later(() => {
           play(solutionMoves[solveIndex]);
           solveIndex++;
           busy = false;
@@ -706,7 +797,7 @@ const { set = 'merida' } = Astro.props;
       feedback('Non è la mossa giusta, riprova.', 'ko');
       chess.move({ from, to, promotion: needsPromotion(from, to) ? 'q' : undefined });
       syncToFen(chess.fen());
-      setTimeout(() => {
+      later(() => {
         chess.undo();
         syncToFen(chess.fen());
         busy = false;
@@ -741,7 +832,7 @@ const { set = 'merida' } = Astro.props;
         if (solveIndex >= solutionMoves.length) { busy = false; finish('solution'); return; }
         play(solutionMoves[solveIndex]);
         solveIndex++;
-        setTimeout(playNext, 650);
+        later(playNext, 650);
       }
       playNext();
     });
@@ -775,6 +866,7 @@ const { set = 'merida' } = Astro.props;
 
     // --- Caricamento di un puzzle ---
     function loadPuzzle(p: Puzzle) {
+      gen++; // annulla risposte/animazioni del puzzle precedente
       puzzle = p;
       solved = false;
       solveIndex = 0;
@@ -802,14 +894,20 @@ const { set = 'merida' } = Astro.props;
       // meta
       metaEl.hidden = false;
       diffEl.textContent = `${difficultyOf(p.rating)} (${p.rating})`;
-      themesEl.textContent = p.themes.map(themeIt).slice(0, 4).join(', ');
+      // solo i temi "argomento" (niente lunghezza/fonte come Corto, Partita di maestri)
+      // l'argomento scelto va sempre per primo
+      const active = themeSel.value;
+      const shown = p.themes
+        .filter((t) => TOPIC_THEMES.has(t))
+        .sort((a, b) => Number(b === active) - Number(a === active));
+      themesEl.textContent = (shown.length ? shown : p.themes).map(themeIt).slice(0, 4).join(', ');
       if (p.url) {
         sourceEl.hidden = false;
         sourceEl.innerHTML = `Puzzle lichess (CC0) · <a href="${p.url}" target="_blank" rel="noopener">vedi su lichess</a>`;
       }
 
       // gioca la prima mossa (avversario) dopo un attimo
-      setTimeout(() => {
+      later(() => {
         play(p.moves[0]);
         solutionMoves = p.moves.slice(1);
         busy = false;
@@ -829,15 +927,70 @@ const { set = 'merida' } = Astro.props;
       s.add(id);
       try { localStorage.setItem(SEEN_KEY, JSON.stringify([...s])); } catch { /* privato/pieno */ }
     }
+    // --- Argomento e difficolta' (filtri) ---
+    const themeSel = root.querySelector<HTMLSelectElement>('[data-filter-theme]')!;
+    const levelSel = root.querySelector<HTMLSelectElement>('[data-filter-level]')!;
+    const filterInfo = root.querySelector<HTMLElement>('[data-filter-info]')!;
+    const FILTER_KEY = 'ssscacchi:puzzle-filter';
+    // stato iniziale: parametri URL (?tema=fork&livello=facile), poi ultima scelta salvata
+    {
+      const q = new URLSearchParams(location.search);
+      let saved: { tema?: string; livello?: string } = {};
+      try { saved = JSON.parse(localStorage.getItem(FILTER_KEY) || '{}'); } catch {}
+      const pick = (sel: HTMLSelectElement, v?: string | null) => {
+        if (v && [...sel.options].some((o) => o.value === v)) sel.value = v;
+      };
+      // un link con filtri vale da solo (non si mescola con la scelta salvata)
+      const fromUrl = q.has('tema') || q.has('livello');
+      pick(themeSel, fromUrl ? q.get('tema') : saved.tema);
+      pick(levelSel, fromUrl ? q.get('livello') : saved.livello);
+    }
+    function matching(): Puzzle[] {
+      const t = themeSel.value, l = levelSel.value;
+      return PUZZLES.filter(
+        (p) => (!t || p.themes.includes(t)) && (!l || difficultyOf(p.rating) === l)
+      );
+    }
+    function onFilterChange() {
+      themeSel.classList.toggle('is-active', !!themeSel.value);
+      levelSel.classList.toggle('is-active', !!levelSel.value);
+      const n = matching().length;
+      filterInfo.classList.toggle('warn', n === 0);
+      filterInfo.textContent = n === 0
+        ? 'Nessun puzzle con questa combinazione: cambia argomento o difficoltà.'
+        : (themeSel.value || levelSel.value) ? `${n} puzzle disponibili` : '';
+      try {
+        localStorage.setItem(FILTER_KEY, JSON.stringify({ tema: themeSel.value, livello: levelSel.value }));
+      } catch {}
+      const p = new URLSearchParams();
+      if (themeSel.value) p.set('tema', themeSel.value);
+      if (levelSel.value) p.set('livello', levelSel.value);
+      const qs = p.toString();
+      // window.history: `history` qui e' la cronologia delle mosse del puzzle
+      window.history.replaceState(null, '', qs ? `?${qs}` : location.pathname);
+      return n;
+    }
+    for (const sel of [themeSel, levelSel]) {
+      sel.addEventListener('change', () => {
+        if (onFilterChange() > 0) loadNext();
+      });
+    }
+
     let lastId = '';
     function loadNext() {
-      let seen = readSeen();
-      let pool = PUZZLES.filter((p) => !seen.has(p.id) && p.id !== lastId);
+      const all = matching();
+      if (!all.length) return;
+      const seen = readSeen();
+      let pool = all.filter((p) => !seen.has(p.id) && p.id !== lastId);
       if (!pool.length) {
-        // visti tutti: si azzera la memoria (evitando di ripetere l'ultimo)
-        try { localStorage.removeItem(SEEN_KEY); } catch {}
-        pool = PUZZLES.filter((p) => p.id !== lastId);
-        if (!pool.length) pool = PUZZLES;
+        // visti tutti quelli di questo argomento: si dimenticano solo quelli
+        // (evitando di ripetere l'ultimo)
+        const ids = new Set(all.map((p) => p.id));
+        try {
+          localStorage.setItem(SEEN_KEY, JSON.stringify([...seen].filter((id) => !ids.has(id))));
+        } catch {}
+        pool = all.filter((p) => p.id !== lastId);
+        if (!pool.length) pool = all;
       }
       const p = pool[Math.floor(Math.random() * pool.length)];
       lastId = p.id;
@@ -933,6 +1086,11 @@ const { set = 'merida' } = Astro.props;
     if (!PUZZLES.length) {
       turnEl.textContent = 'Nessun puzzle disponibile.';
       return;
+    }
+    if (onFilterChange() === 0) {
+      // scelta salvata non piu' valida: si riparte da "tutti"
+      themeSel.value = ''; levelSel.value = '';
+      onFilterChange();
     }
     loadNext();
   }

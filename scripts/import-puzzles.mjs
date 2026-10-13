@@ -36,9 +36,9 @@ const MIN_PLAYS = 2000;      // puzzle ben testati
 const MAX_SOL_MOVES = 8;     // mosse totali (avversario + utente): niente puzzle lunghissimi
 // fasce coerenti con difficultyOf() in src/data/puzzle-themes.ts
 const BANDS = [
-  { name: 'facile', min: 600, max: 1299, quota: 120 },
-  { name: 'medio', min: 1300, max: 1799, quota: 120 },
-  { name: 'difficile', min: 1800, max: 2300, quota: 60 },
+  { name: 'facile', min: 600, max: 1299, quota: 800 },
+  { name: 'medio', min: 1300, max: 1799, quota: 800 },
+  { name: 'difficile', min: 1800, max: 2300, quota: 400 },
 ];
 
 // punteggio pseudo-casuale ma deterministico per ogni puzzle
