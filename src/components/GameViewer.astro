@@ -1,0 +1,826 @@
+---
+// Visualizzatore di partita didattico: scacchiera PIATTA (senza inclinazione),
+// con coordinate, comandi avanti/indietro/play, lista mosse cliccabile,
+// evidenziazione ultima mossa, commenti per mossa, flip scacchiera.
+//
+// I pezzi scivolano anche navigando all'indietro o saltando a una mossa lontana,
+// grazie a id stabili tracciati lungo tutta la partita.
+
+interface Comment { ply: number; text: string }
+
+interface Props {
+  pgn: string;
+  comments?: Comment[];
+  set?: 'merida' | 'cburnett' | 'chessnut';
+  orientation?: 'white' | 'black';
+}
+const { pgn, comments = [], set = 'merida', orientation = 'white' } = Astro.props;
+
+const commentsJson = JSON.stringify(comments);
+
+// --- Valutazioni del motore (precalcolate da scripts/eval-partite.mjs) ---
+// Si passano alla pagina solo quelle delle posizioni di QUESTA partita.
+import { Chess } from 'chess.js';
+import evalsData from '../data/evals.json';
+type Ev = { c?: number; m?: number; w?: 'w' | 'b' };
+const table = (evalsData as { depth: number; engine: string; positions: Record<string, Ev> }).positions;
+const posKey = (fen: string) => fen.split(' ').slice(0, 4).join(' ');
+const plyEvals: (Ev | null)[] = [];
+{
+  const src = new Chess();
+  src.loadPgn(pgn);
+  const r = new Chess();
+  plyEvals.push(table[posKey(r.fen())] ?? null);
+  for (const mv of src.history()) {
+    r.move(mv);
+    plyEvals.push(table[posKey(r.fen())] ?? null);
+  }
+}
+const missing = plyEvals.filter((e) => !e).length;
+// La barra compare solo se la partita e' valutata per intero.
+const hasEvals = missing === 0;
+if (!hasEvals) {
+  console.warn(
+    `[GameViewer] ${missing}/${plyEvals.length} posizioni senza valutazione: ` +
+      `lancia 'node scripts/eval-partite.mjs'. Barra e grafico nascosti.`
+  );
+}
+const evalsJson = hasEvals ? JSON.stringify(plyEvals) : '';
+const engineInfo = `${(evalsData as any).engine}, profondità ${(evalsData as any).depth}`;
+---
+
+<div
+  class="gv"
+  data-game-viewer
+  data-pgn={pgn}
+  data-comments={commentsJson}
+  data-set={set}
+  data-orientation={orientation}
+  data-evals={evalsJson}
+>
+  <div class="gv-main">
+   <div class="gv-board-row">
+    {hasEvals && (
+      <div class="gv-evalbar" data-evalbar role="img" aria-label="Valutazione della posizione" title={`Valutazione: ${engineInfo}`}>
+        <div class="gv-evalbar-fill" data-evalbar-fill></div>
+        <div class="gv-evalbar-mid" aria-hidden="true"></div>
+        <span class="gv-evalbar-label" data-evalbar-label></span>
+      </div>
+    )}
+    <div class="gv-board-wrap">
+      <div class="gv-board" data-board>
+        {Array.from({ length: 64 }).map((_, i) => {
+          const row = Math.floor(i / 8);
+          const col = i % 8;
+          const isLight = (row + col) % 2 === 0;
+          return <div class:list={['gv-sq', isLight ? 'gv-sq-l' : 'gv-sq-d']} data-sq-index={i}></div>;
+        })}
+        <div class="gv-pieces" data-pieces></div>
+        <div class="gv-coords gv-files" data-files aria-hidden="true"></div>
+        <div class="gv-coords gv-ranks" data-ranks aria-hidden="true"></div>
+      </div>
+    </div>
+   </div>
+
+    <div class="gv-controls" role="group" aria-label="Controlli partita">
+      <button class="gv-btn" data-first aria-label="Prima mossa" title="Inizio (Home)">&#x23EE;</button>
+      <button class="gv-btn" data-prev aria-label="Mossa precedente" title="Indietro (←)">&#x25C0;</button>
+      <button class="gv-btn gv-btn-play" data-play aria-label="Play/Pausa" title="Play/Pausa (spazio)">&#x25B6;</button>
+      <button class="gv-btn" data-next aria-label="Mossa successiva" title="Avanti (→)">&#x25B6;&#x25B6;</button>
+      <button class="gv-btn" data-last aria-label="Ultima mossa" title="Fine (End)">&#x23ED;</button>
+      <button class="gv-btn gv-btn-flip" data-flip aria-label="Gira scacchiera" title="Gira scacchiera (F)">&#x21C5;</button>
+    </div>
+  </div>
+
+  <div class="gv-side">
+    <ol class="gv-moves" data-moves aria-label="Elenco mosse"></ol>
+    {hasEvals && (
+      <figure class="gv-chart" data-chart>
+        <!-- valore completo, come il pannello di analisi di lichess -->
+        <div class="gv-evalread" aria-live="polite">
+          <span class="gv-evalread-num" data-evalread-num></span>
+          <span class="gv-evalread-txt" data-evalread-txt></span>
+        </div>
+        <svg viewBox="0 0 100 40" preserveAspectRatio="none" aria-label="Andamento del vantaggio: tocca per andare a quella mossa" role="img">
+          <rect x="0" y="0" width="100" height="40" class="gv-chart-bg" />
+          <path class="gv-chart-area" data-chart-area d="" />
+          <line x1="0" y1="20" x2="100" y2="20" class="gv-chart-mid" />
+          <line x1="0" y1="0" x2="0" y2="40" class="gv-chart-cursor" data-chart-cursor />
+        </svg>
+        <figcaption>Vantaggio · {engineInfo}</figcaption>
+      </figure>
+    )}
+    <div class="gv-comment" data-comment hidden></div>
+  </div>
+</div>
+
+<style>
+  .gv {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 260px;
+    gap: 1.5rem;
+    align-items: start;
+  }
+  .gv-main { min-width: 0; display: flex; flex-direction: column; }
+
+  /* barra di valutazione + scacchiera, affiancate */
+  .gv-board-row {
+    display: flex;
+    gap: 6px;
+    align-items: stretch;
+    width: 100%;
+    max-width: 584px;
+    margin: 0 auto;
+  }
+  .gv-board-wrap {
+    position: relative;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  /* --- barra di valutazione (stile lichess) --- */
+  .gv-evalbar {
+    position: relative;
+    flex: 0 0 18px;
+    border-radius: 3px;
+    overflow: hidden;
+    background: #403d39;           /* parte del Nero */
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.35);
+  }
+  .gv-evalbar-fill {               /* parte del Bianco */
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 50%;
+    background: #f2ede2;
+    transition: height 0.45s cubic-bezier(0.25, 0.8, 0.25, 1);
+  }
+  .gv-evalbar.is-flipped .gv-evalbar-fill { bottom: auto; top: 0; }
+  .gv-evalbar-mid {
+    position: absolute;
+    left: 0; right: 0; top: 50%;
+    height: 2px; margin-top: -1px;
+    background: rgba(212,160,84,0.65);
+    pointer-events: none;
+  }
+  /* etichetta corta (max 3 caratteri: 1.4 · 12 · #3 · 1-0), sempre dentro la barra */
+  .gv-evalbar-label {
+    position: absolute;
+    left: 0; right: 0;
+    text-align: center;
+    font-size: 8.5px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  /* etichetta all'estremita' di chi e' in vantaggio */
+  .gv-evalbar-label.at-bottom { bottom: 4px; }
+  .gv-evalbar-label.at-top { top: 4px; }
+  .gv-evalbar-label.on-white { color: #2a1a0e; }
+  .gv-evalbar-label.on-black { color: #f2ede2; }
+
+  /* --- grafico del vantaggio --- */
+  .gv-chart { margin: 0.6rem 0 0; flex: none; }
+  /* valore completo (come il numero grande del pannello di lichess) */
+  .gv-evalread {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    margin-bottom: 0.4rem;
+    min-width: 0;
+  }
+  .gv-evalread-num {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+    flex: none;
+  }
+  .gv-evalread-txt {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .gv-chart svg {
+    display: block;
+    width: 100%;
+    height: 72px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  .gv-chart-bg { fill: #403d39; }
+  .gv-chart-area { fill: #f2ede2; }
+  .gv-chart-mid { stroke: rgba(212,160,84,0.6); stroke-width: 1; vector-effect: non-scaling-stroke; }
+  .gv-chart-cursor {
+    stroke: var(--accent);
+    stroke-width: 2;
+    vector-effect: non-scaling-stroke;
+    transition: transform 0.25s ease;
+  }
+  .gv-chart figcaption {
+    margin-top: 0.3rem;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+  }
+  .gv-board {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    aspect-ratio: 1 / 1;
+    border: 3px solid var(--wood-dark);
+    border-radius: 4px;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.45), inset 0 0 24px rgba(0,0,0,0.25);
+    overflow: hidden;
+    --sq: 12.5%;
+  }
+  .gv-sq { position: relative; }
+  .gv-sq-l {
+    background:
+      linear-gradient(135deg, rgba(255,255,255,0.05), rgba(0,0,0,0.04)),
+      linear-gradient(135deg, #ecc98f, #d9ac6e);
+  }
+  .gv-sq-d {
+    background:
+      linear-gradient(135deg, rgba(255,255,255,0.05), rgba(0,0,0,0.06)),
+      linear-gradient(135deg, #9c5c40, #7a4530);
+  }
+
+  .gv-pieces {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+  }
+  .gv-pieces :global(.gv-pc) {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 12.5%;
+    height: 12.5%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.35s cubic-bezier(0.33, 0.9, 0.3, 1), opacity 0.2s ease;
+    will-change: transform, opacity;
+  }
+  .gv-pieces :global(.gv-pc img) {
+    width: 86%;
+    height: 86%;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.35));
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+  .gv-pieces :global(.gv-pc.gone) { opacity: 0; }
+
+  /* coordinate */
+  .gv-coords { position: absolute; pointer-events: none; z-index: 3; font-size: 0.6rem; font-weight: 600; }
+  .gv-files { bottom: 2px; left: 0; right: 0; display: flex; justify-content: space-around; }
+  .gv-ranks { top: 0; bottom: 0; left: 2px; display: flex; flex-direction: column; justify-content: space-around; }
+  .gv-coords span { color: rgba(245,240,232,0.55); }
+
+  .gv-controls {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+  }
+  .gv-btn {
+    min-width: 46px;
+    height: 44px;
+    padding: 0 0.7rem;
+    border: 1px solid var(--border-light);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    border-radius: var(--radius);
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, transform 0.1s;
+  }
+  .gv-btn:hover { background: var(--bg-card-hover); border-color: var(--accent); }
+  .gv-btn:active { transform: translateY(1px); }
+  .gv-btn-play.playing { background: var(--accent); color: #2a1a0e; border-color: var(--accent); }
+
+  /* lista mosse: alta come la scacchiera (colonna stretch) */
+  .gv-side {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .gv-moves {
+    list-style: none;
+    margin: 0;
+    padding: 0.5rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    display: grid;
+    grid-template-columns: 2.2rem 1fr 1fr;
+    gap: 0.15rem 0.3rem;
+    align-content: start;
+    font-size: 0.92rem;
+    line-height: 1.5;
+  }
+  /* Le righe mosse sono create via JS: servono selettori globali. */
+  .gv-moves :global(.gv-moveno) {
+    color: var(--text-muted);
+    text-align: right;
+    padding-right: 0.3rem;
+    align-self: center;
+  }
+  .gv-moves :global(.gv-move) {
+    cursor: pointer;
+    padding: 0.2rem 0.45rem;
+    border-radius: 5px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+  }
+  .gv-moves :global(.gv-move:hover) { background: var(--bg-card-hover); color: var(--text-primary); }
+  .gv-moves :global(.gv-move.current) {
+    background: var(--accent);
+    color: #2a1a0e;
+    font-weight: 700;
+    box-shadow: 0 0 0 2px var(--accent), 0 2px 10px rgba(212,160,84,0.45);
+  }
+  .gv-moves :global(.gv-move.has-comment)::after { content: ' \25C6'; color: var(--accent); font-size: 0.6em; vertical-align: super; }
+  .gv-moves :global(.gv-move.current.has-comment)::after { color: #2a1a0e; }
+
+  .gv-comment {
+    margin-top: 0.8rem;
+    padding: 0.8rem 1rem;
+    background: var(--bg-secondary);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    color: var(--text-secondary);
+    font-size: 0.92rem;
+    line-height: 1.6;
+  }
+
+  @media (max-width: 860px) {
+    .gv {
+      grid-template-columns: 1fr;
+      align-items: start;
+      gap: 1rem;
+    }
+    .gv-side { min-height: 0; }
+    /* su mobile la lista non deve essere alta come la scacchiera */
+    .gv-moves {
+      flex: none;
+      max-height: 220px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .gv-board-wrap { max-width: 100%; }
+    /* su telefono: barra sottile, il valore e' nel tooltip / aria-label */
+    .gv-board-row { gap: 4px; }
+    .gv-evalbar { flex-basis: 10px; }
+    .gv-evalbar-label { display: none; }
+    .gv-chart svg { height: 56px; }
+    .gv-controls {
+      gap: 0.4rem;
+      margin-top: 0.8rem;
+    }
+    /* pulsanti piu' comodi al tocco, su una riga sola se possibile */
+    .gv-btn {
+      min-width: 0;
+      flex: 1 1 0;
+      height: 48px;
+      padding: 0 0.3rem;
+      font-size: 0.95rem;
+    }
+    .gv-coords { font-size: 0.5rem; }
+    .gv-moves {
+      grid-template-columns: 1.8rem 1fr 1fr;
+      font-size: 0.88rem;
+      max-height: 200px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .gv-pieces :global(.gv-pc) { transition: none; }
+    .gv-evalbar-fill, .gv-chart-cursor { transition: none; }
+  }
+</style>
+
+<script>
+  import { Chess } from 'chess.js';
+
+  type Orientation = 'white' | 'black';
+
+  interface PieceState { id: string; square: string | null } // null = catturato
+  interface Frame {
+    // mappa pieceId -> casa (o null se gia' catturato a questo ply)
+    places: Map<string, string | null>;
+    // ultima mossa a questo ply (per highlight)
+    from: string | null;
+    to: string | null;
+    san: string;
+  }
+
+  function fileToCol(f: string) { return f.charCodeAt(0) - 97; }
+  function rankToRow(r: string) { return 8 - parseInt(r, 10); }
+
+  function initViewer(root: HTMLElement) {
+    const boardEl = root.querySelector<HTMLElement>('[data-board]')!;
+    const layer = root.querySelector<HTMLElement>('[data-pieces]')!;
+    const movesEl = root.querySelector<HTMLOListElement>('[data-moves]')!;
+    const commentEl = root.querySelector<HTMLElement>('[data-comment]')!;
+    const filesEl = root.querySelector<HTMLElement>('[data-files]')!;
+    const ranksEl = root.querySelector<HTMLElement>('[data-ranks]')!;
+
+    const set = root.dataset.set || 'merida';
+    let orientation: Orientation = (root.dataset.orientation as Orientation) || 'white';
+
+    const pgn = root.dataset.pgn || '';
+    const comments: { ply: number; text: string }[] = JSON.parse(root.dataset.comments || '[]');
+    const commentByPly = new Map(comments.map((c) => [c.ply, c.text]));
+
+    // --- Costruzione dei frame tracciando l'identita' dei pezzi ---
+    const chess = new Chess();
+    chess.loadPgn(pgn);
+    const sanMoves = chess.history();
+    const verbose = chess.history({ verbose: true });
+
+    // Stato iniziale: assegna un id a ogni pezzo sulla posizione di partenza.
+    const start = new Chess();
+    const board0 = start.board();
+    const color0 = new Map<string, 'w' | 'b'>();  // id -> colore (immutabile)
+    const initialType = new Map<string, string>(); // id -> tipo iniziale
+    let occupant = new Map<string, string>();       // casa -> pieceId
+    let idSeq = 0;
+    for (let row = 0; row < 8; row++) {
+      for (let col = 0; col < 8; col++) {
+        const cell = board0[row][col];
+        if (!cell) continue;
+        const id = 'p' + (idSeq++);
+        color0.set(id, cell.color);
+        initialType.set(id, cell.type);
+        occupant.set(cell.square, id);
+      }
+    }
+
+    const allIds = Array.from(color0.keys());
+    // Per ogni ply: tipo mostrato da ciascun pezzo (cambia con la promozione).
+    const typeByPly: Map<string, string>[] = [];
+
+    function snapshot(from: string | null, to: string | null, san: string, types: Map<string, string>): Frame {
+      const places = new Map<string, string | null>();
+      for (const id of allIds) places.set(id, null);
+      for (const [sq, id] of occupant) places.set(id, sq);
+      return { places, from, to, san };
+    }
+
+    const frames: Frame[] = [];
+    let curTypes = new Map(initialType);
+    frames.push(snapshot(null, null, '', curTypes));
+    typeByPly.push(new Map(curTypes));
+
+    // Applica ogni mossa aggiornando occupant (cattura, arrocco, en passant, promozione)
+    for (const mv of verbose) {
+      const movingId = occupant.get(mv.from)!;
+      if (mv.captured) {
+        let capSq = mv.to;
+        if (mv.flags.includes('e')) {
+          const col = fileToCol(mv.to[0]);
+          const row = rankToRow(mv.to[1]) + (mv.color === 'w' ? 1 : -1);
+          capSq = String.fromCharCode(97 + col) + (8 - row);
+        }
+        occupant.delete(capSq);
+      } else if (occupant.has(mv.to)) {
+        occupant.delete(mv.to);
+      }
+      occupant.delete(mv.from);
+      occupant.set(mv.to, movingId);
+      if (mv.promotion) curTypes.set(movingId, mv.promotion);
+      if (mv.flags.includes('k') || mv.flags.includes('q')) {
+        const rank = mv.color === 'w' ? '1' : '8';
+        const rookFrom = (mv.flags.includes('k') ? 'h' : 'a') + rank;
+        const rookTo = (mv.flags.includes('k') ? 'f' : 'd') + rank;
+        const rookId = occupant.get(rookFrom)!;
+        occupant.delete(rookFrom);
+        occupant.set(rookTo, rookId);
+      }
+      frames.push(snapshot(mv.from, mv.to, mv.san, curTypes));
+      typeByPly.push(new Map(curTypes));
+    }
+
+    // --- Crea gli elementi DOM dei pezzi (uno per id), riusati sempre ---
+    const pieceEls = new Map<string, HTMLElement>();
+    const shownType = new Map<string, string>(); // tipo attualmente nell'<img>
+    for (const id of allIds) {
+      const wrap = document.createElement('div');
+      wrap.className = 'gv-pc';
+      const img = document.createElement('img');
+      img.alt = '';
+      img.draggable = false;
+      img.src = imgSrc(color0.get(id)!, initialType.get(id)!);
+      wrap.appendChild(img);
+      layer.appendChild(wrap);
+      pieceEls.set(id, wrap);
+      shownType.set(id, initialType.get(id)!);
+    }
+
+    function imgSrc(color: 'w' | 'b', type: string) {
+      return `/pieces/${set}/${color}${type.toUpperCase()}.svg`;
+    }
+
+    // Converte una casa (es "e4") in coordinate col/row secondo l'orientamento.
+    function coords(square: string): { x: number; y: number } {
+      let col = fileToCol(square[0]);
+      let row = rankToRow(square[1]);
+      if (orientation === 'black') { col = 7 - col; row = 7 - row; }
+      return { x: col, y: row };
+    }
+
+    // --- Rendering di un frame ---
+    let current = 0;
+
+    function render(plyIndex: number, animate: boolean) {
+      const frame = frames[plyIndex];
+      const types = typeByPly[plyIndex];
+
+      for (const id of allIds) {
+        const el = pieceEls.get(id)!;
+        const sq = frame.places.get(id) ?? null;
+
+        if (!animate) el.style.transition = 'none';
+
+        if (sq) {
+          const { x, y } = coords(sq);
+          el.style.transform = `translate(calc(${x} * 100%), calc(${y} * 100%))`;
+          el.classList.remove('gone');
+          const type = types.get(id)!;
+          if (shownType.get(id) !== type) {
+            el.querySelector('img')!.src = imgSrc(color0.get(id)!, type);
+            shownType.set(id, type);
+          }
+        } else {
+          el.classList.add('gone');
+        }
+
+        if (!animate) {
+          void el.offsetWidth;
+          el.style.transition = '';
+        }
+      }
+
+      // mossa corrente nella lista
+      movesEl.querySelectorAll('.gv-move').forEach((m) => m.classList.remove('current'));
+      if (plyIndex > 0) {
+        const el = movesEl.querySelector<HTMLElement>(`[data-ply="${plyIndex}"]`);
+        el?.classList.add('current');
+        // scorre solo l'elenco delle mosse, non la pagina (scrollIntoView
+        // spostava anche la finestra)
+        if (el) {
+          const top = el.offsetTop - movesEl.offsetTop;
+          const bottom = top + el.offsetHeight;
+          if (top < movesEl.scrollTop) movesEl.scrollTop = top - 8;
+          else if (bottom > movesEl.scrollTop + movesEl.clientHeight) {
+            movesEl.scrollTop = bottom - movesEl.clientHeight + 8;
+          }
+        }
+      }
+
+      // commento
+      const text = commentByPly.get(plyIndex);
+      if (text) { commentEl.hidden = false; commentEl.textContent = text; }
+      else { commentEl.hidden = true; commentEl.textContent = ''; }
+
+      current = plyIndex;
+      updateButtons();
+      updateEval();
+    }
+
+    // --- Valutazione: barra + grafico ---
+    type Ev = { c?: number; m?: number; w?: 'w' | 'b' };
+    const evals: Ev[] | null = root.dataset.evals ? JSON.parse(root.dataset.evals) : null;
+    const barEl = root.querySelector<HTMLElement>('[data-evalbar]');
+    const barFill = root.querySelector<HTMLElement>('[data-evalbar-fill]');
+    const barLabel = root.querySelector<HTMLElement>('[data-evalbar-label]');
+    const chartEl = root.querySelector<SVGSVGElement>('[data-chart] svg');
+    const chartCursor = root.querySelector<SVGLineElement>('[data-chart-cursor]');
+    const readNum = root.querySelector<HTMLElement>('[data-evalread-num]');
+    const readTxt = root.querySelector<HTMLElement>('[data-evalread-txt]');
+
+    // Probabilita' di vittoria del Bianco in [-1, 1], stessa formula di lichess.
+    function winChance(e: Ev): number {
+      if (e.m !== undefined) {
+        if (e.m === 0) return e.w === 'w' ? 1 : -1;
+        return e.m > 0 ? 1 : -1;
+      }
+      const cp = Math.max(-1000, Math.min(1000, e.c ?? 0));
+      return 2 / (1 + Math.exp(-0.00368208 * cp)) - 1;
+    }
+    // Valore completo (notazione lichess): +1.4, −0.6, #3, #-2, 1-0
+    function evalText(e: Ev): string {
+      if (e.m !== undefined) {
+        if (e.m === 0) return e.w === 'w' ? '1-0' : '0-1';
+        return '#' + e.m; // #3 matto del Bianco, #-3 matto del Nero
+      }
+      const v = (e.c ?? 0) / 100;
+      if (Math.abs(v) < 0.05) return '0.0';
+      return (v > 0 ? '+' : '−') + Math.abs(v).toFixed(1);
+    }
+    // Valore corto per dentro la barra: niente segno (la posizione dice chi e'
+    // avanti), massimo 3 caratteri: 1.4 · 9.9 · 12 · #3 · #12 · 1-0
+    function evalShort(e: Ev): string {
+      if (e.m !== undefined) {
+        if (e.m === 0) return e.w === 'w' ? '1-0' : '0-1';
+        return '#' + Math.abs(e.m);
+      }
+      const v = Math.abs((e.c ?? 0) / 100);
+      if (v < 0.05) return '0.0';
+      if (v < 9.95) return v.toFixed(1);
+      return String(Math.min(99, Math.round(v)));
+    }
+    function evalDescr(e: Ev): string {
+      if (e.m !== undefined) {
+        if (e.m === 0) return `scacco matto, vince il ${e.w === 'w' ? 'Bianco' : 'Nero'}`;
+        return `il ${e.m > 0 ? 'Bianco' : 'Nero'} dà matto in ${Math.abs(e.m)}`;
+      }
+      const v = (e.c ?? 0) / 100;
+      if (Math.abs(v) < 0.3) return 'posizione equilibrata';
+      return `${v > 0 ? 'Bianco' : 'Nero'} in vantaggio di ${Math.abs(v).toFixed(1)} pedoni`;
+    }
+
+    function updateEval() {
+      if (!evals) return;
+      const e = evals[current];
+      const wc = winChance(e);
+      const flipped = orientation === 'black';
+      if (barEl && barFill && barLabel) {
+        barEl.classList.toggle('is-flipped', flipped);
+        barFill.style.height = `${((1 + wc) / 2) * 100}%`;
+        const whiteAhead = wc >= 0;
+        barLabel.textContent = evalShort(e);
+        // l'etichetta sta dalla parte di chi e' in vantaggio
+        const atBottom = whiteAhead !== flipped;
+        barLabel.classList.toggle('at-bottom', atBottom);
+        barLabel.classList.toggle('at-top', !atBottom);
+        barLabel.classList.toggle('on-white', whiteAhead);
+        barLabel.classList.toggle('on-black', !whiteAhead);
+        barEl.setAttribute('aria-label', `Valutazione: ${evalDescr(e)} (${evalText(e)})`);
+        barEl.title = `${evalText(e)} — ${evalDescr(e)}`;
+      }
+      if (readNum && readTxt) {
+        readNum.textContent = evalText(e);
+        readTxt.textContent = evalDescr(e);
+      }
+      if (chartCursor) {
+        const n = Math.max(1, evals.length - 1);
+        chartCursor.style.transform = `translateX(${(current / n) * 100}px)`;
+      }
+    }
+
+    function buildChart() {
+      if (!evals || !chartEl) return;
+      const area = chartEl.querySelector<SVGPathElement>('[data-chart-area]')!;
+      const n = Math.max(1, evals.length - 1);
+      const pts = evals.map((e, i) => `${((i / n) * 100).toFixed(2)},${(20 - winChance(e) * 19).toFixed(2)}`);
+      // area del Bianco: dal fondo fino alla curva
+      area.setAttribute('d', `M0,40 L${pts.join(' L')} L100,40 Z`);
+      chartEl.addEventListener('click', (ev) => {
+        const r = chartEl.getBoundingClientRect();
+        const ply = Math.round(((ev.clientX - r.left) / r.width) * n);
+        stop();
+        render(Math.max(0, Math.min(n, ply)), true);
+      });
+    }
+
+    // --- Lista mosse (con figurine) ---
+    const FIG: Record<string, string> = { N: '\u2658', B: '\u2657', R: '\u2656', Q: '\u2655', K: '\u2654' };
+    function sanToFigurine(san: string): string {
+      return san.replace(/^[NBRQK]/, (c) => FIG[c]).replace(/=([NBRQ])/, (_, c) => '=' + FIG[c]);
+    }
+    function buildMoveList() {
+      movesEl.innerHTML = '';
+      for (let i = 0; i < sanMoves.length; i++) {
+        const ply = i + 1;
+        const isWhite = i % 2 === 0;
+        if (isWhite) {
+          const no = document.createElement('li');
+          no.className = 'gv-moveno';
+          no.textContent = (Math.floor(i / 2) + 1) + '.';
+          movesEl.appendChild(no);
+        }
+        const li = document.createElement('li');
+        li.className = 'gv-move';
+        if (commentByPly.has(ply)) li.classList.add('has-comment');
+        li.dataset.ply = String(ply);
+        li.textContent = sanToFigurine(sanMoves[i]);
+        li.addEventListener('click', () => { stop(); render(ply, true); });
+        movesEl.appendChild(li);
+        // se il nero apre (impossibile da start) o per allineare la griglia: niente
+      }
+    }
+
+    // --- Coordinate ---
+    function buildCoords() {
+      filesEl.innerHTML = ''; ranksEl.innerHTML = '';
+      const files = orientation === 'white' ? 'abcdefgh' : 'hgfedcba';
+      const ranks = orientation === 'white' ? '87654321' : '12345678';
+      for (const f of files) { const s = document.createElement('span'); s.textContent = f; filesEl.appendChild(s); }
+      for (const r of ranks) { const s = document.createElement('span'); s.textContent = r; ranksEl.appendChild(s); }
+    }
+
+    // --- Navigazione + play ---
+    const btnFirst = root.querySelector<HTMLElement>('[data-first]')!;
+    const btnPrev = root.querySelector<HTMLElement>('[data-prev]')!;
+    const btnNext = root.querySelector<HTMLElement>('[data-next]')!;
+    const btnLast = root.querySelector<HTMLElement>('[data-last]')!;
+    const btnPlay = root.querySelector<HTMLElement>('[data-play]')!;
+    const btnFlip = root.querySelector<HTMLElement>('[data-flip]')!;
+
+    function updateButtons() {
+      (btnFirst as HTMLButtonElement).disabled = current === 0;
+      (btnPrev as HTMLButtonElement).disabled = current === 0;
+      (btnNext as HTMLButtonElement).disabled = current === frames.length - 1;
+      (btnLast as HTMLButtonElement).disabled = current === frames.length - 1;
+    }
+
+    let playTimer: number | undefined;
+    function stop() {
+      if (playTimer) { clearInterval(playTimer); playTimer = undefined; }
+      btnPlay.classList.remove('playing');
+      btnPlay.innerHTML = '\u25B6';
+    }
+    function play() {
+      if (current >= frames.length - 1) render(0, false);
+      btnPlay.classList.add('playing');
+      btnPlay.innerHTML = '\u23F8';
+      playTimer = window.setInterval(() => {
+        if (current >= frames.length - 1) { stop(); return; }
+        render(current + 1, true);
+      }, 1100);
+    }
+
+    btnFirst.addEventListener('click', () => { stop(); render(0, true); });
+    btnPrev.addEventListener('click', () => { stop(); if (current > 0) render(current - 1, true); });
+    btnNext.addEventListener('click', () => { stop(); if (current < frames.length - 1) render(current + 1, true); });
+    btnLast.addEventListener('click', () => { stop(); render(frames.length - 1, true); });
+    btnPlay.addEventListener('click', () => { if (playTimer) stop(); else play(); });
+    btnFlip.addEventListener('click', () => {
+      orientation = orientation === 'white' ? 'black' : 'white';
+      buildCoords();
+      render(current, false);
+    });
+
+    // tastiera
+    root.setAttribute('tabindex', '0');
+    root.addEventListener('keydown', (e) => {
+      switch (e.key) {
+        case 'ArrowRight': e.preventDefault(); stop(); if (current < frames.length - 1) render(current + 1, true); break;
+        case 'ArrowLeft': e.preventDefault(); stop(); if (current > 0) render(current - 1, true); break;
+        case 'Home': e.preventDefault(); stop(); render(0, true); break;
+        case 'End': e.preventDefault(); stop(); render(frames.length - 1, true); break;
+        case 'f': case 'F': btnFlip.dispatchEvent(new Event('click')); break;
+        case ' ': e.preventDefault(); if (playTimer) stop(); else play(); break;
+      }
+    });
+
+    // Allinea l'altezza della lista mosse a quella della scacchiera (desktop).
+    const sideEl = root.querySelector<HTMLElement>('.gv-side');
+    const boardWrap = root.querySelector<HTMLElement>('.gv-board-wrap');
+    function syncSideHeight() {
+      if (!sideEl || !boardWrap) return;
+      // solo su layout a due colonne (desktop)
+      const twoCols = window.matchMedia('(min-width: 861px)').matches;
+      if (twoCols) {
+        sideEl.style.height = boardWrap.offsetHeight + 'px';
+      } else {
+        sideEl.style.height = '';
+      }
+    }
+    const roBoard = new ResizeObserver(syncSideHeight);
+    if (boardWrap) roBoard.observe(boardWrap);
+    window.addEventListener('resize', syncSideHeight);
+
+    // init
+    buildMoveList();
+    buildCoords();
+    buildChart();
+    render(0, false);
+    syncSideHeight();
+  }
+
+  function boot() {
+    document.querySelectorAll<HTMLElement>('[data-game-viewer]').forEach(initViewer);
+  }
+  if (document.readyState !== 'loading') boot();
+  else document.addEventListener('DOMContentLoaded', boot);
+</script>

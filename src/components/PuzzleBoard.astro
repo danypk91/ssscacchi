@@ -1,0 +1,1103 @@
+---
+// Palestra tattica: l'utente risolve il puzzle muovendo i pezzi.
+// Scacchiera piatta con coordinate, pezzi merida.
+// I puzzle (lichess, CC0) sono passati come JSON dalla pagina.
+
+interface Props {
+  set?: 'merida' | 'cburnett' | 'chessnut';
+}
+const { set = 'merida' } = Astro.props;
+
+// Menu "Argomento": temi raggruppati, con il numero di puzzle disponibili.
+import puzzlesData from '../data/puzzles.json';
+import { THEME_GROUPS, MIN_PUZZLES_PER_THEME, themeIt, difficultyOf } from '../data/puzzle-themes';
+const all = puzzlesData as { themes: string[]; rating: number }[];
+const themeCount = new Map<string, number>();
+for (const p of all) for (const t of p.themes) themeCount.set(t, (themeCount.get(t) ?? 0) + 1);
+const groups = THEME_GROUPS.map((g) => ({
+  label: g.label,
+  themes: g.themes
+    .filter((t) => (themeCount.get(t) ?? 0) >= MIN_PUZZLES_PER_THEME)
+    .map((t) => ({ code: t, label: themeIt(t), n: themeCount.get(t)! })),
+})).filter((g) => g.themes.length);
+const diffCount = { facile: 0, medio: 0, difficile: 0 };
+for (const p of all) diffCount[difficultyOf(p.rating)]++;
+---
+
+<div class="pz" data-puzzle-root data-set={set}>
+  <div class="pz-main">
+   <div class="pz-stage" data-stage>
+    <div class="pz-board-wrap">
+      <div class="pz-board" data-board>
+        {Array.from({ length: 64 }).map((_, i) => {
+          const row = Math.floor(i / 8);
+          const col = i % 8;
+          const isLight = (row + col) % 2 === 0;
+          return (
+            <div
+              class:list={['pz-sq', isLight ? 'pz-sq-l' : 'pz-sq-d']}
+              data-sq-index={i}
+            ></div>
+          );
+        })}
+        <div class="pz-sel" data-sel hidden></div>
+        <div class="pz-dots" data-dots aria-hidden="true"></div>
+        <div class="pz-pieces" data-pieces></div>
+        <div class="pz-coords pz-files" data-files aria-hidden="true"></div>
+        <div class="pz-coords pz-ranks" data-ranks aria-hidden="true"></div>
+      </div>
+      <!-- fuori dalla scacchiera (che ha overflow:hidden), cosi' non viene tagliata -->
+      <div class="pz-resize" data-resize aria-hidden="true" title="Trascina per ridimensionare · doppio clic per ripristinare"></div>
+    </div>
+
+    <!-- navigazione tra le mosse giocate (come lichess) -->
+    <div class="pz-nav" role="group" aria-label="Rivedi le mosse">
+      <button type="button" class="pz-nav-btn" data-nav="first" aria-label="Posizione iniziale" title="Inizio (↑ / Home)">&#x23EE;&#xFE0E;</button>
+      <button type="button" class="pz-nav-btn" data-nav="prev" aria-label="Mossa precedente" title="Indietro (←)">&#x25C0;&#xFE0E;</button>
+      <button type="button" class="pz-nav-btn" data-nav="next" aria-label="Mossa successiva" title="Avanti (→)">&#x25B6;&#xFE0E;</button>
+      <button type="button" class="pz-nav-btn" data-nav="last" aria-label="Ultima mossa" title="Ultima mossa (↓ / End)">&#x23ED;&#xFE0E;</button>
+    </div>
+   </div>
+  </div>
+
+  <aside class="pz-side">
+    <!-- scelta dell'argomento (come i "temi" dei puzzle di lichess) -->
+    <div class="pz-filters">
+      <label class="pz-filter">
+        <span>Argomento</span>
+        <select data-filter-theme autocomplete="off" aria-label="Argomento dei puzzle">
+          <option value="">Tutti gli argomenti ({all.length})</option>
+          {groups.map((g) => (
+            <optgroup label={g.label}>
+              {g.themes.map((t) => <option value={t.code}>{t.label} ({t.n})</option>)}
+            </optgroup>
+          ))}
+        </select>
+      </label>
+      <label class="pz-filter">
+        <span>Difficoltà</span>
+        <select data-filter-level autocomplete="off" aria-label="Difficoltà dei puzzle">
+          <option value="">Tutte</option>
+          <option value="facile">Facile ({diffCount.facile})</option>
+          <option value="medio">Media ({diffCount.medio})</option>
+          <option value="difficile">Difficile ({diffCount.difficile})</option>
+        </select>
+      </label>
+      <p class="pz-filter-info" data-filter-info></p>
+    </div>
+
+    <!-- box grande di esito (risolto / soluzione mostrata) -->
+    <button class="pz-done" data-done hidden>
+      <span class="pz-done-badge" data-done-badge>✓</span>
+      <span class="pz-done-text">
+        <strong data-done-title>Esatto!</strong>
+        <small>Prossimo puzzle →</small>
+      </span>
+    </button>
+
+    <div class="pz-status" data-status>
+      <p class="pz-turn" data-turn>Carico il puzzle…</p>
+      <p class="pz-feedback" data-feedback hidden></p>
+    </div>
+
+    <dl class="pz-meta" data-meta hidden>
+      <div><dt>Difficoltà</dt><dd data-diff>—</dd></div>
+      <div><dt>Temi</dt><dd data-themes>—</dd></div>
+    </dl>
+
+    <div class="pz-actions">
+      <button class="pz-btn" data-hint>Suggerimento</button>
+      <button class="pz-btn" data-solution>Vedi soluzione</button>
+    </div>
+
+    <p class="pz-help">
+      Tocca il pezzo da muovere, poi la casa di destinazione. Se ti blocchi,
+      chiedi un suggerimento o guarda la soluzione.
+    </p>
+
+    <p class="pz-source" data-source hidden></p>
+  </aside>
+</div>
+
+<style>
+  /* scacchiera ancorata a sinistra (sotto il titolo) e pannello subito accanto:
+     ridimensionando, l'angolo in basso a destra segue il cursore in diagonale */
+  .pz {
+    display: grid;
+    grid-template-columns: auto 260px;
+    justify-content: start;
+    gap: 1.5rem;
+    align-items: start;
+  }
+  .pz-main { min-width: 0; display: flex; justify-content: flex-start; }
+  /* scacchiera + tasti: la colonna e' larga quanto la scacchiera */
+  .pz-stage { display: inline-flex; flex-direction: column; max-width: 100%; }
+  .pz-board-wrap {
+    position: relative;
+    /* di default scacchiera + tasti stanno nello schermo, sotto l'header */
+    width: var(--board-size, min(560px, calc(100vh - 11rem)));
+    width: var(--board-size, min(560px, calc(100dvh - 11rem)));
+    max-width: 100%;
+  }
+
+  /* tasti avanti/indietro sotto la scacchiera */
+  .pz-nav {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.4rem;
+    margin-top: 0.6rem;
+  }
+  .pz-nav-btn {
+    height: 40px;
+    border: 1px solid var(--border-light);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    border-radius: var(--radius);
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+  }
+  .pz-nav-btn:hover:not(:disabled) { background: var(--bg-card-hover); border-color: var(--accent); }
+  .pz-nav-btn:disabled { opacity: 0.35; cursor: default; }
+  /* quando si rivedono mosse passate, il tasto "ultima mossa" invita a tornare */
+  .is-reviewing .pz-nav-btn[data-nav="last"] {
+    border-color: var(--accent);
+    color: var(--accent);
+    animation: pzGlow 1.6s ease-in-out infinite;
+  }
+  .is-reviewing .pz-board { cursor: pointer; }
+  .is-reviewing .pz-board::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: rgba(26, 20, 16, 0.12);
+    pointer-events: none;
+    z-index: 4;
+  }
+  @keyframes pzGlow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(212,160,84,0); }
+    50% { box-shadow: 0 0 0 4px rgba(212,160,84,0.25); }
+  }
+  .pz-board {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    aspect-ratio: 1 / 1;
+    border: 3px solid var(--wood-dark);
+    border-radius: 4px;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.45), inset 0 0 24px rgba(0,0,0,0.25);
+    overflow: hidden;
+    touch-action: manipulation;
+  }
+
+  /* maniglia di ridimensionamento in basso a destra (trattini, stile lichess) */
+  /* stessa geometria di lichess: 22px, a cavallo dell'angolo (13px - 22px) */
+  .pz-resize {
+    position: absolute;
+    right: -9px; bottom: -9px;
+    width: 22px; height: 22px;
+    cursor: nwse-resize;
+    z-index: 6;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    border-radius: 50%;
+    transition: background 0.15s;
+  }
+  .pz-resize:hover,
+  .pz-resize.is-dragging { background: rgba(212,160,84,0.22); }
+  :global(body.pz-resizing) { cursor: nwse-resize; user-select: none; -webkit-user-select: none; }
+  :global(body.pz-resizing) * { cursor: nwse-resize !important; }
+  @media (hover: none) {
+    /* sul telefono la maniglia e' poco utile e intralcia: la nascondiamo */
+    .pz-resize { display: none; }
+  }
+  .pz-resize::before,
+  .pz-resize::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    height: 2px;
+    background: var(--accent);
+    border-radius: 1px;
+  }
+  .pz-resize::before {
+    width: 12px;
+    transform: translate(5px, 8px) rotate(-45deg);
+  }
+  .pz-resize::after {
+    width: 7px;
+    transform: translate(8px, 11px) rotate(-45deg);
+  }
+  .pz-resize:hover::before,
+  .pz-resize:hover::after { background: var(--accent-hover); }
+  .pz-sq { position: relative; cursor: pointer; }
+  /* case leggermente piu' chiare (meno cupe di prima) */
+  .pz-sq-l {
+    background:
+      linear-gradient(135deg, rgba(255,255,255,0.05), rgba(0,0,0,0.04)),
+      linear-gradient(135deg, #ecc98f, #d9ac6e);
+  }
+  .pz-sq-d {
+    background:
+      linear-gradient(135deg, rgba(255,255,255,0.05), rgba(0,0,0,0.06)),
+      linear-gradient(135deg, #9c5c40, #7a4530);
+  }
+
+  /* casa selezionata (verde lichess) */
+  .pz-sel {
+    position: absolute;
+    width: 12.5%; height: 12.5%; top: 0; left: 0;
+    background: rgba(20,85,30,0.5);
+    pointer-events: none;
+    z-index: 1;
+    transition: transform 0.1s ease;
+  }
+
+  /* pallini sulle case legali di destinazione (stile lichess) */
+  .pz-dots { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+  .pz-dots :global(.pz-dot) {
+    position: absolute; top: 0; left: 0;
+    width: 12.5%; height: 12.5%;
+  }
+  /* casa vuota: punto piccolo e netto (radial-gradient come lichess) */
+  .pz-dots :global(.pz-dot) {
+    background: radial-gradient(rgba(20,85,30,0.5) 19%, rgba(0,0,0,0) 20%);
+  }
+  /* casa con pezzo da catturare: anello verde al bordo */
+  .pz-dots :global(.pz-dot.capture) {
+    background: radial-gradient(transparent 0%, transparent 79%, rgba(20,85,0,0.3) 80%);
+  }
+
+  .pz-pieces { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+  .pz-pieces :global(.pz-pc) {
+    position: absolute; top: 0; left: 0;
+    width: 12.5%; height: 12.5%;
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.3s cubic-bezier(0.33, 0.9, 0.3, 1), opacity 0.2s ease;
+    will-change: transform, opacity;
+  }
+  .pz-pieces :global(.pz-pc img) {
+    width: 86%; height: 86%; object-fit: contain;
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.35));
+    user-select: none; -webkit-user-drag: none;
+    transition: transform 0.12s ease, filter 0.12s ease;
+  }
+  /* pezzo selezionato: leggermente ingrandito e sollevato */
+  .pz-pieces :global(.pz-pc.selected) { z-index: 3; }
+  /* il pezzo che scivola passa sopra quello che sta catturando */
+  .pz-pieces :global(.pz-pc.moving) { z-index: 4; }
+  .pz-pieces :global(.pz-pc.selected img) {
+    transform: scale(1.18);
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
+  }
+  .pz-pieces :global(.pz-pc.gone) { opacity: 0; }
+
+  .pz-coords { position: absolute; pointer-events: none; z-index: 3; font-size: 0.6rem; font-weight: 600; }
+  .pz-files { bottom: 2px; left: 0; right: 0; display: flex; justify-content: space-around; }
+  .pz-ranks { top: 0; bottom: 0; left: 2px; display: flex; flex-direction: column; justify-content: space-around; }
+  .pz-coords span { color: rgba(245,240,232,0.55); }
+
+  .pz-side { display: flex; flex-direction: column; gap: 1rem; }
+
+  /* box grande di esito, stile lichess (grande, colorato, cliccabile) */
+  .pz-done {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    width: 100%;
+    text-align: left;
+    padding: 1.1rem 1.3rem;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    color: #0f2410;
+    background: #7bbf5a;
+    box-shadow: 0 8px 24px rgba(123,191,90,0.3);
+    transition: background 0.2s, transform 0.1s;
+    animation: pzDoneIn 0.3s ease-out;
+  }
+  /* display:flex annullerebbe l'attributo hidden: il box comparirebbe subito */
+  .pz-done[hidden] { display: none; }
+  .pz-done:hover { background: #8fcf6c; }
+  .pz-done:active { transform: translateY(1px); }
+  .pz-done.is-solution { background: #d9b45a; box-shadow: 0 8px 24px rgba(217,180,90,0.3); }
+  .pz-done.is-solution:hover { background: #e6c270; }
+  .pz-done-badge {
+    flex: 0 0 auto;
+    width: 38px; height: 38px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; font-weight: 700;
+    background: rgba(255,255,255,0.35);
+    border-radius: 50%;
+  }
+  .pz-done-text { display: flex; flex-direction: column; line-height: 1.25; }
+  .pz-done-text strong { font-size: 1.1rem; text-transform: uppercase; letter-spacing: 0.03em; }
+  .pz-done-text small { font-size: 0.9rem; opacity: 0.85; font-weight: 600; }
+
+  @keyframes pzDoneIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .pz-status {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+  }
+  .pz-turn { margin: 0; font-weight: 600; color: var(--text-primary); }
+  .pz-feedback { margin: 0.5rem 0 0; font-weight: 600; }
+  .pz-feedback.ok { color: #7bbf6a; }
+  .pz-feedback.ko { color: #d98a6a; }
+
+  .pz-filters {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+  .pz-filter { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
+  /* su telefono i due menu stanno affiancati per risparmiare altezza */
+  @media (max-width: 860px) {
+    .pz-filters { grid-template-columns: 3fr 2fr; }
+  }
+  .pz-filter span {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+  }
+  .pz-filter select {
+    width: 100%;
+    height: 38px;
+    padding: 0 2rem 0 0.7rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-primary);
+    font: inherit;
+    font-size: 0.88rem;
+    appearance: none;
+    cursor: pointer;
+    text-overflow: ellipsis;
+    background-image:
+      linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
+      linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
+    background-position: calc(100% - 16px) 50%, calc(100% - 11px) 50%;
+    background-size: 5px 5px;
+    background-repeat: no-repeat;
+  }
+  .pz-filter select:focus { outline: none; border-color: var(--accent); }
+  .pz-filter select.is-active { border-color: var(--accent); color: var(--accent); }
+  .pz-filter select option, .pz-filter select optgroup { background: var(--bg-card); color: var(--text-primary); }
+  .pz-filter-info { grid-column: 1 / -1; margin: 0; font-size: 0.75rem; color: var(--text-muted); min-height: 1em; }
+  .pz-filter-info.warn { color: #d98a6a; }
+
+  .pz-meta { margin: 0; font-size: 0.85rem; }
+  .pz-meta div { display: flex; gap: 0.5rem; margin-bottom: 0.3rem; }
+  .pz-meta dt { color: var(--text-muted); min-width: 72px; }
+  .pz-meta dd { margin: 0; color: var(--text-secondary); }
+
+  .pz-actions { display: flex; flex-direction: column; gap: 0.5rem; }
+  .pz-btn {
+    padding: 0.6rem 0.8rem;
+    border: 1px solid var(--border-light);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    border-radius: var(--radius);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .pz-btn:hover { background: var(--bg-card-hover); border-color: var(--accent); }
+  .pz-btn-primary { background: var(--accent); color: #2a1a0e; border-color: var(--accent); font-weight: 600; }
+  .pz-btn-primary:hover { background: var(--accent-hover); }
+
+  .pz-help { font-size: 0.82rem; line-height: 1.5; color: var(--text-muted); margin: 0; }
+  .pz-source { font-size: 0.75rem; color: var(--text-muted); margin: 0; }
+  .pz-source a { color: var(--accent); }
+
+  @media (max-width: 860px) {
+    .pz { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+    .pz-main { justify-content: center; }
+    .pz-board-wrap { max-width: 100%; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pz-pieces :global(.pz-pc), .pz-sel { transition: none; }
+  }
+</style>
+
+<script>
+  import { Chess } from 'chess.js';
+  import { themeIt, difficultyOf, THEME_GROUPS } from '../data/puzzle-themes';
+  const TOPIC_THEMES = new Set(THEME_GROUPS.flatMap((g) => g.themes));
+  import puzzlesData from '../data/puzzles.json';
+
+  interface Puzzle {
+    id: string;
+    fen: string;
+    moves: string[];
+    rating: number;
+    themes: string[];
+    url: string;
+  }
+
+  const PUZZLES = puzzlesData as Puzzle[];
+
+  function fileToCol(f: string) { return f.charCodeAt(0) - 97; }
+  function rankToRow(r: string) { return 8 - parseInt(r, 10); }
+  function squareName(col: number, row: number) {
+    return String.fromCharCode(97 + col) + (8 - row);
+  }
+
+  function initPuzzle(root: HTMLElement) {
+    const boardEl = root.querySelector<HTMLElement>('[data-board]')!;
+    const boardWrap = root.querySelector<HTMLElement>('.pz-board-wrap')!;
+    const layer = root.querySelector<HTMLElement>('[data-pieces]')!;
+    const selEl = root.querySelector<HTMLElement>('[data-sel]')!;
+    const dotsEl = root.querySelector<HTMLElement>('[data-dots]')!;
+    const resizeEl = root.querySelector<HTMLElement>('[data-resize]')!;
+    const filesEl = root.querySelector<HTMLElement>('[data-files]')!;
+    const ranksEl = root.querySelector<HTMLElement>('[data-ranks]')!;
+    const turnEl = root.querySelector<HTMLElement>('[data-turn]')!;
+    const fbEl = root.querySelector<HTMLElement>('[data-feedback]')!;
+    const metaEl = root.querySelector<HTMLElement>('[data-meta]')!;
+    const diffEl = root.querySelector<HTMLElement>('[data-diff]')!;
+    const themesEl = root.querySelector<HTMLElement>('[data-themes]')!;
+    const sourceEl = root.querySelector<HTMLElement>('[data-source]')!;
+    const btnHint = root.querySelector<HTMLButtonElement>('[data-hint]')!;
+    const btnSolution = root.querySelector<HTMLButtonElement>('[data-solution]')!;
+    const doneEl = root.querySelector<HTMLButtonElement>('[data-done]')!;
+    const doneTitleEl = root.querySelector<HTMLElement>('[data-done-title]')!;
+    const doneBadgeEl = root.querySelector<HTMLElement>('[data-done-badge]')!;
+    const set = root.dataset.set || 'merida';
+
+    // mostra il box di esito, grande ed evidente
+    function showDone(kind: 'ok' | 'solution') {
+      doneEl.hidden = false;
+      doneEl.classList.toggle('is-solution', kind === 'solution');
+      doneTitleEl.textContent = kind === 'ok' ? 'Esatto!' : 'Soluzione';
+      doneBadgeEl.textContent = kind === 'ok' ? '✓' : '♟';
+    }
+
+    let chess: InstanceType<typeof Chess>;
+    let puzzle: Puzzle;
+    let orientation: 'white' | 'black' = 'white';
+    let solutionMoves: string[] = []; // UCI che l'utente deve trovare
+    let solveIndex = 0;               // quante mosse soluzione gia' risolte
+    let selected: string | null = null;
+    let solved = false;
+
+    // --- gestione pezzi come nel viewer: id stabili + slide ---
+    const pieceEls = new Map<string, HTMLElement>();
+    let occupant = new Map<string, string>(); // casa -> pieceId
+    let pieceColorType = new Map<string, { c: 'w'|'b'; t: string }>();
+    let idSeq = 0;
+
+    function imgSrc(c: 'w'|'b', t: string) {
+      return `/pieces/${set}/${c}${t.toUpperCase()}.svg`;
+    }
+    function coords(square: string) {
+      let col = fileToCol(square[0]);
+      let row = rankToRow(square[1]);
+      if (orientation === 'black') { col = 7 - col; row = 7 - row; }
+      return { x: col, y: row };
+    }
+    function placeEl(el: HTMLElement, square: string, animate: boolean) {
+      const { x, y } = coords(square);
+      if (!animate) el.style.transition = 'none';
+      el.style.transform = `translate(calc(${x} * 100%), calc(${y} * 100%))`;
+      if (!animate) { void el.offsetWidth; el.style.transition = ''; }
+    }
+
+    function buildFromBoard() {
+      layer.innerHTML = '';
+      pieceEls.clear();
+      occupant = new Map();
+      pieceColorType = new Map();
+      idSeq = 0;
+      const b = chess.board();
+      for (let row = 0; row < 8; row++) {
+        for (let col = 0; col < 8; col++) {
+          const cell = b[row][col];
+          if (!cell) continue;
+          const id = 'p' + (idSeq++);
+          const wrap = document.createElement('div');
+          wrap.className = 'pz-pc';
+          const img = document.createElement('img');
+          img.alt = ''; img.draggable = false;
+          img.src = imgSrc(cell.color, cell.type);
+          wrap.appendChild(img);
+          layer.appendChild(wrap);
+          pieceEls.set(id, wrap);
+          pieceColorType.set(id, { c: cell.color, t: cell.type });
+          occupant.set(cell.square, id);
+          placeEl(wrap, cell.square, false);
+        }
+      }
+    }
+
+    // Porta la scacchiera disegnata alla posizione `fen`, facendo scivolare i
+    // pezzi che si spostano. Funziona in avanti, all'indietro e per i salti:
+    // abbina ogni pezzo della posizione di arrivo al pezzo uguale piu' vicino.
+    function syncToFen(fen: string, animate = true) {
+      const target = new Map<string, { c: 'w' | 'b'; t: string }>();
+      const b = new Chess(fen).board();
+      for (const row of b) for (const cell of row) {
+        if (cell) target.set(cell.square, { c: cell.color, t: cell.type });
+      }
+      const free = new Map(occupant); // casa -> id dei pezzi ancora da abbinare
+      const next = new Map<string, string>();
+      const sameKind = (id: string, p: { c: string; t: string }) => {
+        const q = pieceColorType.get(id)!;
+        return q.c === p.c && q.t === p.t;
+      };
+      const dist = (a: string, z: string) =>
+        Math.max(
+          Math.abs(fileToCol(a[0]) - fileToCol(z[0])),
+          Math.abs(rankToRow(a[1]) - rankToRow(z[1]))
+        );
+
+      // 1) pezzi rimasti fermi sulla stessa casa
+      for (const [sq, p] of target) {
+        const id = free.get(sq);
+        if (id && sameKind(id, p)) { next.set(sq, id); free.delete(sq); }
+      }
+      // 2) pezzi che si spostano: pezzo uguale piu' vicino
+      // 3) promozione (o il suo annullamento): pezzo dello stesso colore vicino
+      for (const strict of [true, false]) {
+        for (const [sq, p] of target) {
+          if (next.has(sq)) continue;
+          let best: string | null = null, bestD = 99;
+          for (const [from, id] of free) {
+            const q = pieceColorType.get(id)!;
+            if (q.c !== p.c) continue;
+            if (strict ? q.t !== p.t : dist(from, sq) > 1) continue;
+            const d = dist(from, sq);
+            if (d < bestD) { bestD = d; best = from; }
+          }
+          if (best) {
+            const id = free.get(best)!;
+            free.delete(best);
+            next.set(sq, id);
+            const el = pieceEls.get(id)!;
+            if (animate) {
+              el.classList.add('moving');
+              setTimeout(() => el.classList.remove('moving'), 320);
+            }
+            placeEl(el, sq, animate);
+            if (!sameKind(id, p)) {
+              pieceColorType.set(id, p);
+              const img = el.querySelector('img')!;
+              const swap = () => { img.src = imgSrc(p.c, p.t); };
+              animate ? setTimeout(swap, 180) : swap();
+            }
+          }
+        }
+      }
+      // 4) pezzi non piu' presenti (catture): dissolvenza
+      for (const [, id] of free) {
+        const el = pieceEls.get(id)!;
+        pieceEls.delete(id);
+        pieceColorType.delete(id);
+        if (animate) {
+          el.classList.add('gone');
+          setTimeout(() => el.remove(), 250);
+        } else el.remove();
+      }
+      // 5) pezzi che ricompaiono (es. tornando indietro dopo una cattura)
+      for (const [sq, p] of target) {
+        if (next.has(sq)) continue;
+        const id = 'p' + (idSeq++);
+        const wrap = document.createElement('div');
+        wrap.className = 'pz-pc' + (animate ? ' gone' : '');
+        const img = document.createElement('img');
+        img.alt = ''; img.draggable = false;
+        img.src = imgSrc(p.c, p.t);
+        wrap.appendChild(img);
+        layer.appendChild(wrap);
+        pieceEls.set(id, wrap);
+        pieceColorType.set(id, p);
+        placeEl(wrap, sq, false);
+        if (animate) requestAnimationFrame(() => wrap.classList.remove('gone'));
+        next.set(sq, id);
+      }
+      occupant = next;
+    }
+
+    // --- Cronologia delle posizioni (per i tasti avanti/indietro) ---
+    let history: string[] = [];   // FEN di ogni posizione giocata
+    let viewIdx = 0;              // posizione mostrata
+    let busy = false;             // animazione in corso (risposta, errore, soluzione)
+    const navBtns = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-nav]'));
+    const atTip = () => viewIdx === history.length - 1;
+
+    function updateNav() {
+      for (const b of navBtns) {
+        const a = b.dataset.nav;
+        b.disabled = a === 'first' || a === 'prev' ? viewIdx <= 0 : atTip();
+      }
+      root.classList.toggle('is-reviewing', !atTip());
+    }
+
+    // Gioca una mossa sulla posizione corrente e la aggiunge alla cronologia.
+    // Timer legati al puzzle corrente: se nel frattempo si carica un altro
+    // puzzle (es. cambiando argomento), non devono agire sul nuovo.
+    let gen = 0;
+    function later(fn: () => void, ms: number) {
+      const g = gen;
+      return window.setTimeout(() => { if (g === gen) fn(); }, ms);
+    }
+
+    function play(uci: string) {
+      chess.move(uciToMove(uci));
+      history.push(chess.fen());
+      viewIdx = history.length - 1;
+      syncToFen(chess.fen());
+      updateNav();
+    }
+
+    function goTo(i: number) {
+      if (busy) return;
+      i = Math.max(0, Math.min(i, history.length - 1));
+      if (i === viewIdx) return;
+      clearSel();
+      viewIdx = i;
+      syncToFen(history[i]);
+      updateNav();
+    }
+
+    function uciToMove(uci: string) {
+      return { from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci.slice(4) || undefined };
+    }
+
+    function buildCoords() {
+      filesEl.innerHTML = ''; ranksEl.innerHTML = '';
+      const files = orientation === 'white' ? 'abcdefgh' : 'hgfedcba';
+      const ranks = orientation === 'white' ? '87654321' : '12345678';
+      for (const f of files) { const s = document.createElement('span'); s.textContent = f; filesEl.appendChild(s); }
+      for (const r of ranks) { const s = document.createElement('span'); s.textContent = r; ranksEl.appendChild(s); }
+    }
+
+    function pieceElAt(square: string): HTMLElement | null {
+      const id = occupant.get(square);
+      return id ? pieceEls.get(id) ?? null : null;
+    }
+
+    function clearSel() {
+      // rimuovi l'ingrandimento da qualunque pezzo lo avesse
+      layer.querySelectorAll('.pz-pc.selected').forEach((el) => el.classList.remove('selected'));
+      selected = null;
+      selEl.hidden = true;
+      dotsEl.innerHTML = '';
+    }
+
+    function showSel(square: string) {
+      clearSel();
+      selected = square;
+      const { x, y } = coords(square);
+      selEl.hidden = false;
+      selEl.style.transform = `translate(calc(${x} * 100%), calc(${y} * 100%))`;
+
+      // ingrandisci il pezzo selezionato
+      pieceElAt(square)?.classList.add('selected');
+
+      // disegna i pallini sulle case legali di destinazione
+      const legal = chess.moves({ square: square as any, verbose: true }) as any[];
+      for (const m of legal) {
+        const { x: dx, y: dy } = coords(m.to);
+        const dot = document.createElement('div');
+        dot.className = 'pz-dot' + (m.captured || m.flags.includes('e') ? ' capture' : '');
+        dot.style.transform = `translate(calc(${dx} * 100%), calc(${dy} * 100%))`;
+        dotsEl.appendChild(dot);
+      }
+    }
+
+    function setTurnLabel() {
+      const toMove = chess.turn() === 'w' ? 'Bianco' : 'Nero';
+      turnEl.textContent = solved ? 'Risolto!' : `Trova la mossa migliore — muove il ${toMove}`;
+    }
+
+    function feedback(msg: string, kind: 'ok' | 'ko') {
+      fbEl.hidden = false;
+      fbEl.textContent = msg;
+      fbEl.classList.remove('ok', 'ko');
+      fbEl.classList.add(kind);
+    }
+
+    // Gestione click sulle case
+    boardEl.querySelectorAll<HTMLElement>('[data-sq-index]').forEach((sqEl) => {
+      sqEl.addEventListener('click', () => {
+        if (busy) return;
+        // se si stanno rivedendo mosse passate, un tocco riporta alla posizione attuale
+        if (!atTip()) { goTo(history.length - 1); return; }
+        if (solved) return;
+        const idx = parseInt(sqEl.dataset.sqIndex!, 10);
+        let col = idx % 8, row = Math.floor(idx / 8);
+        if (orientation === 'black') { col = 7 - col; row = 7 - row; }
+        const square = squareName(col, row);
+        const piece = chess.get(square as any);
+        const ownPiece = piece && piece.color === chess.turn();
+
+        if (!selected) {
+          if (ownPiece) showSel(square);
+          return;
+        }
+        if (square === selected) { clearSel(); return; }
+
+        const isLegal = (chess.moves({ square: selected as any, verbose: true }) as any[])
+          .some((m) => m.to === square);
+        if (!isLegal) {
+          // come su lichess: toccare un altro proprio pezzo cambia la selezione,
+          // una casa non raggiungibile deseleziona
+          if (ownPiece) showSel(square); else clearSel();
+          return;
+        }
+        tryUserMove(selected, square);
+      });
+    });
+
+    function finish(kind: 'ok' | 'solution') {
+      solved = true;
+      setTurnLabel();
+      showDone(kind);
+      btnHint.disabled = true; btnSolution.disabled = true;
+      feedback(kind === 'ok' ? 'Esatto! Puzzle risolto.' : 'Questa era la soluzione.', 'ok');
+    }
+
+    function tryUserMove(from: string, to: string) {
+      // promozione: assumiamo donna (i puzzle lichess promuovono a donna salvo sottopromozione)
+      const expected = solutionMoves[solveIndex];
+      const promo = expected && expected.length > 4 ? expected.slice(4) : 'q';
+      const uci = from + to + (needsPromotion(from, to) ? promo : '');
+      clearSel();
+
+      if (uci === expected || (uci + 'q') === expected || stripPromoEq(uci, expected)) {
+        // mossa corretta
+        play(expected);
+        solveIndex++;
+        if (solveIndex >= solutionMoves.length) { finish('ok'); return; }
+        feedback('Bene! Continua.', 'ok');
+        // risposta automatica dell'avversario
+        busy = true;
+        later(() => {
+          play(solutionMoves[solveIndex]);
+          solveIndex++;
+          busy = false;
+          setTurnLabel();
+          if (solveIndex >= solutionMoves.length) finish('ok');
+        }, 450);
+        return;
+      }
+
+      // Mossa legale ma sbagliata: come su lichess la si vede giocata,
+      // poi i pezzi tornano dov'erano.
+      busy = true;
+      feedback('Non è la mossa giusta, riprova.', 'ko');
+      chess.move({ from, to, promotion: needsPromotion(from, to) ? 'q' : undefined });
+      syncToFen(chess.fen());
+      later(() => {
+        chess.undo();
+        syncToFen(chess.fen());
+        busy = false;
+      }, 650);
+    }
+
+    function needsPromotion(from: string, to: string): boolean {
+      const piece = chess.get(from as any);
+      if (!piece || piece.type !== 'p') return false;
+      return to[1] === '8' || to[1] === '1';
+    }
+    function stripPromoEq(a: string, b: string) {
+      // confronto robusto per promozioni
+      return a.slice(0,4) === b.slice(0,4) && (a.length <= 4 || b.length <= 4 || a[4] === b[4]);
+    }
+
+    // Suggerimento: evidenzia la casa di partenza della prossima mossa
+    btnHint.addEventListener('click', () => {
+      if (solved || busy) return;
+      if (!atTip()) goTo(history.length - 1);
+      const next = solutionMoves[solveIndex];
+      if (next) { showSel(next.slice(0, 2)); feedback('Muovi questo pezzo.', 'ok'); }
+    });
+
+    // Soluzione: gioca il resto automaticamente
+    btnSolution.addEventListener('click', () => {
+      if (solved || busy) return;
+      if (!atTip()) goTo(history.length - 1);
+      clearSel();
+      busy = true;
+      function playNext() {
+        if (solveIndex >= solutionMoves.length) { busy = false; finish('solution'); return; }
+        play(solutionMoves[solveIndex]);
+        solveIndex++;
+        later(playNext, 650);
+      }
+      playNext();
+    });
+
+    // Tasti avanti / indietro (e frecce della tastiera, come su lichess)
+    for (const b of navBtns) {
+      b.addEventListener('click', () => {
+        const a = b.dataset.nav;
+        if (a === 'first') goTo(0);
+        else if (a === 'prev') goTo(viewIdx - 1);
+        else if (a === 'next') goTo(viewIdx + 1);
+        else goTo(history.length - 1);
+      });
+    }
+    document.addEventListener('keydown', (e) => {
+      const t = e.target as HTMLElement;
+      if (t && (t.isContentEditable || /INPUT|SELECT|TEXTAREA/.test(t.tagName))) return;
+      const map: Record<string, () => void> = {
+        ArrowLeft: () => goTo(viewIdx - 1),
+        ArrowRight: () => goTo(viewIdx + 1),
+        ArrowUp: () => goTo(0),
+        Home: () => goTo(0),
+        ArrowDown: () => goTo(history.length - 1),
+        End: () => goTo(history.length - 1),
+      };
+      const fn = map[e.key];
+      if (fn) { e.preventDefault(); fn(); }
+    });
+
+    doneEl.addEventListener('click', () => loadNext());
+
+    // --- Caricamento di un puzzle ---
+    function loadPuzzle(p: Puzzle) {
+      gen++; // annulla risposte/animazioni del puzzle precedente
+      puzzle = p;
+      solved = false;
+      solveIndex = 0;
+      busy = true;
+      clearSel();
+      fbEl.hidden = true;
+      turnEl.textContent = 'Nuovo puzzle…'; // finche' l'avversario non ha mosso
+      doneEl.hidden = true;
+      doneEl.classList.remove('is-solution');
+      btnHint.disabled = false; btnSolution.disabled = false;
+
+      chess = new Chess(p.fen);
+      // La prima mossa UCI e' dell'avversario: la sequenza soluzione per l'utente
+      // comincia dopo. Giochiamo la prima mossa e orientiamo la scacchiera dal
+      // lato di chi deve risolvere.
+      const firstMover = chess.turn(); // chi muove nella FEN = l'avversario
+      orientation = firstMover === 'w' ? 'black' : 'white';
+
+      buildCoords();
+      buildFromBoard();
+      history = [chess.fen()];
+      viewIdx = 0;
+      updateNav();
+
+      // meta
+      metaEl.hidden = false;
+      diffEl.textContent = `${difficultyOf(p.rating)} (${p.rating})`;
+      // solo i temi "argomento" (niente lunghezza/fonte come Corto, Partita di maestri)
+      // l'argomento scelto va sempre per primo
+      const active = themeSel.value;
+      const shown = p.themes
+        .filter((t) => TOPIC_THEMES.has(t))
+        .sort((a, b) => Number(b === active) - Number(a === active));
+      themesEl.textContent = (shown.length ? shown : p.themes).map(themeIt).slice(0, 4).join(', ');
+      if (p.url) {
+        sourceEl.hidden = false;
+        sourceEl.innerHTML = `Puzzle lichess (CC0) · <a href="${p.url}" target="_blank" rel="noopener">vedi su lichess</a>`;
+      }
+
+      // gioca la prima mossa (avversario) dopo un attimo
+      later(() => {
+        play(p.moves[0]);
+        solutionMoves = p.moves.slice(1);
+        busy = false;
+        setTurnLabel();
+      }, 500);
+    }
+
+    // Scelta del prossimo puzzle: a caso tra quelli non ancora visti in questo
+    // browser (memoria in localStorage). Quando sono stati visti tutti si ricomincia.
+    const SEEN_KEY = 'ssscacchi:puzzle-seen';
+    function readSeen(): Set<string> {
+      try { return new Set(JSON.parse(localStorage.getItem(SEEN_KEY) || '[]')); }
+      catch { return new Set(); }
+    }
+    function markSeen(id: string) {
+      const s = readSeen();
+      s.add(id);
+      try { localStorage.setItem(SEEN_KEY, JSON.stringify([...s])); } catch { /* privato/pieno */ }
+    }
+    // --- Argomento e difficolta' (filtri) ---
+    const themeSel = root.querySelector<HTMLSelectElement>('[data-filter-theme]')!;
+    const levelSel = root.querySelector<HTMLSelectElement>('[data-filter-level]')!;
+    const filterInfo = root.querySelector<HTMLElement>('[data-filter-info]')!;
+    const FILTER_KEY = 'ssscacchi:puzzle-filter';
+    // stato iniziale: parametri URL (?tema=fork&livello=facile), poi ultima scelta salvata
+    {
+      const q = new URLSearchParams(location.search);
+      let saved: { tema?: string; livello?: string } = {};
+      try { saved = JSON.parse(localStorage.getItem(FILTER_KEY) || '{}'); } catch {}
+      const pick = (sel: HTMLSelectElement, v?: string | null) => {
+        if (v && [...sel.options].some((o) => o.value === v)) sel.value = v;
+      };
+      // un link con filtri vale da solo (non si mescola con la scelta salvata)
+      const fromUrl = q.has('tema') || q.has('livello');
+      pick(themeSel, fromUrl ? q.get('tema') : saved.tema);
+      pick(levelSel, fromUrl ? q.get('livello') : saved.livello);
+    }
+    function matching(): Puzzle[] {
+      const t = themeSel.value, l = levelSel.value;
+      return PUZZLES.filter(
+        (p) => (!t || p.themes.includes(t)) && (!l || difficultyOf(p.rating) === l)
+      );
+    }
+    function onFilterChange() {
+      themeSel.classList.toggle('is-active', !!themeSel.value);
+      levelSel.classList.toggle('is-active', !!levelSel.value);
+      const n = matching().length;
+      filterInfo.classList.toggle('warn', n === 0);
+      filterInfo.textContent = n === 0
+        ? 'Nessun puzzle con questa combinazione: cambia argomento o difficoltà.'
+        : (themeSel.value || levelSel.value) ? `${n} puzzle disponibili` : '';
+      try {
+        localStorage.setItem(FILTER_KEY, JSON.stringify({ tema: themeSel.value, livello: levelSel.value }));
+      } catch {}
+      const p = new URLSearchParams();
+      if (themeSel.value) p.set('tema', themeSel.value);
+      if (levelSel.value) p.set('livello', levelSel.value);
+      const qs = p.toString();
+      // window.history: `history` qui e' la cronologia delle mosse del puzzle
+      window.history.replaceState(null, '', qs ? `?${qs}` : location.pathname);
+      return n;
+    }
+    for (const sel of [themeSel, levelSel]) {
+      sel.addEventListener('change', () => {
+        if (onFilterChange() > 0) loadNext();
+      });
+    }
+
+    let lastId = '';
+    function loadNext() {
+      const all = matching();
+      if (!all.length) return;
+      const seen = readSeen();
+      let pool = all.filter((p) => !seen.has(p.id) && p.id !== lastId);
+      if (!pool.length) {
+        // visti tutti quelli di questo argomento: si dimenticano solo quelli
+        // (evitando di ripetere l'ultimo)
+        const ids = new Set(all.map((p) => p.id));
+        try {
+          localStorage.setItem(SEEN_KEY, JSON.stringify([...seen].filter((id) => !ids.has(id))));
+        } catch {}
+        pool = all.filter((p) => p.id !== lastId);
+        if (!pool.length) pool = all;
+      }
+      const p = pool[Math.floor(Math.random() * pool.length)];
+      lastId = p.id;
+      markSeen(p.id);
+      loadPuzzle(p);
+    }
+
+
+    // --- ridimensionamento della scacchiera dall'angolo in basso a destra ---
+    // Come lichess: si memorizza punto di partenza e dimensione iniziale, e la
+    // nuova dimensione dipende solo da quanto si e' spostato il puntatore
+    // (niente ricalcolo sul bordo della scacchiera, che si muove mentre cambia).
+    const SIZE_KEY = 'ssscacchi:puzzle-board-size';
+    const mainEl = root.querySelector<HTMLElement>('.pz-main')!;
+    const sideEl = root.querySelector<HTMLElement>('.pz-side')!;
+    const MIN_SIZE = 240;
+    const MAX_SIZE = 760;
+    const twoColumns = () => sideEl.getBoundingClientRect().top < mainEl.getBoundingClientRect().bottom - 1
+      && sideEl.getBoundingClientRect().left > mainEl.getBoundingClientRect().left;
+    function maxSize() {
+      // spazio realmente libero: tutta la riga, meno il pannello laterale se e' accanto
+      const gap = parseFloat(getComputedStyle(root).columnGap) || 0;
+      const avail = twoColumns()
+        ? root.clientWidth - sideEl.offsetWidth - gap
+        : root.clientWidth;
+      return Math.min(MAX_SIZE, avail);
+    }
+    const clampSize = (px: number) => Math.round(Math.max(MIN_SIZE, Math.min(px, maxSize())));
+    const currentSize = () => boardWrap.getBoundingClientRect().width;
+    function applySize(px: number) {
+      boardWrap.style.setProperty('--board-size', clampSize(px) + 'px');
+    }
+    // ripristina la preferenza salvata (riadattata alla larghezza disponibile)
+    const saved = parseInt(localStorage.getItem(SIZE_KEY) || '', 10);
+    if (!Number.isNaN(saved)) applySize(saved);
+    let resizeRaf = 0;
+    window.addEventListener('resize', () => {
+      cancelAnimationFrame(resizeRaf);
+      resizeRaf = requestAnimationFrame(() => {
+        const v = boardWrap.style.getPropertyValue('--board-size');
+        if (v) applySize(parseInt(v, 10));
+      });
+    });
+
+    function resetSize() {
+      boardWrap.style.removeProperty('--board-size');
+      localStorage.removeItem(SIZE_KEY);
+    }
+    let lastDown = 0;
+
+    resizeEl.addEventListener('pointerdown', (start) => {
+      if (start.button !== 0) return;
+      start.preventDefault();
+      // doppio clic sulla maniglia: dimensione predefinita
+      if (start.timeStamp - lastDown < 350) { lastDown = 0; resetSize(); return; }
+      lastDown = start.timeStamp;
+
+      resizeEl.setPointerCapture(start.pointerId);
+      const x0 = start.clientX, y0 = start.clientY;
+      const s0 = currentSize();
+      // Di quanto si sposta l'angolo per ogni px di lato in piu':
+      // ancorata a sinistra (desktop) -> (1, 1); centrata (colonna unica) -> (1/2, 1).
+      const ax = getComputedStyle(mainEl).justifyContent === 'center' ? 0.5 : 1;
+      const norm = ax * ax + 1;
+      let pending = s0, raf = 0;
+      resizeEl.classList.add('is-dragging');
+      document.body.classList.add('pz-resizing');
+
+      const move = (e: PointerEvent) => {
+        // proiezione dello spostamento sulla direzione in cui si muove l'angolo:
+        // l'angolo resta il piu' vicino possibile al cursore
+        const dx = e.clientX - x0, dy = e.clientY - y0;
+        pending = s0 + (ax * dx + dy) / norm;
+        if (!raf) raf = requestAnimationFrame(() => { raf = 0; applySize(pending); });
+      };
+      const end = () => {
+        resizeEl.removeEventListener('pointermove', move);
+        resizeEl.removeEventListener('pointerup', end);
+        resizeEl.removeEventListener('pointercancel', end);
+        cancelAnimationFrame(raf);
+        applySize(pending);
+        resizeEl.classList.remove('is-dragging');
+        document.body.classList.remove('pz-resizing');
+        localStorage.setItem(SIZE_KEY, String(clampSize(pending)));
+      };
+      resizeEl.addEventListener('pointermove', move);
+      resizeEl.addEventListener('pointerup', end);
+      resizeEl.addEventListener('pointercancel', end);
+    });
+
+
+    // init
+    if (!PUZZLES.length) {
+      turnEl.textContent = 'Nessun puzzle disponibile.';
+      return;
+    }
+    if (onFilterChange() === 0) {
+      // scelta salvata non piu' valida: si riparte da "tutti"
+      themeSel.value = ''; levelSel.value = '';
+      onFilterChange();
+    }
+    loadNext();
+  }
+
+  function boot() {
+    document.querySelectorAll<HTMLElement>('[data-puzzle-root]').forEach(initPuzzle);
+  }
+  if (document.readyState !== 'loading') boot();
+  else document.addEventListener('DOMContentLoaded', boot);
+</script>

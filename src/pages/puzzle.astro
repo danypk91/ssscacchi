@@ -1,0 +1,57 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PuzzleBoard from '../components/PuzzleBoard.astro';
+import { SITE_URL, breadcrumbJsonLd } from '../data/club';
+
+const metaDescription =
+  'Palestra tattica: risolvi i puzzle di scacchi direttamente sulla scacchiera. ' +
+  'Posizioni reali da partite, dai temi come forchetta, inchiodatura e matto. ' +
+  'A cura del Circolo Scacchi Santa Sabina.';
+
+const crumbs = breadcrumbJsonLd([
+  { name: 'Home', path: '/' },
+  { name: 'Puzzle', path: '/puzzle' },
+]);
+---
+
+<BaseLayout title="Puzzle — Palestra tattica" description={metaDescription} jsonLd={[crumbs]}>
+  <section class="section pz-page">
+    <div class="container">
+      <!-- titolo compatto: la scacchiera deve stare subito nello schermo -->
+      <h1 class="pz-title">Palestra tattica</h1>
+
+      <PuzzleBoard set="merida" />
+
+      <p class="pz-credit">
+        I puzzle provengono dal database pubblico di
+        <a href="https://database.lichess.org/#puzzles" target="_blank" rel="noopener">lichess</a>
+        (licenza CC0).
+      </p>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  /* pagina "board-first": poco spazio sopra la scacchiera */
+  .pz-page { padding-top: 1rem; padding-bottom: 3rem; }
+  .pz-title {
+    font-size: 1.3rem;
+    line-height: 1.2;
+    margin: 0 0 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+  }
+
+  @media (max-width: 860px) {
+    .pz-page { padding-top: 0.6rem; padding-bottom: 2rem; }
+    .pz-page :global(.container) { padding-left: 0.75rem; padding-right: 0.75rem; }
+    .pz-title { font-size: 1.05rem; margin-bottom: 0.5rem; }
+  }
+  .pz-credit {
+    text-align: left;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    margin-top: 2.5rem;
+  }
+  .pz-credit a { color: var(--accent); }
+</style>

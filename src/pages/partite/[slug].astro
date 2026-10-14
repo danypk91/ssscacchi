@@ -1,0 +1,153 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection, render } from 'astro:content';
+import GameViewer from '../../components/GameViewer.astro';
+import { classifyPgn } from '../../lib/openings';
+import { SITE_URL, breadcrumbJsonLd } from '../../data/club';
+
+export async function getStaticPaths() {
+  const partite = await getCollection('partite', ({ data }) =>
+    import.meta.env.PROD ? !data.draft : true
+  );
+  return partite.map((entry) => ({
+    params: { slug: entry.id },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+const d = entry.data;
+
+const opening = classifyPgn(d.pgn);
+const title = d.nickname || `${d.white} – ${d.black}`;
+const subtitle = [d.event, d.place, d.year].filter(Boolean).join(', ');
+
+const url = `${SITE_URL}/partite/${entry.id}`;
+const metaDescription =
+  `${d.white} contro ${d.black}` +
+  (d.place ? `, ${d.place} ${d.year}` : ` (${d.year})`) +
+  (opening ? `. Apertura: ${opening.family}` : '') +
+  '. Partita commentata sulla scacchiera interattiva del Circolo Scacchi Santa Sabina.';
+
+const crumbs = breadcrumbJsonLd([
+  { name: 'Home', path: '/' },
+  { name: 'Partite', path: '/partite' },
+  { name: title, path: `/partite/${entry.id}` },
+]);
+---
+
+<BaseLayout title={`${title} — Partite`} description={metaDescription} jsonLd={[crumbs]}>
+  <section class="section">
+    <div class="container">
+      <nav class="crumbs" aria-label="breadcrumb">
+        <a href="/partite">&larr; Archivio partite</a>
+      </nav>
+
+      <header class="game-head">
+        {d.nickname && <p class="game-nick">{d.nickname}</p>}
+        <h1 class="game-players">
+          <span class="pl pl-w">{d.white}</span>
+          <span class="vs">–</span>
+          <span class="pl pl-b">{d.black}</span>
+        </h1>
+        <p class="game-meta">
+          {subtitle}
+          <span class="game-result">{d.result}</span>
+        </p>
+        {opening && (
+          <p class="game-opening">
+            <span class="eco">{opening.eco}</span>
+            <span class="op-family">{opening.family}</span>
+            {opening.variation && <span class="op-var">{opening.variation}</span>}
+          </p>
+        )}
+      </header>
+
+      <GameViewer pgn={d.pgn} comments={d.comments ?? []} set="merida" />
+
+      <div class="game-body">
+        <Content />
+      </div>
+
+      <footer class="game-foot">
+        <p>
+          Fonte: <a href={d.source} target="_blank" rel="noopener">{d.source}</a>
+        </p>
+        {opening && (
+          <p class="op-note">
+            Apertura classificata automaticamente (dataset aperture lichess, CC0):
+            {' '}<strong>{opening.eco}</strong> — {opening.name}.
+          </p>
+        )}
+      </footer>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .crumbs { margin-bottom: 1.5rem; font-size: 0.9rem; }
+  .crumbs a { color: var(--accent); }
+
+  .game-head { margin-bottom: 2rem; text-align: center; }
+  .game-nick {
+    color: var(--accent);
+    font-style: italic;
+    font-size: 1.05rem;
+    margin-bottom: 0.3rem;
+  }
+  .game-players {
+    font-family: var(--font-heading);
+    font-size: clamp(1.5rem, 3vw, 2.2rem);
+    margin: 0 0 0.5rem;
+  }
+  .game-players .vs { color: var(--text-muted); margin: 0 0.5rem; }
+  .game-meta { color: var(--text-secondary); }
+  .game-result {
+    display: inline-block;
+    margin-left: 0.6rem;
+    padding: 0.1rem 0.6rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-primary);
+  }
+  .game-opening {
+    margin-top: 0.8rem;
+    display: inline-flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .game-opening .eco {
+    background: var(--accent);
+    color: #2a1a0e;
+    font-weight: 700;
+    padding: 0.1rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+  }
+  .game-opening .op-family { color: var(--text-primary); font-weight: 600; }
+  .game-opening .op-var { color: var(--text-muted); font-size: 0.9rem; }
+
+  .game-body {
+    max-width: 680px;
+    margin: 2.5rem auto 0;
+    line-height: 1.7;
+    color: var(--text-secondary);
+  }
+  .game-body :global(h2) { color: var(--text-primary); margin-top: 1.5rem; }
+
+  .game-foot {
+    max-width: 680px;
+    margin: 2rem auto 0;
+    padding-top: 1.2rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+  .game-foot a { color: var(--accent); word-break: break-all; }
+  .op-note { margin-top: 0.5rem; }
+</style>
