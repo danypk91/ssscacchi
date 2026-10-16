@@ -145,7 +145,7 @@ function fenToPieces(fen: string): (string | null)[][] {
 
               <label class="arch-select">
                 <span class="arch-select-label">Apertura</span>
-                <select class="arch-field" data-filter="family" aria-label="Filtra per apertura">
+                <select class="arch-field" data-filter="family" data-combo aria-label="Filtra per apertura">
                   <option value="">Tutte le aperture</option>
                   {families.map((f) => (
                     <option value={f}>{f} ({familyCount.get(f)})</option>
@@ -155,7 +155,7 @@ function fenToPieces(fen: string): (string | null)[][] {
 
               <label class="arch-select">
                 <span class="arch-select-label">Scacchista</span>
-                <select class="arch-field" data-filter="player" aria-label="Filtra per scacchista">
+                <select class="arch-field" data-filter="player" data-combo aria-label="Filtra per scacchista">
                   <option value="">Tutti gli scacchisti</option>
                   {players.map((p) => (
                     <option value={p}>{p} ({playerCount.get(p)})</option>
@@ -238,7 +238,8 @@ function fenToPieces(fen: string): (string | null)[][] {
     letter-spacing: 0.06em;
     color: var(--text-muted);
   }
-  .arch-field {
+  /* :global perche' vale anche per i campi creati dallo script (menu con ricerca) */
+  .arch-filters :global(.arch-field) {
     width: 100%;
     height: 42px;
     padding: 0 0.9rem;
@@ -250,8 +251,8 @@ function fenToPieces(fen: string): (string | null)[][] {
     font-size: 0.9rem;
     transition: border-color 0.2s;
   }
-  .arch-field:focus { outline: none; border-color: var(--accent); }
-  select.arch-field {
+  .arch-filters :global(.arch-field:focus) { outline: none; border-color: var(--accent); }
+  .arch-filters select.arch-field {
     appearance: none;
     cursor: pointer;
     padding-right: 2.2rem;
@@ -264,8 +265,57 @@ function fenToPieces(fen: string): (string | null)[][] {
     background-repeat: no-repeat;
   }
   /* menu con un filtro attivo: evidenziato */
-  select.arch-field.is-active { border-color: var(--accent); color: var(--accent); }
+  .arch-filters select.arch-field.is-active { border-color: var(--accent); color: var(--accent); }
   select.arch-field option { background: var(--bg-card); color: var(--text-primary); }
+
+  /* Menu con ricerca (costruito dallo script sopra i <select data-combo>):
+     si scrive e l'elenco si restringe. Elementi creati in JS: stili :global. */
+  .arch-select :global(.arch-combo) { position: relative; }
+  .arch-select :global(.arch-combo-input) {
+    padding-right: 2.2rem;
+    text-overflow: ellipsis;
+    background-image:
+      linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
+      linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
+    background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%;
+    background-size: 5px 5px;
+    background-repeat: no-repeat;
+  }
+  .arch-select :global(.arch-combo-input::placeholder) { color: var(--text-primary); opacity: 1; }
+  .arch-select :global(.arch-combo-input.is-active) { border-color: var(--accent); color: var(--accent); }
+  .arch-select :global(.arch-combo-input.is-active::placeholder) { color: var(--accent); }
+  .arch-select :global(.arch-combo-input:focus::placeholder) { color: var(--text-muted); }
+  .arch-select :global(.arch-combo-list) {
+    position: absolute;
+    z-index: 30;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    min-width: 220px;
+    max-height: 300px;
+    overflow-y: auto;
+    margin: 0;
+    padding: 0.3rem;
+    list-style: none;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: 0 14px 36px rgba(0,0,0,0.4);
+  }
+  .arch-select :global(.arch-combo-opt) {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.5rem 0.65rem;
+    border-radius: calc(var(--radius) - 2px);
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    cursor: pointer;
+  }
+  .arch-select :global(.arch-combo-opt .n) { color: var(--text-muted); font-size: 0.8rem; }
+  .arch-select :global(.arch-combo-opt.is-hl) { background: rgba(212,160,84,0.15); }
+  .arch-select :global(.arch-combo-opt[aria-selected="true"]) { color: var(--accent); }
+  .arch-select :global(.arch-combo-empty) { padding: 0.5rem 0.65rem; font-size: 0.85rem; color: var(--text-muted); }
 
   .arch-status {
     display: flex;
@@ -441,6 +491,138 @@ function fenToPieces(fen: string): (string | null)[][] {
     const selectOf = (k: FilterKey) =>
       selects.find((s) => s.dataset.filter === k) ?? null;
 
+    // --- Menu con ricerca sopra i <select data-combo> ---
+    // Il <select> resta (nascosto) come unica fonte del valore: URL, filtri e
+    // "Azzera" funzionano come prima. Senza JS si vede il menu normale.
+    const norm = (t: string) =>
+      t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const combos = selects
+      .filter((s) => s.dataset.combo !== undefined && !s.dataset.comboReady)
+      .map((select) => {
+        select.dataset.comboReady = '1';
+        const opts = Array.from(select.options).map((o) => {
+          const m = o.text.match(/^(.*?)\s*\((\d+)\)$/);
+          return { value: o.value, name: m ? m[1] : o.text, n: m ? m[2] : '' };
+        });
+        const allLabel = opts[0]?.name ?? '';
+        const id = `combo-${select.dataset.filter}`;
+
+        const wrap = document.createElement('div');
+        wrap.className = 'arch-combo';
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.id = id;
+        input.className = 'arch-field arch-combo-input';
+        input.autocomplete = 'off';
+        input.spellcheck = false;
+        input.placeholder = allLabel;
+        input.setAttribute('role', 'combobox');
+        input.setAttribute('aria-autocomplete', 'list');
+        input.setAttribute('aria-expanded', 'false');
+        input.setAttribute('aria-controls', `${id}-list`);
+        input.setAttribute('aria-label', select.getAttribute('aria-label') ?? '');
+        const list = document.createElement('ul');
+        list.className = 'arch-combo-list';
+        list.id = `${id}-list`;
+        list.setAttribute('role', 'listbox');
+        list.hidden = true;
+        // trascinare la barra di scorrimento dell'elenco non deve chiuderlo
+        list.addEventListener('mousedown', (e) => e.preventDefault());
+        wrap.append(input, list);
+        select.hidden = true;
+        select.after(wrap);
+        select.closest('label')?.setAttribute('for', id);
+
+        let shownOpts: typeof opts = [];
+        let hl = -1;
+
+        const labelOf = (v: string) => opts.find((o) => o.value === v)?.name ?? '';
+        function sync() {
+          if (document.activeElement !== input) input.value = select.value ? labelOf(select.value) : '';
+          input.classList.toggle('is-active', Boolean(select.value));
+        }
+        function highlight(i: number) {
+          hl = i;
+          list.querySelectorAll('[role=option]').forEach((el, k) => el.classList.toggle('is-hl', k === i));
+          const el = list.children[i] as HTMLElement | undefined;
+          el?.scrollIntoView({ block: 'nearest' });
+          if (el) input.setAttribute('aria-activedescendant', el.id);
+          else input.removeAttribute('aria-activedescendant');
+        }
+        function renderList(q: string) {
+          const nq = norm(q.trim());
+          shownOpts = nq ? opts.filter((o) => o.value && norm(o.name).includes(nq)) : opts;
+          list.replaceChildren(
+            ...(shownOpts.length
+              ? shownOpts.map((o, i) => {
+                  const li = document.createElement('li');
+                  li.id = `${id}-o${i}`;
+                  li.className = 'arch-combo-opt';
+                  li.setAttribute('role', 'option');
+                  li.setAttribute('aria-selected', String(o.value === select.value));
+                  const name = document.createElement('span');
+                  name.textContent = o.name;
+                  li.append(name);
+                  if (o.n) {
+                    const n = document.createElement('span');
+                    n.className = 'n';
+                    n.textContent = o.n;
+                    li.append(n);
+                  }
+                  // mousedown (non click): scatta prima che l'input perda il focus
+                  li.addEventListener('mousedown', (e) => { e.preventDefault(); choose(o.value); });
+                  return li;
+                })
+              : [Object.assign(document.createElement('li'), { className: 'arch-combo-empty', textContent: 'Nessun risultato' })])
+          );
+          highlight(nq && shownOpts.length ? 0 : -1);
+        }
+        function open() {
+          if (!list.hidden) return;
+          renderList('');
+          list.hidden = false;
+          input.setAttribute('aria-expanded', 'true');
+          const cur = shownOpts.findIndex((o) => o.value === select.value);
+          if (cur >= 0) highlight(cur);
+        }
+        function close() {
+          list.hidden = true;
+          input.setAttribute('aria-expanded', 'false');
+          input.removeAttribute('aria-activedescendant');
+        }
+        function choose(v: string) {
+          close();
+          input.blur();
+          if (select.value !== v) {
+            select.value = v;
+            select.dispatchEvent(new Event('change'));
+          }
+          sync();
+        }
+
+        input.addEventListener('focus', () => { input.value = ''; open(); });
+        input.addEventListener('click', open);
+        input.addEventListener('input', () => { open(); renderList(input.value); });
+        input.addEventListener('blur', () => { close(); sync(); });
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            open();
+            if (!shownOpts.length) return;
+            const d = e.key === 'ArrowDown' ? 1 : -1;
+            highlight((hl + d + shownOpts.length) % shownOpts.length);
+          } else if (e.key === 'Enter') {
+            if (list.hidden) return;
+            e.preventDefault();
+            if (hl >= 0 && shownOpts[hl]) choose(shownOpts[hl].value);
+          } else if (e.key === 'Escape') {
+            close();
+            input.blur();
+          }
+        });
+        return { sync };
+      });
+
     // Ripristina lo stato dai parametri URL (se validi).
     const params = new URLSearchParams(location.search);
     for (const s of selects) {
@@ -584,6 +766,7 @@ function fenToPieces(fen: string): (string | null)[][] {
       render();
 
       for (const s of selects) s.classList.toggle('is-active', Boolean(s.value));
+      combos.forEach((c) => c.sync());
       const anyActive = selects.some((s) => s.value) || Boolean(query);
       if (resetBtn) resetBtn.hidden = !anyActive;
       if (countEl) {
