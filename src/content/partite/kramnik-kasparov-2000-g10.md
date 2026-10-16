@@ -1,0 +1,12 @@
+---
+white: "Vladimir Kramnik"
+black: "Garry Kasparov"
+result: "1-0"
+year: 2000
+event: "Campionato del Mondo 2000, 10ª partita"
+place: "Londra"
+source: "https://www.pgnmentor.com/players/Kasparov.zip"
+pgn: "1.d4 Nf6 2.c4 e6 3.Nc3 Bb4 4.e3 O-O 5.Bd3 d5 6.Nf3 c5 7.O-O cxd4 8.exd4 dxc4 9.Bxc4 b6 10.Bg5 Bb7 11.Re1 Nbd7 12.Rc1 Rc8 13.Qb3 Be7 14.Bxf6 Nxf6 15.Bxe6 fxe6 16.Qxe6+ Kh8 17.Qxe7 Bxf3 18.gxf3 Qxd4 19.Nb5 Qxb2 20.Rxc8 Rxc8 21.Nd6 Rb8 22.Nf7+ Kg8 23.Qe6 Rf8 24.Nd8+ Kh8 25.Qe7 1-0"
+draft: false
+comments: []
+---

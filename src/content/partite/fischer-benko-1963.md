@@ -1,0 +1,12 @@
+---
+white: "Bobby Fischer"
+black: "Pal Benko"
+result: "1-0"
+year: 1963
+event: "Campionato degli Stati Uniti"
+place: "New York"
+source: "https://www.pgnmentor.com/players/Fischer.zip"
+pgn: "1.e4 g6 2.d4 Bg7 3.Nc3 d6 4.f4 Nf6 5.Nf3 O-O 6.Bd3 Bg4 7.h3 Bxf3 8.Qxf3 Nc6 9.Be3 e5 10.dxe5 dxe5 11.f5 gxf5 12.Qxf5 Nd4 13.Qf2 Ne8 14.O-O Nd6 15.Qg3 Kh8 16.Qg4 c6 17.Qh5 Qe8 18.Bxd4 exd4 19.Rf6 Kg8 20.e5 h6 21.Ne2 1-0"
+draft: false
+comments: []
+---

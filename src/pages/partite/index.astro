@@ -56,7 +56,7 @@ const eras = ERAS.filter((e) => games.some((g) => g.era === e));
 
 // Elenco scacchisti presenti (bianco o nero), con conteggio partite.
 // Escludiamo i "non giocatori" (Il Mondo, computer) dai filtri nominali.
-const EXCLUDE_PLAYERS = new Set(['Il Mondo', 'Deep Blue']);
+const EXCLUDE_PLAYERS = new Set(['Il Mondo', 'Deep Blue', 'Deep Fritz']);
 const playerCount = new Map<string, number>();
 for (const g of games) {
   for (const name of [g.white, g.black]) {

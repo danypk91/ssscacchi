@@ -1,0 +1,12 @@
+---
+white: "Arnold Denker"
+black: "Mikhail Botvinnik"
+result: "0-1"
+year: 1945
+event: "Incontro via radio USA–URSS"
+place: "Mosca"
+source: "https://www.pgnmentor.com/players/Botvinnik.zip"
+pgn: "1.d4 d5 2.c4 e6 3.Nc3 c6 4.Nf3 Nf6 5.Bg5 dxc4 6.e4 b5 7.e5 h6 8.Bh4 g5 9.Nxg5 hxg5 10.Bxg5 Nbd7 11.exf6 Bb7 12.Be2 Qb6 13.O-O O-O-O 14.a4 b4 15.Ne4 c5 16.Qb1 Qc7 17.Ng3 cxd4 18.Bxc4 Qc6 19.f3 d3 20.Qc1 Bc5+ 21.Kh1 Qd6 22.Qf4 Rxh2+ 23.Kxh2 Rh8+ 24.Qh4 Rxh4+ 25.Bxh4 Qf4 0-1"
+draft: false
+comments: []
+---

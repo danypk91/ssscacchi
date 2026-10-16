@@ -1,0 +1,12 @@
+---
+white: "Gukesh Dommaraju"
+black: "Ding Liren"
+result: "1-0"
+year: 2024
+event: "Campionato del Mondo 2024, 11ª partita"
+place: "Singapore"
+source: "https://theweekinchess.com/html/twic1570.html"
+pgn: "1.Nf3 d5 2.c4 d4 3.b4 c5 4.e3 Nf6 5.a3 Bg4 6.exd4 cxd4 7.h3 Bxf3 8.Qxf3 Qc7 9.d3 a5 10.b5 Nbd7 11.g3 Nc5 12.Bg2 Nfd7 13.O-O Ne5 14.Qf4 Rd8 15.Rd1 g6 16.a4 h5 17.b6 Qd6 18.Ba3 Bh6 19.Bxc5 Qxc5 20.Qe4 Nc6 21.Na3 Rd7 22.Nc2 Qxb6 23.Rab1 Qc7 24.Rb5 O-O 25.Na1 Rb8 26.Nb3 e6 27.Nc5 Re7 28.Rdb1 Qc8 29.Qxc6 1-0"
+draft: false
+comments: []
+---

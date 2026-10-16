@@ -1,0 +1,12 @@
+---
+white: "Tigran Petrosian"
+black: "Luděk Pachman"
+result: "1-0"
+year: 1961
+event: "Torneo di Bled"
+place: "Bled"
+source: "https://www.pgnmentor.com/players/Petrosian.zip"
+pgn: "1.Nf3 c5 2.g3 Nc6 3.Bg2 g6 4.O-O Bg7 5.d3 e6 6.e4 Nge7 7.Re1 O-O 8.e5 d6 9.exd6 Qxd6 10.Nbd2 Qc7 11.Nb3 Nd4 12.Bf4 Qb6 13.Ne5 Nxb3 14.Nc4 Qb5 15.axb3 a5 16.Bd6 Bf6 17.Qf3 Kg7 18.Re4 Rd8 19.Qxf6+ Kxf6 20.Be5+ Kg5 21.Bg7 1-0"
+draft: false
+comments: []
+---

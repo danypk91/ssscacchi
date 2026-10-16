@@ -1,0 +1,12 @@
+---
+white: "Mikhail Botvinnik"
+black: "Paul Keres"
+result: "1-0"
+year: 1948
+event: "Campionato del Mondo 1948"
+place: "L'Aia e Mosca"
+source: "https://www.pgnmentor.com/players/Botvinnik.zip"
+pgn: "1.d4 Nf6 2.c4 e6 3.Nc3 Bb4 4.e3 O-O 5.a3 Bxc3+ 6.bxc3 Re8 7.Ne2 e5 8.Ng3 d6 9.Be2 Nbd7 10.O-O c5 11.f3 cxd4 12.cxd4 Nb6 13.Bb2 exd4 14.e4 Be6 15.Rc1 Re7 16.Qxd4 Qc7 17.c5 dxc5 18.Rxc5 Qf4 19.Bc1 Qb8 20.Rg5 Nbd7 21.Rxg7+ Kxg7 22.Nh5+ Kg6 23.Qe3 1-0"
+draft: false
+comments: []
+---
