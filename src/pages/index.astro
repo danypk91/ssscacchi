@@ -956,11 +956,12 @@ const prossimieventi = [
       <h2 class="section-title section-title-center">Il Nostro Circolo</h2>
       <p class="section-subtitle section-subtitle-center">Tutto ciò che trovi al Circolo Scacchistico Santa Sabina</p>
       <div class="info-grid">
-        <div class="info-card">
+        <a href="/giovani" class="info-card info-card-link">
           <div class="info-icon" aria-hidden="true">&#9823;</div>
           <h3>Corsi Giovani</h3>
-          <p>Corsi base e perfezionamento per tutte le età. Centro di Avviamento allo Sport riconosciuto.</p>
-        </div>
+          <p>Lezioni il sabato mattina, gioco libero il venerdì pomeriggio e scacchi nelle scuole primarie del quartiere.</p>
+          <span class="info-more">Scopri le attività &rarr;</span>
+        </a>
         <div class="info-card">
           <div class="info-icon" aria-hidden="true">&#9813;</div>
           <h3>Tornei</h3>
@@ -1728,6 +1729,23 @@ const prossimieventi = [
   .info-card p {
     color: var(--text-secondary);
     font-size: 0.9rem;
+  }
+
+  .info-card-link {
+    display: block;
+    color: inherit;
+  }
+
+  .info-card-link:hover {
+    color: inherit;
+  }
+
+  .info-more {
+    display: inline-block;
+    margin-top: 1rem;
+    color: var(--accent);
+    font-size: 0.85rem;
+    font-weight: 600;
   }
 
   /* =============================================

@@ -1,0 +1,526 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Gallery from '../components/Gallery.astro';
+
+const CDN = (import.meta.env.PUBLIC_CDN_URL || '').replace(/\/$/, '');
+const img = (name: string) => `${CDN}/giovani/${name}.jpg`;
+
+const scuoleCurricolari = [
+  'N.S. del Monte',
+  'Plesso Solari del comprensivo Terralba',
+  'Plesso Marconi del comprensivo Terralba',
+  'Plesso XII Ottobre del comprensivo San Fruttuoso',
+  'Plesso Cesare Battisti del comprensivo San Fruttuoso',
+];
+
+const scuoleExtra = [
+  'Istituto Santa Maria Immacolata di piazza Paolo da Novi',
+  'Istituto Santa Maria Immacolata di via Semeria',
+];
+
+const galleryImages = [
+  { src: img('lezione-circolo-01'), alt: 'Lezione al circolo' },
+  { src: img('lezione-circolo-02'), alt: 'Lezione al circolo' },
+  { src: img('lezione-circolo-03'), alt: 'Lezione al circolo' },
+  { src: img('lezione-circolo-04'), alt: 'Lezione al circolo' },
+  { src: img('lezione-circolo-05'), alt: 'Lezione al circolo' },
+  { src: img('si-analizza'), alt: 'Si analizza la partita' },
+  { src: img('scacchi-a-scuola-01'), alt: 'Scacchi a scuola' },
+  { src: img('scacchi-a-scuola-02'), alt: 'Scacchi a scuola' },
+  { src: img('trofeo-scacchi-scuola'), alt: 'Al Trofeo Scacchi Scuola' },
+  { src: img('trofeo-juniores-salone'), alt: 'Trofeo Juniores nel nostro salone' },
+  { src: img('campionato-regionale-juniores'), alt: 'I nostri ragazzi al campionato regionale juniores' },
+  { src: img('campionati-nazionali'), alt: 'I nostri ragazzi ai campionati nazionali' },
+];
+---
+
+<BaseLayout
+  title="Giovani – Scacchi per bambini e ragazzi"
+  description="Scacchi per bambini e ragazzi a Genova: lezioni il sabato mattina e gioco libero il venerdì pomeriggio con istruttori FSI, corsi nelle scuole primarie e Trofeo Scacchi Scuola."
+>
+  <section class="page-header">
+    <div class="page-header-bg" aria-hidden="true"></div>
+    <div class="page-header-decor" aria-hidden="true">&#9823;</div>
+    <div class="container">
+      <h1>Giovani</h1>
+      <p class="page-header-sub">Scacchi per bambini e ragazzi, al circolo e nelle scuole</p>
+    </div>
+  </section>
+
+  <section class="section section-body">
+    <div class="section-texture" aria-hidden="true"></div>
+    <div class="container page-content">
+
+      <!-- Intro -->
+      <div class="intro">
+        <div class="prose">
+          <h2>Giocare per imparare</h2>
+          <p>
+            La nostra "politica" è essenzialmente quella di <strong>far giocare i ragazzi fra loro</strong>,
+            in modo da farli divertire e fare esperienza alla scacchiera. In questo modo migliorano il
+            loro gioco e imparano tecniche di <strong>strategia e tattica</strong> scacchistica.
+          </p>
+          <p>
+            Il circolo svolge due tipi di attività per i più giovani, seguite dagli istruttori del circolo.
+          </p>
+        </div>
+        <figure class="intro-photo">
+          <img src={img('lezione-circolo-01')} alt="Ragazzi che giocano a scacchi al circolo con gli istruttori" width="1600" height="945" />
+        </figure>
+      </div>
+
+      <!-- Attività al circolo -->
+      <div class="activities">
+        <article class="card activity">
+          <div class="activity-head">
+            <span class="activity-day">Sabato</span>
+            <span class="activity-time">10:00 – 11:30</span>
+          </div>
+          <h3>Lezione e gioco</h3>
+          <p>
+            È più frequentato da chi conosce il gioco ma non si è ancora appropriato a pieno
+            della teoria di base.
+          </p>
+          <p>
+            L'orario è rigido: <strong>mezz'ora di teoria</strong> e poi <strong>alla scacchiera</strong>.
+            Gli istruttori si alternano e trattano ogni volta argomenti diversi.
+          </p>
+        </article>
+
+        <article class="card activity">
+          <div class="activity-head">
+            <span class="activity-day">Venerdì</span>
+            <span class="activity-time">15:00 – 17:30</span>
+          </div>
+          <h3>Accesso libero</h3>
+          <p>
+            Si può venire <strong>per quanto tempo si desidera</strong> all'interno della fascia oraria,
+            per giocare con gli altri ragazzi con la presenza degli istruttori.
+          </p>
+          <p>
+            Ideale per fare pratica, giocare partite e chiedere consigli su ciò che si sta imparando.
+          </p>
+        </article>
+      </div>
+
+      <p class="where">
+        &#9822; Al circolo in <strong>Via Donghi 8</strong>, Genova (presso il Circolo ACLI Achille Grandi).
+        Quota annuale <em>istruzione ragazzi</em>: <strong>&euro;30</strong>.
+        <a href="/contatti">Orari e indicazioni</a>
+      </p>
+
+      <!-- Scuole -->
+      <div class="schools">
+        <div class="prose">
+          <h2>Gli scacchi nelle scuole</h2>
+          <p>
+            Gli istruttori del Circolo scacchistico Santa Sabina svolgono da anni regolare attività di
+            istruzione in diverse scuole primarie del quartiere e limitrofe, coinvolgendo mediamente
+            <strong>oltre 150 ragazzini</strong>.
+          </p>
+          <p>
+            In particolare tengono <strong>un'ora di lezione alla settimana da ottobre a maggio</strong>.
+          </p>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <span class="stat-number">150+</span>
+            <span class="stat-label">ragazzini nelle scuole</span>
+          </div>
+          <div class="stat">
+            <span class="stat-number">7</span>
+            <span class="stat-label">scuole e plessi</span>
+          </div>
+          <div class="stat">
+            <span class="stat-number">80+</span>
+            <span class="stat-label">al Trofeo Scacchi Scuola</span>
+          </div>
+        </div>
+
+        <div class="school-lists">
+          <div class="card school-card">
+            <h3>In orario curricolare</h3>
+            <ul class="school-list">
+              {scuoleCurricolari.map((s) => <li>{s}</li>)}
+            </ul>
+          </div>
+          <div class="card school-card">
+            <h3>Attività extracurricolare</h3>
+            <ul class="school-list">
+              {scuoleExtra.map((s) => <li>{s}</li>)}
+            </ul>
+          </div>
+        </div>
+
+        <div class="trofeo">
+          <figure>
+            <img src={img('trofeo-scacchi-scuola')} alt="Ragazzi al Trofeo Scacchi Scuola" loading="lazy" width="1200" height="1600" />
+          </figure>
+          <div class="prose">
+            <h2>Trofeo Scacchi Scuola</h2>
+            <p>
+              I ragazzi di tutti gli istituti dove vengono tenute le lezioni partecipano ogni anno al
+              <strong>"Trofeo Scacchi Scuola"</strong> provinciale, con <strong>tre squadre per ciascun
+              plesso o istituto</strong>, coinvolgendo oltre 80 ragazzini.
+            </p>
+            <p>
+              E chi si appassiona arriva lontano: i nostri ragazzi partecipano ai campionati
+              regionali juniores e ai Campionati Italiani Giovanili.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Galleria -->
+      <div class="gallery-block">
+        <div class="prose">
+          <h2>Le nostre foto</h2>
+        </div>
+        <Gallery images={galleryImages} columns={3} initialCount={12} />
+      </div>
+
+      <!-- CTA -->
+      <div class="cta card">
+        <h2>Vuoi far provare tuo figlio?</h2>
+        <p>Vieni a trovarci un sabato mattina o un venerdì pomeriggio, oppure scrivici per informazioni.</p>
+        <div class="cta-actions">
+          <a href="/contatti" class="btn btn-primary">Contattaci</a>
+          <a href="/puzzle" class="btn btn-outline">Allenati con i puzzle</a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  /* --- Page Header --- */
+  .page-header {
+    position: relative;
+    padding: 5rem 0 3rem;
+    overflow: hidden;
+    text-align: center;
+  }
+
+  .page-header-bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 30% 50%, rgba(212,160,84,0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 70% 80%, rgba(107,58,42,0.12) 0%, transparent 50%),
+      linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  }
+
+  .page-header-decor {
+    position: absolute;
+    right: 10%;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: clamp(120px, 18vw, 220px);
+    color: rgba(212,160,84,0.06);
+    pointer-events: none;
+    user-select: none;
+    line-height: 1;
+  }
+
+  .page-header .container {
+    position: relative;
+    z-index: 1;
+  }
+
+  .page-header h1 {
+    font-size: clamp(2rem, 4vw, 3rem);
+    margin-bottom: 0.5rem;
+  }
+
+  .page-header-sub {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+  }
+
+  /* --- Section body --- */
+  .section-body {
+    position: relative;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse at 80% 20%, rgba(212,160,84,0.04) 0%, transparent 50%),
+      var(--bg-primary);
+  }
+
+  .section-texture {
+    position: absolute;
+    inset: 0;
+    opacity: 0.015;
+    background: repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 20px,
+      rgba(212,160,84,1) 20px,
+      rgba(212,160,84,1) 21px
+    );
+    pointer-events: none;
+  }
+
+  .page-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3.5rem;
+  }
+
+  /* --- Prose --- */
+  .prose h2 {
+    margin: 0 0 1rem;
+    font-size: 1.6rem;
+    color: var(--accent);
+  }
+
+  .prose p {
+    color: var(--text-secondary);
+    line-height: 1.8;
+    margin-bottom: 1rem;
+    font-size: 1.02rem;
+  }
+
+  .prose p:last-child {
+    margin-bottom: 0;
+  }
+
+  .prose strong,
+  .activity strong,
+  .where strong {
+    color: var(--text-primary);
+  }
+
+  figure img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+  }
+
+  /* --- Intro --- */
+  .intro {
+    display: grid;
+    grid-template-columns: 1fr 1.1fr;
+    gap: 3rem;
+    align-items: center;
+  }
+
+  .intro-photo img {
+    aspect-ratio: 16 / 10;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+  }
+
+  /* --- Activities --- */
+  .activities {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+
+  .activity {
+    border-top: 3px solid var(--accent);
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+
+  .activity:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+  }
+
+  .activity-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+  }
+
+  .activity-day {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .activity-time {
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+    color: var(--text-primary);
+  }
+
+  .activity h3 {
+    font-size: 1.25rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .activity p {
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin-bottom: 0.75rem;
+  }
+
+  .activity p:last-child {
+    margin-bottom: 0;
+  }
+
+  .where {
+    margin-top: -2rem;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.7;
+  }
+
+  .where a {
+    margin-left: 0.25rem;
+    white-space: nowrap;
+  }
+
+  /* --- Schools --- */
+  .schools {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    padding-top: 3rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+
+  .stat {
+    text-align: center;
+    padding: 1.5rem 1rem;
+    background: rgba(212,160,84,0.06);
+    border: 1px solid rgba(212,160,84,0.15);
+    border-radius: var(--radius-lg);
+  }
+
+  .stat-number {
+    display: block;
+    font-family: var(--font-heading);
+    font-size: clamp(2rem, 5vw, 2.8rem);
+    color: var(--accent);
+    line-height: 1.1;
+  }
+
+  .stat-label {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+  }
+
+  .school-lists {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+
+  .school-card h3 {
+    font-size: 1rem;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 1rem;
+  }
+
+  .school-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .school-list li {
+    position: relative;
+    padding-left: 1.5rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+
+  .school-list li::before {
+    content: '♟';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-size: 0.85rem;
+  }
+
+  .trofeo {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 3rem;
+    align-items: center;
+  }
+
+  .trofeo img {
+    aspect-ratio: 3 / 4;
+  }
+
+  /* --- Gallery --- */
+  .gallery-block {
+    padding-top: 3rem;
+    border-top: 1px solid var(--border);
+  }
+
+  /* --- CTA --- */
+  .cta {
+    text-align: center;
+    padding: 2.5rem 1.5rem;
+    background:
+      radial-gradient(ellipse at 50% 0%, rgba(212,160,84,0.12) 0%, transparent 70%),
+      var(--bg-card);
+  }
+
+  .cta h2 {
+    font-size: 1.6rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .cta p {
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+  }
+
+  .cta-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  @media (max-width: 900px) {
+    .intro,
+    .trofeo {
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+
+    .trofeo figure {
+      max-width: 360px;
+    }
+  }
+
+  @media (max-width: 700px) {
+    .activities,
+    .school-lists {
+      grid-template-columns: 1fr;
+    }
+
+    .stats {
+      grid-template-columns: 1fr;
+    }
+
+    .where {
+      margin-top: -1.5rem;
+    }
+  }
+</style>

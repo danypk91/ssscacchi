@@ -4,6 +4,7 @@ const currentPath = Astro.url.pathname;
 const navLinks = [
   { href: '/', label: 'Home' },
   { href: '/chi-siamo', label: 'Chi Siamo' },
+  { href: '/giovani', label: 'Giovani' },
   { href: '/notizie', label: 'Notizie' },
   { href: '/tornei', label: 'Tornei' },
   { href: '/biblioteca', label: 'Biblioteca' },
@@ -104,7 +105,23 @@ const navLinks = [
     color: var(--text-secondary);
     font-size: 0.9rem;
     font-weight: 500;
+    white-space: nowrap;
     transition: all 0.2s;
+  }
+
+  .logo {
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 1240px) and (min-width: 901px) {
+    .nav-link {
+      padding: 0.5rem 0.45rem;
+      font-size: 0.82rem;
+    }
+
+    .logo-text {
+      display: none;
+    }
   }
 
   .nav-link:hover {
@@ -169,7 +186,8 @@ const navLinks = [
     }
 
     .nav.open {
-      max-height: 500px;
+      max-height: 80vh;
+      overflow-y: auto;
       opacity: 1;
       padding: 1rem;
     }
