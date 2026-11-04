@@ -1,21 +1,22 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { club } from '../data/club';
+import PieceIcon from '../components/PieceIcon.astro';
 
 const categorie = [
-  { name: 'Aperture', icon: '&#9816;', desc: 'Trattati e repertori sulle aperture' },
-  { name: 'Mediogioco', icon: '&#9815;', desc: 'Strategia, tattica e combinazioni' },
-  { name: 'Finali', icon: '&#9814;', desc: 'Tecnica dei finali' },
-  { name: 'Generali', icon: '&#9813;', desc: 'Manuali completi e didattica' },
-  { name: 'Narrativa', icon: '&#9819;', desc: 'Romanzi e racconti a tema scacchistico' },
-  { name: 'Raccolte', icon: '&#9812;', desc: 'Raccolte di partite commentate' },
+  { name: 'Aperture', piece: 'N' as const, desc: 'Trattati e repertori sulle aperture' },
+  { name: 'Mediogioco', piece: 'B' as const, desc: 'Strategia, tattica e combinazioni' },
+  { name: 'Finali', piece: 'R' as const, desc: 'Tecnica dei finali' },
+  { name: 'Generali', piece: 'Q' as const, desc: 'Manuali completi e didattica' },
+  { name: 'Narrativa', piece: 'P' as const, desc: 'Romanzi e racconti a tema scacchistico' },
+  { name: 'Raccolte', piece: 'K' as const, desc: 'Raccolte di partite commentate' },
 ];
 ---
 
 <BaseLayout title="Biblioteca" description="Biblioteca scacchistica del Circolo Santa Sabina. Consultazione e prestito libri per i soci.">
   <section class="page-header">
     <div class="page-header-bg" aria-hidden="true"></div>
-    <div class="page-header-decor" aria-hidden="true">&#9820;</div>
+    <div class="page-header-decor" aria-hidden="true"><PieceIcon piece="R" /></div>
     <div class="container">
       <h1>Biblioteca</h1>
       <p class="page-header-sub">La nostra collezione scacchistica a disposizione dei soci</p>
@@ -60,7 +61,7 @@ const categorie = [
       <div class="cat-grid">
         {categorie.map(cat => (
           <div class="card cat-card">
-            <div class="cat-icon" set:html={cat.icon} />
+            <div class="cat-icon"><PieceIcon piece={cat.piece} /></div>
             <h3>{cat.name}</h3>
             <p>{cat.desc}</p>
           </div>
@@ -235,7 +236,7 @@ const categorie = [
 
   .cat-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 1.25rem;
     margin-bottom: 3rem;
   }
@@ -312,6 +313,16 @@ const categorie = [
 
   @media (max-width: 768px) {
     .intro-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .cat-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 480px) {
+    .cat-grid {
       grid-template-columns: 1fr;
     }
   }

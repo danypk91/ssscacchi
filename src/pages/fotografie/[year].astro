@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { listFolders } from '../../lib/r2';
+import PieceIcon from '../../components/PieceIcon.astro';
 
 export async function getStaticPaths() {
   const yearFolders = await listFolders('foto/');
@@ -28,7 +29,7 @@ const albums = albumFolders.map((prefix) => {
 <BaseLayout title={`Fotografie ${year}`} description={`Gallerie fotografiche anno ${year} - Circolo Scacchi Santa Sabina`}>
   <section class="page-header">
     <div class="page-header-bg" aria-hidden="true"></div>
-    <div class="page-header-decor" aria-hidden="true">&#9815;</div>
+    <div class="page-header-decor" aria-hidden="true"><PieceIcon piece="B" /></div>
     <div class="container">
       <h1>Fotografie {year}</h1>
       <p class="page-header-sub">
@@ -44,7 +45,7 @@ const albums = albumFolders.map((prefix) => {
         <div class="album-grid">
           {albums.map((album) => (
             <a href={`/fotografie/${year}/${album.slug}`} class="card album-card">
-              <div class="album-icon">&#9816;</div>
+              <div class="album-icon"><PieceIcon piece="N" /></div>
               <h2 class="album-name">{album.name}</h2>
             </a>
           ))}

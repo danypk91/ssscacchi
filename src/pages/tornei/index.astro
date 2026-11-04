@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
+import PieceIcon from '../../components/PieceIcon.astro';
 
 const allTornei = await getCollection('tornei');
 const torneiByYear = allTornei
@@ -18,7 +19,7 @@ const years = Object.keys(torneiByYear).sort((a, b) => Number(b) - Number(a));
 <BaseLayout title="Tornei di scacchi a Genova" description="Archivio dei tornei di scacchi organizzati a Genova dal Circolo Santa Sabina dal 2010: tornei sociali, Grand Prix lampo, Weekend Valbisagno, tornei giovanili. Bandi e classifiche.">
   <section class="page-header">
     <div class="page-header-bg" aria-hidden="true"></div>
-    <div class="page-header-decor" aria-hidden="true">&#9812;</div>
+    <div class="page-header-decor" aria-hidden="true"><PieceIcon piece="K" /></div>
     <div class="container">
       <h1>Tornei</h1>
       <p class="page-header-sub">Archivio tornei organizzati dal circolo</p>

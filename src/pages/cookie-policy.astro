@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { club } from '../data/club';
+import PieceIcon from '../components/PieceIcon.astro';
 
 const updated = '30 settembre 2026';
 ---
@@ -12,7 +13,7 @@ const updated = '30 settembre 2026';
 >
   <section class="page-header">
     <div class="page-header-bg" aria-hidden="true"></div>
-    <div class="page-header-decor" aria-hidden="true">&#9820;</div>
+    <div class="page-header-decor" aria-hidden="true"><PieceIcon piece="R" /></div>
     <div class="container">
       <h1>Cookie Policy</h1>
       <p class="page-header-sub">Come usiamo cookie e contenuti di terze parti</p>

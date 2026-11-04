@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Gallery from '../components/Gallery.astro';
+import PieceIcon from '../components/PieceIcon.astro';
 
 const CDN = (import.meta.env.PUBLIC_CDN_URL || '').replace(/\/$/, '');
 const img = (name: string) => `${CDN}/giovani/${name}.jpg`;
@@ -40,7 +41,7 @@ const galleryImages = [
 >
   <section class="page-header">
     <div class="page-header-bg" aria-hidden="true"></div>
-    <div class="page-header-decor" aria-hidden="true">&#9823;</div>
+    <div class="page-header-decor" aria-hidden="true"><PieceIcon piece="P" /></div>
     <div class="container">
       <h1>Giovani</h1>
       <p class="page-header-sub">Scacchi per bambini e ragazzi, al circolo e nelle scuole</p>
@@ -104,7 +105,7 @@ const galleryImages = [
       </div>
 
       <p class="where">
-        &#9822; Al circolo in <strong>Via Donghi 8</strong>, Genova (presso il Circolo ACLI Achille Grandi).
+        <PieceIcon piece="N" /> Al circolo in <strong>Via Donghi 8</strong>, Genova (presso il Circolo ACLI Achille Grandi).
         Quota annuale <em>istruzione ragazzi</em>: <strong>&euro;30</strong>.
         <a href="/contatti">Orari e indicazioni</a>
       </p>

@@ -2,6 +2,7 @@
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import Gallery from '../../../components/Gallery.astro';
 import { listFolders, scanGallery } from '../../../lib/r2';
+import PieceIcon from '../../../components/PieceIcon.astro';
 
 export async function getStaticPaths() {
   const yearFolders = await listFolders('foto/');
@@ -36,7 +37,7 @@ const albumName = album
 <BaseLayout title={`${albumName} - ${year}`} description={`Foto: ${albumName} (${year}) - Circolo Scacchi Santa Sabina`}>
   <section class="page-header">
     <div class="page-header-bg" aria-hidden="true"></div>
-    <div class="page-header-decor" aria-hidden="true">&#9815;</div>
+    <div class="page-header-decor" aria-hidden="true"><PieceIcon piece="B" /></div>
     <div class="container">
       <h1>{albumName}</h1>
       <p class="page-header-sub">

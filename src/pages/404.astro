@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import PieceIcon from '../components/PieceIcon.astro';
 ---
 
 <BaseLayout title="Pagina non trovata" noindex>
@@ -7,7 +8,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     <div class="nf-bg" aria-hidden="true"></div>
     <div class="nf-pattern" aria-hidden="true"></div>
     <div class="container nf-content">
-      <div class="nf-icon" aria-hidden="true">&#9812;</div>
+      <div class="nf-icon" aria-hidden="true"><PieceIcon piece="K" /></div>
       <div class="nf-code">404</div>
       <h1>Scacco matto!</h1>
       <p>La pagina che cerchi non esiste o è stata spostata.</p>

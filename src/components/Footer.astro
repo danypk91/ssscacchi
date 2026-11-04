@@ -1,5 +1,6 @@
 ---
 import { club, fullAddress } from '../data/club';
+import PieceIcon from './PieceIcon.astro';
 const year = new Date().getFullYear();
 ---
 
@@ -8,7 +9,7 @@ const year = new Date().getFullYear();
     <div class="footer-grid">
       <div class="footer-col">
         <div class="footer-logo">
-          <span class="footer-icon" aria-hidden="true">&#9822;</span>
+          <span class="footer-icon" aria-hidden="true"><PieceIcon piece="N" /></span>
           <div>
             <strong>{club.name}</strong>
             <a href="https://www.facebook.com/santa.sabina.92/?locale=it_IT" target="_blank" rel="noopener noreferrer">ASD U.S. ACLI Santa Sabina</a>

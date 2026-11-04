@@ -3,6 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
 import { clubJsonLd, websiteJsonLd } from '../data/club';
 import HeroBoard from '../components/HeroBoard.astro';
+import PieceIcon from '../components/PieceIcon.astro';
 
 // Flag per abilitare/disabilitare la sezione partita live Lichess
 const LIVE_ENABLED = false;
@@ -132,7 +133,7 @@ const prossimieventi = [
   >
     <div class="container">
       <h2 class="section-title">
-        <span class="title-icon" aria-hidden="true">&#9823;</span>
+        <span class="title-icon" aria-hidden="true"><PieceIcon piece="P" /></span>
         In Diretta da Lichess
         <span class="live-dot" aria-hidden="true"></span>
       </h2>
@@ -886,7 +887,7 @@ const prossimieventi = [
     <div class="section-bg-pattern" aria-hidden="true"></div>
     <div class="container">
       <h2 class="section-title">
-        <span class="title-icon" aria-hidden="true">&#9816;</span>
+        <span class="title-icon" aria-hidden="true"><PieceIcon piece="N" /></span>
         In Evidenza
       </h2>
       <p class="section-subtitle">Tornei e appuntamenti in programma</p>
@@ -925,16 +926,16 @@ const prossimieventi = [
     <div class="section-bg-diagonal" aria-hidden="true"></div>
     <div class="container">
       <h2 class="section-title">
-        <span class="title-icon" aria-hidden="true">&#9814;</span>
+        <span class="title-icon" aria-hidden="true"><PieceIcon piece="R" /></span>
         Ultime Notizie
       </h2>
       <p class="section-subtitle">Le novità dal circolo</p>
       <div class="news-grid">
         {notizie.map((n, idx) => {
-          const icons = ['\u265A', '\u265B', '\u265E', '\u265C'];
+          const icons = ['K', 'Q', 'N', 'R'] as const;
           return (
             <a href={`/notizie/${n.id}`} class="news-card">
-              <div class="news-watermark" aria-hidden="true">{icons[idx % 4]}</div>
+              <div class="news-watermark" aria-hidden="true"><PieceIcon piece={icons[idx % 4]} /></div>
               <time>{new Date(n.data.date).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })}</time>
               <h3>{n.data.title}</h3>
               <p>{n.data.excerpt}</p>
@@ -957,23 +958,23 @@ const prossimieventi = [
       <p class="section-subtitle section-subtitle-center">Tutto ciò che trovi al Circolo Scacchistico Santa Sabina</p>
       <div class="info-grid">
         <a href="/giovani" class="info-card info-card-link">
-          <div class="info-icon" aria-hidden="true">&#9823;</div>
+          <div class="info-icon" aria-hidden="true"><PieceIcon piece="P" /></div>
           <h3>Corsi Giovani</h3>
           <p>Lezioni il sabato mattina, gioco libero il venerdì pomeriggio e scacchi nelle scuole primarie del quartiere.</p>
           <span class="info-more">Scopri le attività &rarr;</span>
         </a>
         <div class="info-card">
-          <div class="info-icon" aria-hidden="true">&#9813;</div>
+          <div class="info-icon" aria-hidden="true"><PieceIcon piece="Q" /></div>
           <h3>Tornei</h3>
           <p>WE Valbisagno, Memorial Massimo Saffioti, Grand Prix Blitz, Trofeo Juniores Città di Genova, 2 Tornei Sociali, Trofeo CONI.</p>
         </div>
         <div class="info-card">
-          <div class="info-icon" aria-hidden="true">&#9822;</div>
+          <div class="info-icon" aria-hidden="true"><PieceIcon piece="N" /></div>
           <h3>Squadre</h3>
           <p>Partecipiamo ai Campionati Italiani a Squadre in Serie C e Promozione e al Trofeo Scacchi Scuola con i nostri ragazzini delle scuole primarie.</p>
         </div>
         <div class="info-card">
-          <div class="info-icon" aria-hidden="true">&#9814;</div>
+          <div class="info-icon" aria-hidden="true"><PieceIcon piece="R" /></div>
           <h3>Biblioteca</h3>
           <p>Ampia collezione di libri scacchistici disponibile per tutti i soci del circolo.</p>
         </div>

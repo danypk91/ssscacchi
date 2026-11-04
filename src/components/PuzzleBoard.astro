@@ -9,6 +9,7 @@ interface Props {
 const { set = 'merida' } = Astro.props;
 
 // Menu "Argomento": temi raggruppati, con il numero di puzzle disponibili.
+import PieceIcon from './PieceIcon.astro';
 import puzzlesData from '../data/puzzles.json';
 import { THEME_GROUPS, MIN_PUZZLES_PER_THEME, themeIt, difficultyOf } from '../data/puzzle-themes';
 const all = puzzlesData as { themes: string[]; rating: number }[];
@@ -88,7 +89,7 @@ for (const p of all) diffCount[difficultyOf(p.rating)]++;
 
     <!-- box grande di esito (risolto / soluzione mostrata) -->
     <button class="pz-done" data-done hidden>
-      <span class="pz-done-badge" data-done-badge>✓</span>
+      <span class="pz-done-badge" data-done-badge><span data-badge-ok>✓</span><span data-badge-sol hidden><PieceIcon piece="P" /></span></span>
       <span class="pz-done-text">
         <strong data-done-title>Esatto!</strong>
         <small>Prossimo puzzle →</small>
@@ -478,7 +479,8 @@ for (const p of all) diffCount[difficultyOf(p.rating)]++;
       doneEl.hidden = false;
       doneEl.classList.toggle('is-solution', kind === 'solution');
       doneTitleEl.textContent = kind === 'ok' ? 'Esatto!' : 'Soluzione';
-      doneBadgeEl.textContent = kind === 'ok' ? '✓' : '♟';
+      doneBadgeEl.querySelector<HTMLElement>('[data-badge-ok]')!.hidden = kind !== 'ok';
+      doneBadgeEl.querySelector<HTMLElement>('[data-badge-sol]')!.hidden = kind === 'ok';
     }
 
     let chess: InstanceType<typeof Chess>;

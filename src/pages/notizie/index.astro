@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
+import PieceIcon from '../../components/PieceIcon.astro';
 
 const notizie = await getCollection('notizie');
 const years = [...new Set(notizie.map(n => new Date(n.data.date).getFullYear()))].sort((a, b) => b - a);
@@ -13,7 +14,7 @@ const items = notizie
 <BaseLayout title="Notizie" description="Notizie, risultati e appuntamenti del Circolo Scacchi Santa Sabina di Genova: tornei, corsi, eventi scacchistici in città.">
   <section class="page-header">
     <div class="page-header-bg" aria-hidden="true"></div>
-    <div class="page-header-decor" aria-hidden="true">&#9819;</div>
+    <div class="page-header-decor" aria-hidden="true"><PieceIcon piece="Q" /></div>
     <div class="container">
       <h1>Notizie</h1>
       <p class="page-header-sub">Tutte le novità dal circolo</p>

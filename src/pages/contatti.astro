@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { club, clubJsonLd, fullAddress, mapsUrl, mapsEmbedUrl } from '../data/club';
+import PieceIcon from '../components/PieceIcon.astro';
 ---
 
 <BaseLayout
@@ -10,7 +11,7 @@ import { club, clubJsonLd, fullAddress, mapsUrl, mapsEmbedUrl } from '../data/cl
 >
   <section class="page-header">
     <div class="page-header-bg" aria-hidden="true"></div>
-    <div class="page-header-decor" aria-hidden="true">&#9814;</div>
+    <div class="page-header-decor" aria-hidden="true"><PieceIcon piece="R" /></div>
     <div class="container">
       <h1>Contatti</h1>
       <p class="page-header-sub">Vieni a trovarci o scrivici</p>
